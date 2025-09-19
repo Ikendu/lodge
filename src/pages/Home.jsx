@@ -2,7 +2,7 @@ import React from "react";
 
 export default function Home() {
   return (
-    <div className="flex bluer-500 h-screen justify-center items-center gap-20">
+    <div className="flex blue-500 h-screen justify-center items-center gap-20">
       <div className="">
         <div>Lodge Seeker</div>
         <div>Are you seeking for lodge or apartment</div>
