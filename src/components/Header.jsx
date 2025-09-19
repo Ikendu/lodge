@@ -1,8 +1,8 @@
-// src/components/Header.jsx
+import logo from "../assets/logos/MoreLinksLogo.png";
 export default function Header() {
   return (
     <header className="bg-blue-600 text-white p-4">
-      <h1 className="text-xl font-bold">My App</h1>
+      <img src={logo} alt="MoreLinks Logo" className="h-8 w-auto" />
     </header>
   );
 }
