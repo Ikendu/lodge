@@ -10,17 +10,38 @@ export default function RegisterCustomer() {
     nin: "",
     dob: "",
     address: "",
+    permanentAddress: "",
+    lga: "",
+    state: "",
+    country: "",
+    passport: null,
   });
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, files } = e.target;
+    if (files) {
+      setFormData((prev) => ({ ...prev, [name]: files[0] }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Here you will send data to your PHP backend API
+
+    // Prepare FormData for backend
+    const formDataToSend = new FormData();
+    Object.keys(formData).forEach((key) => {
+      formDataToSend.append(key, formData[key]);
+    });
+
+    fetch("http://localhost/lodge/register.php", {
+      method: "POST",
+      body: formDataToSend,
+    })
+      .then((res) => res.json())
+      .then((data) => console.log("Response:", data))
+      .catch((err) => console.error("Error:", err));
   };
 
   return (
@@ -29,17 +50,18 @@ export default function RegisterCustomer() {
         initial={{ opacity: 0, scale: 0.9, y: 50 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-white/20 backdrop-blur-lg shadow-2xl rounded-2xl w-full max-w-2xl p-8"
+        className="bg-white/20 backdrop-blur-lg shadow-2xl rounded-2xl w-full max-w-3xl p-8"
       >
         <h2 className="text-3xl font-bold text-white text-center mb-6">
-          User Registration
+          Customer Registration
         </h2>
+
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
           {/* First Name */}
-          <motion.div whileFocus={{ scale: 1.05 }} className="flex flex-col">
+          <div className="flex flex-col">
             <label className="text-white mb-2 font-medium">First Name</label>
             <input
               type="text"
@@ -49,7 +71,7 @@ export default function RegisterCustomer() {
               className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
               required
             />
-          </motion.div>
+          </div>
 
           {/* Middle Name */}
           <div className="flex flex-col">
@@ -116,7 +138,7 @@ export default function RegisterCustomer() {
             />
           </div>
 
-          {/* Address */}
+          {/* Current Address */}
           <div className="col-span-2 flex flex-col">
             <label className="text-white mb-2 font-medium">
               Current Address
@@ -125,8 +147,79 @@ export default function RegisterCustomer() {
               name="address"
               value={formData.address}
               onChange={handleChange}
-              rows="3"
+              rows="2"
               className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none resize-none"
+              required
+            />
+          </div>
+
+          {/* Permanent Address */}
+          <div className="col-span-2 flex flex-col">
+            <label className="text-white mb-2 font-medium">
+              Permanent Address
+            </label>
+            <textarea
+              name="permanentAddress"
+              value={formData.permanentAddress}
+              onChange={handleChange}
+              rows="2"
+              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none resize-none"
+              required
+            />
+          </div>
+
+          {/* LGA */}
+          <div className="flex flex-col">
+            <label className="text-white mb-2 font-medium">
+              Local Govt. of Origin
+            </label>
+            <input
+              type="text"
+              name="lga"
+              value={formData.lga}
+              onChange={handleChange}
+              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
+              required
+            />
+          </div>
+
+          {/* State of Origin */}
+          <div className="flex flex-col">
+            <label className="text-white mb-2 font-medium">
+              State of Origin
+            </label>
+            <input
+              type="text"
+              name="state"
+              value={formData.state}
+              onChange={handleChange}
+              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
+              required
+            />
+          </div>
+
+          {/* Country */}
+          <div className="flex flex-col">
+            <label className="text-white mb-2 font-medium">Country</label>
+            <input
+              type="text"
+              name="country"
+              value={formData.country}
+              onChange={handleChange}
+              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
+              required
+            />
+          </div>
+
+          {/* Passport */}
+          <div className="flex flex-col">
+            <label className="text-white mb-2 font-medium">Passport</label>
+            <input
+              type="file"
+              name="passport"
+              accept="image/*"
+              onChange={handleChange}
+              className="p-2 rounded-xl border border-white/30 bg-white/10 text-white cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700"
               required
             />
           </div>
