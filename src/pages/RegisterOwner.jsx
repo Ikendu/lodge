@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 export default function RegisterCustomer() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: "",
     middleName: "",
@@ -55,6 +57,13 @@ export default function RegisterCustomer() {
         <h2 className="text-3xl font-bold text-white text-center mb-6">
           Lodge Owner Registration
         </h2>
+        <p
+          className="font-bold text-gray-700 text-center mb-6 cursor-pointer"
+          onClick={() => navigate("/registeruser")}
+        >
+          Looking for a suitable place instead?{" "}
+          <i className="underline">Click here</i>
+        </p>
 
         <form
           onSubmit={handleSubmit}

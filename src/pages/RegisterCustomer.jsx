@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 export default function RegisterCustomer() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: "",
     middleName: "",
@@ -29,7 +31,6 @@ export default function RegisterCustomer() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Prepare FormData for backend
     const formDataToSend = new FormData();
     Object.keys(formData).forEach((key) => {
       formDataToSend.append(key, formData[key]);
@@ -45,16 +46,23 @@ export default function RegisterCustomer() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 50 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-white/20 backdrop-blur-lg shadow-2xl rounded-2xl w-full max-w-3xl p-8"
+        className="bg-white/20 backdrop-blur-lg shadow-2xl rounded-2xl w-full max-w-3xl p-6 sm:p-8"
       >
-        <h2 className="text-3xl font-bold text-white text-center mb-6">
+        <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-6">
           New User Registration
         </h2>
+        <p
+          className="font-bold text-gray-700 text-center mb-6 cursor-pointer"
+          onClick={() => navigate("/registerowner")}
+        >
+          Want to rent out your lodge instead?{" "}
+          <i className="underline">Click here</i>
+        </p>
 
         <form
           onSubmit={handleSubmit}
@@ -139,7 +147,7 @@ export default function RegisterCustomer() {
           </div>
 
           {/* Current Address */}
-          <div className="col-span-2 flex flex-col">
+          <div className="col-span-1 md:col-span-2 flex flex-col">
             <label className="text-white mb-2 font-medium">
               Current Address
             </label>
@@ -154,7 +162,7 @@ export default function RegisterCustomer() {
           </div>
 
           {/* Permanent Address */}
-          <div className="col-span-2 flex flex-col">
+          <div className="col-span-1 md:col-span-2 flex flex-col">
             <label className="text-white mb-2 font-medium">
               Permanent Address
             </label>
@@ -183,7 +191,7 @@ export default function RegisterCustomer() {
             />
           </div>
 
-          {/* State of Origin */}
+          {/* State */}
           <div className="flex flex-col">
             <label className="text-white mb-2 font-medium">
               State of Origin
@@ -225,7 +233,7 @@ export default function RegisterCustomer() {
           </div>
 
           {/* Submit */}
-          <div className="col-span-2">
+          <div className="col-span-1 md:col-span-2">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
