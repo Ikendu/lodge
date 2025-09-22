@@ -26,7 +26,7 @@ export default function Home() {
         transition={{ duration: 0.8 }}
         className="text-4xl md:text-5xl font-extrabold text-center mb-12 drop-shadow-lg"
       >
-        Welcome to <span className="text-yellow-300">Lodge</span>
+        Welcome to <span className="text-yellow-300">MoreLink Lodge</span>
       </motion.h1>
 
       {/* Options */}
@@ -46,9 +46,10 @@ export default function Home() {
             alt="guest or tenant"
             className="h-20 mb-4 drop-shadow-md"
           />
-          <h4 className="text-2xl font-bold mb-2">Lodge Seeker</h4>
+          <h4 className="text-2xl font-bold mb-2">Find a Lodge</h4>
           <p className="text-sm md:text-base opacity-90">
-            Are you a traveler or tenant seeking a lodge or apartment?
+            Looking for the perfect place to lodge or rent? We've got you
+            covered.
           </p>
           <span className="mt-4 inline-block bg-yellow-400 text-black font-semibold py-2 px-6 rounded-full shadow hover:bg-yellow-300 transition-all">
             Click Here
@@ -70,15 +71,18 @@ export default function Home() {
             alt="lodge owner"
             className="h-20 mb-4 drop-shadow-md"
           />
-          <h4 className="text-2xl font-bold mb-2">Lodge Owner</h4>
+          <h4 className="text-2xl font-bold mb-2">List a Lodge</h4>
           <p className="text-sm md:text-base opacity-90">
-            Do you have a lodge, space, or apartment to rent out?
+            Want to rent out your lodge, space, or apartment? Join us and reach
+            thousands of potential tenants.
           </p>
           <span className="mt-4 inline-block bg-green-400 text-black font-semibold py-2 px-6 rounded-full shadow hover:bg-green-300 transition-all">
             Click Here
           </span>
         </motion.div>
       </div>
+
+      {/* Footer */}
     </div>
   );
 }
