@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 import bed1 from "../assets/images/bed1.jpg";
 import bed2 from "../assets/images/bed2.jpg";
@@ -8,8 +10,6 @@ import bed4 from "../assets/images/bed4.jpg";
 import bed5 from "../assets/images/bed5.jpg";
 import bed6 from "../assets/images/bed6.jpg";
 
-import { b } from "framer-motion/client";
-
 const roomsData = [
   {
     id: 1,
@@ -17,7 +17,9 @@ const roomsData = [
     location: "Nsukka, Enugu State",
     price: 8000,
     rating: 4.8,
-    image: bed1, // sample placeholder
+    description:
+      "A cozy lodge located in the heart of Enugu with all amenities.",
+    image: bed1,
   },
   {
     id: 2,
@@ -25,7 +27,8 @@ const roomsData = [
     location: "Abuja, Nigeria",
     price: 10000,
     rating: 4.6,
-    image: bed2, // sample placeholder
+    description: "Modern apartment with a beautiful balcony view in Abuja.",
+    image: bed2,
   },
   {
     id: 3,
@@ -33,7 +36,8 @@ const roomsData = [
     location: "Lagos, Nigeria",
     price: 4000,
     rating: 4.3,
-    image: bed3, // sample placeholder
+    description: "Perfect for students, affordable and close to campus.",
+    image: bed3,
   },
   {
     id: 4,
@@ -41,7 +45,8 @@ const roomsData = [
     location: "Calabar, Nigeria",
     price: 10000,
     rating: 4.9,
-    image: bed4, // sample placeholder
+    description: "Enjoy a luxury suite with breathtaking sea view in Calabar.",
+    image: bed4,
   },
   {
     id: 5,
@@ -49,7 +54,8 @@ const roomsData = [
     location: "Ibadan, Nigeria",
     price: 6000,
     rating: 4.5,
-    image: bed5, // sample placeholder
+    description: "Peaceful lodge located in the quiet countryside of Ibadan.",
+    image: bed5,
   },
   {
     id: 6,
@@ -57,29 +63,41 @@ const roomsData = [
     location: "Port Harcourt, Nigeria",
     price: 9000,
     rating: 4.4,
-    image: bed6, // sample placeholder
+    description:
+      "Stay in the center of Port Harcourt with easy access to shops.",
+    image: bed6,
   },
 ];
 
 export default function Apartments() {
   const [rooms] = useState(roomsData);
+  const navigate = useNavigate();
+
+  const handleRoomClick = (room) => {
+    navigate(`/room/${room.id}`, { state: room });
+  };
 
   return (
     <div className="p-4 md:p-10">
-      <h2 className="text-2xl font-bold mb-6 text-center">
+      <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center text-gray-800">
         Explore Available Lodges & Apartments
       </h2>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {rooms.map((room) => (
-          <div
+        {rooms.map((room, index) => (
+          <motion.div
             key={room.id}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1, duration: 0.4 }}
+            whileHover={{ scale: 1.03 }}
             className="rounded-2xl shadow-md hover:shadow-xl transition duration-300 bg-white overflow-hidden cursor-pointer"
+            onClick={() => handleRoomClick(room)}
           >
             <img
               src={room.image}
               alt={room.title}
-              className="h-48 w-full object-cover hover:scale-105 transition-transform duration-300"
+              className="h-56 w-full object-cover"
             />
             <div className="p-4">
               <h3 className="font-semibold text-lg">{room.title}</h3>
@@ -94,7 +112,7 @@ export default function Apartments() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>
