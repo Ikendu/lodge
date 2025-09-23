@@ -8,7 +8,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const links = [
-    { name: "Find Lodge", path: "/lodges" },
+    { name: "Find Lodge", path: "/apartments" },
     { name: "List Your Property", path: "/registerowner" },
     { name: "About Us", path: "/about" },
     { name: "Contact", path: "/contact" },
