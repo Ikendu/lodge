@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
 
+import bed1 from "../assets/images/bed1.jpg";
+import bed2 from "../assets/images/bed2.jpg";
+import bed3 from "../assets/images/bed3.jpg";
+import bed4 from "../assets/images/bed4.jpg";
+import bed5 from "../assets/images/bed5.jpg";
+import bed6 from "../assets/images/bed6.jpg";
+
+import { b } from "framer-motion/client";
+
 const roomsData = [
   {
     id: 1,
@@ -8,8 +17,7 @@ const roomsData = [
     location: "Nsukka, Enugu State",
     price: 8000,
     rating: 4.8,
-    image:
-      "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.freepik.com%2Ffree-photos-vectors%2Fbedroom&psig=AOvVaw21ONzpWF2y6fMOfh_83mY2&ust=1758689817385000&source=images&cd=vfe&opi=89978449&ved=0CBUQjRxqFwoTCPiGy6CM7o8DFQAAAAAdAAAAABAE", // sample placeholder
+    image: bed1, // sample placeholder
   },
   {
     id: 2,
@@ -17,7 +25,7 @@ const roomsData = [
     location: "Abuja, Nigeria",
     price: 10000,
     rating: 4.6,
-    image: "https://source.unsplash.com/600x400/?apartment,livingroom",
+    image: bed2, // sample placeholder
   },
   {
     id: 3,
@@ -25,7 +33,31 @@ const roomsData = [
     location: "Lagos, Nigeria",
     price: 4000,
     rating: 4.3,
-    image: "https://source.unsplash.com/600x400/?student,hostel",
+    image: bed3, // sample placeholder
+  },
+  {
+    id: 4,
+    title: "Luxury Suite with Sea View",
+    location: "Calabar, Nigeria",
+    price: 10000,
+    rating: 4.9,
+    image: bed4, // sample placeholder
+  },
+  {
+    id: 5,
+    title: "Quiet Countryside Lodge",
+    location: "Ibadan, Nigeria",
+    price: 6000,
+    rating: 4.5,
+    image: bed5, // sample placeholder
+  },
+  {
+    id: 6,
+    title: "Downtown Apartment",
+    location: "Port Harcourt, Nigeria",
+    price: 9000,
+    rating: 4.4,
+    image: bed6, // sample placeholder
   },
 ];
 
