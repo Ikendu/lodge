@@ -39,7 +39,7 @@ export default function Home() {
           animate="visible"
           whileHover="hover"
           custom={0}
-          onClick={() => navigate("/registeruser")}
+          onClick={() => navigate("/apartments")}
         >
           <img
             src={guest}
@@ -81,8 +81,6 @@ export default function Home() {
           </span>
         </motion.div>
       </div>
-
-      {/* Footer */}
     </div>
   );
 }
