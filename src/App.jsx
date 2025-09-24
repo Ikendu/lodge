@@ -11,6 +11,7 @@ import RegisterCustomer from "./pages/RegisterCustomer";
 import RegisterOwner from "./pages/RegisterOwner";
 import Apartments from "./pages/Apartments.jsx";
 import LoginPage from "./pages/Login.jsx";
+import FAQPage from "./pages/FqaPage.jsx";
 
 const links = [
   { id: "hero", label: "Home", path: "/" },
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="registerowner" element={<RegisterOwner />} />
           <Route path="apartments" element={<Apartments />} />
           <Route path="login" element={<LoginPage />} />
+          <Route path="faqs" element={<FAQPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
