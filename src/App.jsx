@@ -13,6 +13,7 @@ import Apartments from "./pages/Apartments.jsx";
 import LoginPage from "./pages/Login.jsx";
 import FAQPage from "./pages/FqaPage.jsx";
 import LodgeDetails from "./pages/LodgeDetails.jsx";
+import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 
 const links = [
   { id: "hero", label: "Home", path: "/" },
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="apartments" element={<Apartments />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="faqs" element={<FAQPage />} />
+          <Route path="privacy-policy" element={<PrivacyPolicy />} />
         </Route>
       </Routes>
     </BrowserRouter>
