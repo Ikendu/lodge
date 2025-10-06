@@ -2,6 +2,74 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import guest from "../assets/logos/guest.png";
 import ownerh from "../assets/logos/ownerh.png";
+import { Star } from "lucide-react";
+
+// Sample lodge images
+import bed1 from "../assets/images/bed1.jpg";
+import bed2 from "../assets/images/bed2.jpg";
+import bed3 from "../assets/images/bed3.jpg";
+import bed4 from "../assets/images/bed4.jpg";
+import bed5 from "../assets/images/bed5.jpg";
+import bed6 from "../assets/images/bed6.jpg";
+
+const lodges = [
+  {
+    id: 1,
+    title: "Cozy Lodge in Enugu",
+    location: "Nsukka, Enugu State",
+    price: 8000,
+    rating: 4.8,
+    description:
+      "A cozy lodge located in the heart of Enugu with all amenities.",
+    image: bed1,
+  },
+  {
+    id: 2,
+    title: "Modern Apartment with Balcony",
+    location: "Abuja, Nigeria",
+    price: 10000,
+    rating: 4.6,
+    description: "Modern apartment with a beautiful balcony view in Abuja.",
+    image: bed2,
+  },
+  {
+    id: 3,
+    title: "Affordable Student Lodge",
+    location: "Lagos, Nigeria",
+    price: 4000,
+    rating: 4.3,
+    description: "Perfect for students, affordable and close to campus.",
+    image: bed3,
+  },
+  {
+    id: 4,
+    title: "Luxury Suite with Sea View",
+    location: "Calabar, Nigeria",
+    price: 10000,
+    rating: 4.9,
+    description: "Enjoy a luxury suite with breathtaking sea view in Calabar.",
+    image: bed4,
+  },
+  {
+    id: 5,
+    title: "Quiet Countryside Lodge",
+    location: "Ibadan, Nigeria",
+    price: 6000,
+    rating: 4.5,
+    description: "Peaceful lodge located in the quiet countryside of Ibadan.",
+    image: bed5,
+  },
+  {
+    id: 6,
+    title: "Downtown Apartment",
+    location: "Port Harcourt, Nigeria",
+    price: 9000,
+    rating: 4.4,
+    description:
+      "Stay in the center of Port Harcourt with easy access to shops.",
+    image: bed6,
+  },
+];
 
 export default function Home() {
   const navigate = useNavigate();
@@ -17,6 +85,10 @@ export default function Home() {
     hover: { scale: 1.05, y: -5, transition: { duration: 0.3 } },
   };
 
+  const handleLodgeClick = (lodge) => {
+    navigate(`/lodge/${lodge.id}`, { state: { lodge } });
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 text-white p-6">
       {/* Header */}
@@ -29,8 +101,8 @@ export default function Home() {
         Welcome to <span className="text-yellow-300">MoreLink Lodge</span>
       </motion.h1>
 
-      {/* Options */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+      {/* Options Section (Exactly like before) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mb-20">
         {/* Lodge Seeker */}
         <motion.div
           className="cursor-pointer bg-white/20 backdrop-blur-lg rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border border-white/30"
@@ -39,7 +111,12 @@ export default function Home() {
           animate="visible"
           whileHover="hover"
           custom={0}
-          onClick={() => navigate("/apartments")}
+          onClick={() =>
+            window.scrollTo({
+              top: document.body.scrollHeight / 2,
+              behavior: "smooth",
+            })
+          }
         >
           <img
             src={guest}
@@ -80,6 +157,46 @@ export default function Home() {
             Click Here
           </span>
         </motion.div>
+      </div>
+
+      {/* Lodges List Section Below */}
+      <div className="w-full max-w-6xl bg-white/10 rounded-2xl p-8 shadow-lg mb-12">
+        <h2 className="text-3xl font-semibold text-center mb-8 text-yellow-300">
+          Explore Available Lodges
+        </h2>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {lodges.map((lodge, i) => (
+            <motion.div
+              key={lodge.id}
+              className="rounded-2xl bg-white text-gray-800 shadow-lg hover:shadow-2xl overflow-hidden cursor-pointer transition-all"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.2 }}
+              whileHover={{ scale: 1.03 }}
+              onClick={() => handleLodgeClick(lodge)}
+            >
+              <img
+                src={lodge.image}
+                alt={lodge.title}
+                className="h-48 w-full object-cover hover:scale-105 transition-transform duration-300"
+              />
+              <div className="p-4">
+                <h3 className="font-bold text-lg">{lodge.title}</h3>
+                <p className="text-gray-500 text-sm">{lodge.location}</p>
+                <div className="flex justify-between items-center mt-3">
+                  <span className="font-bold text-blue-600">
+                    ₦{lodge.price.toLocaleString()}/night
+                  </span>
+                  <div className="flex items-center text-yellow-500">
+                    <Star size={16} className="fill-yellow-500" />
+                    <span className="ml-1 text-sm">{lodge.rating}</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </div>
   );

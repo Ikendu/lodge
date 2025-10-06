@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 const faqs = [
@@ -42,38 +43,76 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 md:p-12">
-      <div className="max-w-3xl mx-auto bg-white shadow-md rounded-2xl p-8">
-        <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">
+    <div className="min-h-screen bg-gradient-to-b from-blue-100 via-white to-blue-100 p-6 md:p-12 flex justify-center items-start">
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-3xl w-full bg-white shadow-lg rounded-2xl p-8 border border-gray-100"
+      >
+        <h2 className="text-3xl font-bold text-center mb-8 text-blue-700">
           Frequently Asked Questions
         </h2>
 
         <div className="space-y-4">
           {faqs.map((faq, index) => (
-            <div
+            <motion.div
               key={index}
-              className="border rounded-lg overflow-hidden transition shadow-sm"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all bg-white overflow-hidden"
             >
               <button
                 onClick={() => toggleFAQ(index)}
-                className="w-full flex justify-between items-center px-4 py-3 text-left font-medium text-gray-700 hover:bg-gray-100"
+                className="w-full flex justify-between items-center px-5 py-4 text-left font-semibold text-gray-800 hover:bg-blue-50 transition-colors"
               >
-                {faq.question}
-                {openIndex === index ? (
-                  <ChevronUp className="w-5 h-5 text-gray-500" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-500" />
-                )}
+                <span>{faq.question}</span>
+                <motion.div
+                  animate={{ rotate: openIndex === index ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {openIndex === index ? (
+                    <ChevronUp className="w-5 h-5 text-blue-600" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-blue-600" />
+                  )}
+                </motion.div>
               </button>
-              {openIndex === index && (
-                <div className="px-4 py-3 text-gray-600 bg-gray-50 border-t">
-                  {faq.answer}
-                </div>
-              )}
-            </div>
+
+              <AnimatePresence>
+                {openIndex === index && (
+                  <motion.div
+                    key="content"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.35, ease: "easeInOut" }}
+                    className="px-5 pb-4 text-gray-600 bg-blue-50 border-t border-blue-100"
+                  >
+                    {faq.answer}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           ))}
         </div>
-      </div>
+
+        <motion.div
+          className="text-center mt-10 text-sm text-gray-500"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+        >
+          Still have questions?{" "}
+          <a
+            href="/contact"
+            className="text-blue-600 font-medium hover:underline"
+          >
+            Contact our support team
+          </a>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

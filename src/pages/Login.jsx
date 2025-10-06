@@ -91,7 +91,7 @@ export default function LoginPage() {
         {/* Extra links */}
         <div className="text-center mt-4 text-sm text-gray-600">
           Don’t have an account?{" "}
-          <a href="/register" className="text-blue-600 font-semibold">
+          <a href="/registeruser" className="text-blue-600 font-semibold">
             Register
           </a>
         </div>

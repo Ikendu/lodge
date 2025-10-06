@@ -12,6 +12,7 @@ import RegisterOwner from "./pages/RegisterOwner";
 import Apartments from "./pages/Apartments.jsx";
 import LoginPage from "./pages/Login.jsx";
 import FAQPage from "./pages/FqaPage.jsx";
+import LodgeDetails from "./pages/LodgeDetails.jsx";
 
 const links = [
   { id: "hero", label: "Home", path: "/" },
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="about" element={<About />} />
           <Route path="registeruser" element={<RegisterCustomer />} />
           <Route path="registerowner" element={<RegisterOwner />} />
+          <Route path="/lodge/:id" element={<LodgeDetails />} />
           <Route path="apartments" element={<Apartments />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="faqs" element={<FAQPage />} />
