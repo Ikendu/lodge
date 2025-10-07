@@ -161,7 +161,7 @@ export default function Footer() {
         <div>
           <h4 className="text-xl font-semibold mb-4">Contact Us</h4>
           <p className="flex items-center gap-2 mb-2">
-            <FaPhoneAlt className="text-yellow-400" /> +234 901 234 5678
+            <FaPhoneAlt className="text-yellow-400" /> +234 806 163 2276
           </p>
           <p className="flex items-center gap-2 mb-4">
             <FaEnvelope className="text-yellow-400" /> support@morelinklodge.com

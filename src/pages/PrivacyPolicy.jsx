@@ -167,7 +167,7 @@ export default function PrivacyPolicy() {
         <strong>Address:</strong> 5 Aku Road, Nsukka, Enugu State, Nigeria
       </p>
       <p>
-        <strong>Phone:</strong> +234 (0)812 345 6789
+        <strong>Phone:</strong> +234 806 163 2276
       </p>
 
       <div className="mt-10 text-sm text-gray-500">
