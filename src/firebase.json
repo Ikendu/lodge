@@ -1,0 +1,7 @@
+{
+  "hosting": {
+    "site": "morelinkslodge",
+
+    "public": "dist"
+  }
+}

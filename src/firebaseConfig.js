@@ -1,6 +1,7 @@
 // src/firebaseConfig.js
 
 import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
 import {
   getAuth,
   GoogleAuthProvider,
@@ -16,12 +17,13 @@ import {
 // (found in Firebase Console > Project Settings > General)
 // ===============================
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "YOUR_FIREBASE_PROJECT.firebaseapp.com",
-  projectId: "YOUR_FIREBASE_PROJECT_ID",
-  storageBucket: "YOUR_FIREBASE_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_FIREBASE_APP_ID",
+  apiKey: "AIzaSyDiMuKD3o5WIRHLRQ4PVEZd7TuNhKnNAKk",
+  authDomain: "lodge-72abe.firebaseapp.com",
+  projectId: "lodge-72abe",
+  storageBucket: "lodge-72abe.firebasestorage.app",
+  messagingSenderId: "101703969569",
+  appId: "1:101703969569:web:40ab0ed8ba62a9672a2c60",
+  measurementId: "G-L2614CJ8N5",
 };
 
 // ===============================
@@ -29,6 +31,9 @@ const firebaseConfig = {
 // ===============================
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+
+// Initialize Firebase
+const analytics = getAnalytics(app);
 
 // ===============================
 // 🔐 Authentication Providers

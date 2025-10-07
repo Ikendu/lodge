@@ -18,6 +18,7 @@ import TermsAndConditions from "./pages/TermsAndConditions.jsx";
 import ContactUs from "./pages/ContactUs.jsx";
 import HelpCenter from "./pages/HelpCenter.jsx";
 import SafetyTips from "./pages/SaftyTips.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 const links = [
   { id: "hero", label: "Home", path: "/" },
@@ -37,16 +38,16 @@ export default function App() {
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/registeruser" element={<RegisterCustomer />} />
           <Route path="/registerowner" element={<RegisterOwner />} />
-          <Route path="/lodge/:id" element={<LodgeDetails />} />
-          <Route path="/apartments" element={<Apartments />} />
           <Route
-            path="/login"
+            path="/lodge/:id"
             element={
               <ProtectedRoute>
-                <BookLodge />
+                <LodgeDetails />
               </ProtectedRoute>
             }
           />
+          <Route path="/apartments" element={<Apartments />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/faqs" element={<FAQPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsAndConditions />} />
