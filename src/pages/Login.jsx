@@ -1,13 +1,8 @@
+// src/pages/LoginPage.jsx
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import {
-  FaGoogle,
-  FaYahoo,
-  FaApple,
-  FaFacebookF,
-  FaXTwitter,
-} from "react-icons/fa6";
-
+import { motion } from "framer-motion";
 import {
   googleProvider,
   yahooProvider,
@@ -15,15 +10,25 @@ import {
   facebookProvider,
   twitterProvider,
   socialSignIn,
+  auth,
 } from "../firebaseConfig";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get previous page (or default to home)
+  const from = location.state?.from || "/";
+
+  // Email/Password Login
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!email || !password) {
@@ -31,47 +36,65 @@ export default function LoginPage() {
       return;
     }
 
-    if (email === "demo@email.com" && password === "123456") {
-      alert("Login successful ✅");
-      setError("");
-    } else {
+    setError("");
+    setLoading(true);
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      alert("✅ Login successful!");
+      navigate(from, { replace: true }); // redirect back
+    } catch (err) {
       setError("Invalid email or password.");
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Social Login
   const handleSocialLogin = async (providerName) => {
-    try {
-      const providerMap = {
-        Google: googleProvider,
-        Yahoo: yahooProvider,
-        Apple: appleProvider,
-        Facebook: facebookProvider,
-        X: twitterProvider,
-      };
+    const providerMap = {
+      Google: googleProvider,
+      Yahoo: yahooProvider,
+      Apple: appleProvider,
+      Facebook: facebookProvider,
+      X: twitterProvider,
+    };
 
-      const provider = providerMap[providerName];
+    const provider = providerMap[providerName];
+    if (!provider) return;
+
+    try {
+      setLoading(true);
       await socialSignIn(provider);
+      navigate(from, { replace: true }); // redirect to previous page
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("Social login failed:", error);
+      setError("Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 p-6">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 transition-all duration-500 hover:shadow-blue-200">
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 p-6">
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="w-full max-w-md rounded-2xl bg-white shadow-2xl p-8"
+      >
+        <h2 className="text-3xl font-bold text-center mb-6 text-indigo-700">
           Welcome Back 👋
         </h2>
-        <p className="text-center text-gray-500 mb-6">
-          Login to continue exploring lodges
-        </p>
 
         {error && (
-          <div className="bg-red-100 text-red-600 text-sm p-2 mb-4 rounded-md text-center">
+          <div className="bg-red-100 text-red-600 text-sm p-2 mb-4 rounded">
             {error}
           </div>
         )}
 
+        {/* Email Login Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Email */}
           <div>
@@ -84,6 +107,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="example@mail.com"
                 className="w-full p-2 outline-none"
               />
             </div>
@@ -100,6 +124,7 @@ export default function LoginPage() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
                 className="w-full p-2 outline-none"
               />
               <button
@@ -112,67 +137,54 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Login Button */}
+          {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-300"
+            disabled={loading}
+            className={`w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition ${
+              loading ? "opacity-70 cursor-not-allowed" : ""
+            }`}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
         {/* Divider */}
-        <div className="flex items-center my-6">
-          <hr className="flex-grow border-gray-300" />
-          <span className="mx-3 text-gray-400 text-sm">or login with</span>
-          <hr className="flex-grow border-gray-300" />
+        <div className="my-6 text-center text-gray-500 relative">
+          <span className="px-3 bg-white relative z-10">or continue with</span>
+          <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-full h-px bg-gray-300"></div>
         </div>
 
         {/* Social Login Buttons */}
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 text-center">
-          <button
-            onClick={() => handleSocialLogin("Google")}
-            className="p-3 rounded-full border hover:bg-red-50 transition duration-300 hover:scale-105"
-          >
-            <FaGoogle className="text-red-500 text-xl mx-auto" />
-          </button>
-          <button
-            onClick={() => handleSocialLogin("Yahoo")}
-            className="p-3 rounded-full border hover:bg-purple-50 transition duration-300 hover:scale-105"
-          >
-            <FaYahoo className="text-purple-500 text-xl mx-auto" />
-          </button>
-          <button
-            onClick={() => handleSocialLogin("Apple")}
-            className="p-3 rounded-full border hover:bg-gray-100 transition duration-300 hover:scale-105"
-          >
-            <FaApple className="text-gray-800 text-xl mx-auto" />
-          </button>
-          <button
-            onClick={() => handleSocialLogin("Facebook")}
-            className="p-3 rounded-full border hover:bg-blue-50 transition duration-300 hover:scale-105"
-          >
-            <FaFacebookF className="text-blue-600 text-xl mx-auto" />
-          </button>
-          <button
-            onClick={() => handleSocialLogin("X")}
-            className="p-3 rounded-full border hover:bg-gray-50 transition duration-300 hover:scale-105"
-          >
-            <FaXTwitter className="text-black text-xl mx-auto" />
-          </button>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {[
+            { name: "Google", color: "bg-red-500" },
+            { name: "Yahoo", color: "bg-purple-600" },
+            { name: "Apple", color: "bg-gray-900" },
+            { name: "Facebook", color: "bg-blue-600" },
+            { name: "X", color: "bg-black" },
+          ].map((provider, i) => (
+            <motion.button
+              key={i}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => handleSocialLogin(provider.name)}
+              disabled={loading}
+              className={`${provider.color} text-white py-2 rounded-lg font-semibold transition text-sm`}
+            >
+              {provider.name}
+            </motion.button>
+          ))}
         </div>
 
-        {/* Extra links */}
+        {/* Register Link */}
         <div className="text-center mt-6 text-sm text-gray-600">
           Don’t have an account?{" "}
-          <a
-            href="/registeruser"
-            className="text-blue-600 font-semibold hover:underline"
-          >
+          <a href="/registeruser" className="text-indigo-600 font-semibold">
             Register
           </a>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

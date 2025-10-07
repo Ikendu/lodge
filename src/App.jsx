@@ -39,7 +39,14 @@ export default function App() {
           <Route path="/registerowner" element={<RegisterOwner />} />
           <Route path="/lodge/:id" element={<LodgeDetails />} />
           <Route path="/apartments" element={<Apartments />} />
-          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/login"
+            element={
+              <ProtectedRoute>
+                <BookLodge />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/faqs" element={<FAQPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsAndConditions />} />
