@@ -38,14 +38,16 @@ export default function App() {
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/registeruser" element={<RegisterCustomer />} />
           <Route path="/registerowner" element={<RegisterOwner />} />
-          <Route
+          <Route path="/lodge/:id" element={<LodgeDetails />} />
+
+          {/* <Route
             path="/lodge/:id"
             element={
               <ProtectedRoute>
                 <LodgeDetails />
               </ProtectedRoute>
             }
-          />
+          /> */}
           <Route path="/apartments" element={<Apartments />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/faqs" element={<FAQPage />} />
