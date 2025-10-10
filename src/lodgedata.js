@@ -5,6 +5,12 @@ import bed3 from "./assets/images/bed3.jpg";
 import bed4 from "./assets/images/bed4.jpg";
 import bed5 from "./assets/images/bed5.jpg";
 import bed6 from "./assets/images/bed6.jpg";
+import beda from "./assets/images/beda.jpg";
+import bedb from "./assets/images/bedb.jpg";
+import bedc from "./assets/images/bedc.jpg";
+import bedda from "./assets/images/bedda.jpg";
+import beddb from "./assets/images/beddb.jpg";
+import bedcc from "./assets/images/bedcc.webp";
 
 export const lodges = [
   {
@@ -15,7 +21,7 @@ export const lodges = [
     rating: 4.8,
     description:
       "A cozy lodge located in the heart of Enugu with all amenities.",
-    image: bed1,
+    images: [bed1, bed2, bed3],
   },
   {
     id: 2,
@@ -24,7 +30,7 @@ export const lodges = [
     price: 10000,
     rating: 4.6,
     description: "Modern apartment with a beautiful balcony view in Abuja.",
-    image: bed2,
+    images: [bed4, bed5, bed6],
   },
   {
     id: 3,
@@ -33,7 +39,7 @@ export const lodges = [
     price: 4000,
     rating: 4.3,
     description: "Perfect for students, affordable and close to campus.",
-    image: bed3,
+    images: [bed3, bedb, bedc],
   },
   {
     id: 4,
@@ -42,7 +48,7 @@ export const lodges = [
     price: 10000,
     rating: 4.9,
     description: "Enjoy a luxury suite with breathtaking sea view in Calabar.",
-    image: bed4,
+    images: [bed2, beddb, bedcc],
   },
   {
     id: 5,
@@ -51,7 +57,7 @@ export const lodges = [
     price: 6000,
     rating: 4.5,
     description: "Peaceful lodge located in the quiet countryside of Ibadan.",
-    image: bed5,
+    images: [bed5, bed3, bed1],
   },
   {
     id: 6,
@@ -61,6 +67,6 @@ export const lodges = [
     rating: 4.4,
     description:
       "Stay in the center of Port Harcourt with easy access to shops.",
-    image: bed6,
+    images: [bed6, bedc, bedb],
   },
 ];

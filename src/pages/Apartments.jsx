@@ -29,7 +29,7 @@ export default function Apartments() {
             onClick={() => handleRoomClick(lodge)}
           >
             <img
-              src={lodge.image}
+              src={lodge.images?.[0] ?? ""}
               alt={lodge.title}
               className="h-56 w-full object-cover"
             />

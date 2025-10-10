@@ -1,3 +1,4 @@
+// src/pages/Home.jsx
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import guest from "../assets/logos/guest.png";
@@ -30,12 +31,12 @@ export default function Home() {
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="text-4xl md:text-5xl font-extrabold text-center mb-12 drop-shadow-lg"
+        className="text-4xl md:text-5xl font-extrabold text-center m-12 drop-shadow-lg"
       >
         Welcome to <span className="text-yellow-300">MoreLink Lodge</span>
       </motion.h1>
 
-      {/* Options Section (Exactly like before) */}
+      {/* Options Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mb-20">
         {/* Lodge Seeker */}
         <motion.div
@@ -47,7 +48,7 @@ export default function Home() {
           custom={0}
           onClick={() =>
             window.scrollTo({
-              top: document.body.scrollHeight / 2,
+              top: document.body.scrollHeight / 3.5,
               behavior: "smooth",
             })
           }
@@ -93,7 +94,7 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* Lodges List Section Below */}
+      {/* Lodges List Section */}
       <div className="w-full max-w-6xl bg-white/10 rounded-2xl p-8 shadow-lg mb-12">
         <h2 className="text-3xl font-semibold text-center mb-8 text-yellow-300">
           Explore Available Lodges
@@ -111,7 +112,9 @@ export default function Home() {
               onClick={() => handleLodgeClick(lodge)}
             >
               <img
-                src={lodge.image}
+                src={
+                  lodge.images && lodge.images.length > 0 ? lodge.images[0] : ""
+                }
                 alt={lodge.title}
                 className="h-48 w-full object-cover hover:scale-105 transition-transform duration-300"
               />

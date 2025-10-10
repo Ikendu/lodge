@@ -17,18 +17,38 @@ export default function LodgeDetails() {
     if (userRegistered) {
       navigate(`/booking/${lodge.id}`, { state: { lodge } });
     } else {
-      navigate("/login");
+      navigate("/login", { state: { from: location.pathname } });
     }
   };
+
+  // Ensure lodge.images is an array of 3 URLs; fallback to empty strings if missing
+  const images = lodge.images || ["", "", ""];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex justify-center items-center p-6">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden">
-        <img
-          src={lodge.image}
-          alt={lodge.title}
-          className="w-full h-64 object-cover"
-        />
+        {/* Image Gallery Section */}
+        <div className="w-full">
+          <img
+            src={images[0]}
+            alt={lodge.title}
+            className="w-full h-72 object-cover"
+          />
+          <div className="flex flex-wrap">
+            <img
+              src={images[1]}
+              alt={`${lodge.title} view 2`}
+              className="w-1/2 h-48 object-cover"
+            />
+            <img
+              src={images[2]}
+              alt={`${lodge.title} view 3`}
+              className="w-1/2 h-48 object-cover"
+            />
+          </div>
+        </div>
+
+        {/* Details Section */}
         <div className="p-6">
           <h2 className="text-3xl font-bold text-gray-800 mb-2">
             {lodge.title}
