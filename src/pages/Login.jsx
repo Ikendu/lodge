@@ -26,15 +26,25 @@ export default function LoginPage() {
   const location = useLocation();
   const [user] = useAuthState(auth);
 
-  // Get previous page (or default to home)
-  const from = location.state?.from || "/";
+  // Get previous page (or default to home). `from` may be a string path or a full location object.
+  const rawFrom = location.state?.from || "/";
 
-  // If user already signed in, return them to the page they came from
+  const buildTarget = (raw) => {
+    if (!raw) return { path: "/", state: undefined };
+    if (typeof raw === "string") return { path: raw, state: undefined };
+    // raw is a location object
+    const path = `${raw.pathname || "/"}${raw.search || ""}${raw.hash || ""}`;
+    return { path, state: raw.state };
+  };
+
+  const fromTarget = buildTarget(rawFrom);
+
+  // If user already signed in, return them to the page they came from (preserve state)
   useEffect(() => {
     if (user) {
-      navigate(from, { replace: true });
+      navigate(fromTarget.path, { replace: true, state: fromTarget.state });
     }
-  }, [user, from, navigate]);
+  }, [user, fromTarget.path, fromTarget.state, navigate]);
 
   // Email/Password Login
   const handleSubmit = async (e) => {
@@ -51,7 +61,7 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       alert("✅ Login successful!");
-      navigate(from, { replace: true }); // redirect back
+      navigate(fromTarget.path, { replace: true, state: fromTarget.state }); // redirect back (preserve state)
     } catch (err) {
       setError("Invalid email or password.");
       console.error(err);
@@ -76,7 +86,7 @@ export default function LoginPage() {
     try {
       setLoading(true);
       await socialSignIn(provider);
-      navigate(from, { replace: true }); // redirect to previous page
+      navigate(fromTarget.path, { replace: true, state: fromTarget.state }); // redirect to previous page (preserve state)
     } catch (error) {
       console.error("Social login failed:", error);
       setError("Login failed. Please try again.");

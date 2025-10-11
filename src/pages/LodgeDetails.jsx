@@ -20,7 +20,8 @@ export default function LodgeDetails() {
     if (userRegistered) {
       navigate(`/booking/${lodge.id}`, { state: { lodge } });
     } else {
-      navigate("/login", { state: { from: location.pathname } });
+      // Pass the full location object so the lodge data in location.state is preserved
+      navigate("/login", { state: { from: location } });
     }
   };
 
