@@ -13,6 +13,7 @@ import Apartments from "./pages/Apartments.jsx";
 import LoginPage from "./pages/Login.jsx";
 import FAQPage from "./pages/FqaPage.jsx";
 import LodgeDetails from "./pages/LodgeDetails.jsx";
+import UserProfilePage from "./pages/UserProfilePage.jsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 import TermsAndConditions from "./pages/TermsAndConditions.jsx";
 import ContactUs from "./pages/ContactUs.jsx";
@@ -50,6 +51,7 @@ export default function App() {
           /> */}
           <Route path="/apartments" element={<Apartments />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/profile" element={<UserProfilePage />} />
           <Route path="/faqs" element={<FAQPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsAndConditions />} />
