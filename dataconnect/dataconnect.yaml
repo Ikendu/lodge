@@ -1,6 +1,6 @@
 specVersion: "v1"
 serviceId: "lodge"
-location: "us-central1"
+location: "us-east4"
 schema:
   source: "./schema"
   datasource:
