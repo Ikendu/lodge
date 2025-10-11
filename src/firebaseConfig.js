@@ -9,6 +9,8 @@ import {
   FacebookAuthProvider,
   TwitterAuthProvider,
   signInWithPopup,
+  setPersistence,
+  browserLocalPersistence,
 } from "firebase/auth";
 
 // ===============================
@@ -31,6 +33,12 @@ const firebaseConfig = {
 // ===============================
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+
+// Ensure auth state persists across browser sessions (explicit)
+setPersistence(auth, browserLocalPersistence).catch((err) => {
+  // If persistence setting fails, log but don't break the app
+  console.warn("Could not set auth persistence:", err);
+});
 
 // Initialize Firebase
 const analytics = getAnalytics(app);

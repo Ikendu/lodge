@@ -1,14 +1,17 @@
 // LodgeDetails.jsx
 import { useLocation, useNavigate } from "react-router-dom";
 import { Star } from "lucide-react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "../firebaseConfig";
 
 export default function LodgeDetails() {
   const location = useLocation();
   const navigate = useNavigate();
   const lodge = location.state?.lodge;
 
-  // Simulate user registration status (you’ll later replace this with real auth logic)
-  const userRegistered = false;
+  // Use Firebase auth state to determine whether the user is signed in
+  const [user] = useAuthState(auth);
+  const userRegistered = !!user;
 
   if (!lodge)
     return <p className="text-center mt-10 text-gray-600">Lodge not found</p>;

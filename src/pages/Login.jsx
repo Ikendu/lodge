@@ -1,5 +1,5 @@
 // src/pages/LoginPage.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { motion } from "framer-motion";
@@ -13,6 +13,7 @@ import {
   auth,
 } from "../firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -23,9 +24,17 @@ export default function LoginPage() {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const [user] = useAuthState(auth);
 
   // Get previous page (or default to home)
   const from = location.state?.from || "/";
+
+  // If user already signed in, return them to the page they came from
+  useEffect(() => {
+    if (user) {
+      navigate(from, { replace: true });
+    }
+  }, [user, from, navigate]);
 
   // Email/Password Login
   const handleSubmit = async (e) => {

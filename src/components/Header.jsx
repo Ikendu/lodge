@@ -1,11 +1,17 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../assets/logos/logo.png";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "../firebaseConfig";
+import { signOut } from "firebase/auth";
 
 export default function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [user] = useAuthState(auth);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   const links = [
     { name: "Find Lodge", path: "/apartments" },
@@ -40,19 +46,68 @@ export default function Header() {
               {link.name}
             </button>
           ))}
-          {/* Login Link */}
-          <button
-            onClick={() => navigate("/login")}
-            className="bg-yellow-400 text-blue-800 px-4 py-1 rounded-md font-semibold hover:bg-yellow-300 transition-colors"
-          >
-            Login
-          </button>
+          {/* Login / Account */}
+          {!user ? (
+            <button
+              onClick={() =>
+                navigate("/login", { state: { from: location.pathname } })
+              }
+              className="bg-yellow-400 text-blue-800 px-4 py-1 rounded-md font-semibold hover:bg-yellow-300 transition-colors"
+            >
+              Login
+            </button>
+          ) : (
+            <div className="relative">
+              <button
+                onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden"
+                aria-label="Account menu"
+              >
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt={user.displayName || "User"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={18} />
+                )}
+              </button>
+
+              {accountMenuOpen && (
+                <div className="absolute right-0 mt-2 w-40 bg-white text-gray-800 rounded shadow-lg py-2 z-50">
+                  <button
+                    onClick={() => {
+                      setAccountMenuOpen(false);
+                      navigate("/profile");
+                    }}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  >
+                    Profile
+                  </button>
+                  <button
+                    onClick={async () => {
+                      await signOut(auth);
+                      setAccountMenuOpen(false);
+                      // after logout, redirect to home
+                      navigate("/");
+                    }}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </nav>
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-3">
           <button
-            onClick={() => navigate("/login")}
+            onClick={() =>
+              navigate("/login", { state: { from: location.pathname } })
+            }
             className="text-yellow-300 font-semibold hover:underline"
           >
             Login
