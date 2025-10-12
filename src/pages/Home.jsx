@@ -1,5 +1,7 @@
 // src/pages/Home.jsx
 import { useNavigate } from "react-router-dom";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "../firebaseConfig";
 import { motion } from "framer-motion";
 import guest from "../assets/logos/guest.png";
 import ownerh from "../assets/logos/ownerh.png";
@@ -22,6 +24,17 @@ export default function Home() {
 
   const handleLodgeClick = (lodge) => {
     navigate(`/lodge/${lodge.id}`, { state: { lodge } });
+  };
+
+  const [user] = useAuthState(auth);
+
+  const handleListLodge = () => {
+    if (!user) {
+      // send to login and preserve the full target location so on return we can continue
+      navigate("/login", { state: { from: { pathname: "/registerowner" } } });
+      return;
+    }
+    navigate("/registerowner");
   };
 
   return (
@@ -76,7 +89,7 @@ export default function Home() {
           animate="visible"
           whileHover="hover"
           custom={1}
-          onClick={() => navigate("/registerowner")}
+          onClick={handleListLodge}
         >
           <img
             src={ownerh}

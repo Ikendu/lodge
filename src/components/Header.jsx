@@ -40,7 +40,15 @@ export default function Header() {
           {links.map((link, i) => (
             <button
               key={i}
-              onClick={() => navigate(link.path)}
+              onClick={() => {
+                if (link.path === "/registerowner" && !user) {
+                  navigate("/login", {
+                    state: { from: { pathname: "/registerowner" } },
+                  });
+                } else {
+                  navigate(link.path);
+                }
+              }}
               className="hover:text-yellow-300 transition-colors"
             >
               {link.name}
@@ -102,16 +110,61 @@ export default function Header() {
           )}
         </nav>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile Menu Button / Account */}
         <div className="md:hidden flex items-center gap-3">
-          <button
-            onClick={() =>
-              navigate("/login", { state: { from: location.pathname } })
-            }
-            className="text-yellow-300 font-semibold hover:underline"
-          >
-            Login
-          </button>
+          {!user ? (
+            <button
+              onClick={() =>
+                navigate("/login", { state: { from: location.pathname } })
+              }
+              className="text-yellow-300 font-semibold hover:underline"
+            >
+              Login
+            </button>
+          ) : (
+            <div className="relative">
+              <button
+                onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden"
+                aria-label="Account menu"
+              >
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt={user.displayName || "User"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={18} />
+                )}
+              </button>
+
+              {accountMenuOpen && (
+                <div className="absolute right-0 mt-2 w-40 bg-white text-gray-800 rounded shadow-lg py-2 z-50">
+                  <button
+                    onClick={() => {
+                      setAccountMenuOpen(false);
+                      navigate("/profile");
+                    }}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  >
+                    Profile
+                  </button>
+                  <button
+                    onClick={async () => {
+                      await signOut(auth);
+                      setAccountMenuOpen(false);
+                      navigate("/");
+                    }}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           <button
             className="md:hidden"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -129,7 +182,13 @@ export default function Header() {
             <button
               key={i}
               onClick={() => {
-                navigate(link.path);
+                if (link.path === "/registerowner" && !user) {
+                  navigate("/login", {
+                    state: { from: { pathname: "/registerowner" } },
+                  });
+                } else {
+                  navigate(link.path);
+                }
                 setMenuOpen(false);
               }}
               className="block w-full hover:text-yellow-300 transition-colors"

@@ -53,7 +53,7 @@ git reset HEAD~1
 - Images of the building should be open to only admins
 - Images of lodge renters should be visible on the site both uploaded and the one from NIN
 
-## User Details Page
+## Lodge Details Page
 
 - Hero picture
 - two more pictures below it
@@ -61,4 +61,11 @@ git reset HEAD~1
 - Lodge details by the left
 - Owner details by the right
 - From and to date below it
--
+
+## User Details Page
+
+- Two images [One from NIN the other from Form]
+- Fullname
+- Full Adsress
+- LGA of Origin and Residence
+- State of Origin and Residence

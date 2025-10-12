@@ -1,7 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
-import { motion } from "framer-motion";
-// import { Button } from "@/components/ui/button";
-import { Menu, X, Facebook, Twitter, Instagram } from "lucide-react";
+import React from "react";
 // src/App.jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
@@ -9,6 +6,8 @@ import Home from "./pages/Home";
 import About from "./pages/AboutUs.jsx";
 import RegisterCustomer from "./pages/RegisterCustomer";
 import RegisterOwner from "./pages/RegisterOwner";
+import RegisterSuccess from "./pages/RegisterSuccess";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Apartments from "./pages/Apartments.jsx";
 import LoginPage from "./pages/Login.jsx";
 import FAQPage from "./pages/FqaPage.jsx";
@@ -19,15 +18,8 @@ import TermsAndConditions from "./pages/TermsAndConditions.jsx";
 import ContactUs from "./pages/ContactUs.jsx";
 import HelpCenter from "./pages/HelpCenter.jsx";
 import SafetyTips from "./pages/SaftyTips.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
-const links = [
-  { id: "hero", label: "Home", path: "/" },
-  { id: "features", label: "Features", path: "/features" },
-  { id: "pricing", label: "Pricing", path: "/pricing" },
-  { id: "testimonials", label: "Testimonials", path: "/testimonials" },
-  { id: "contact", label: "Contact", path: "/contact" },
-];
+// (links array removed; not used in this file)
 
 export default function App() {
   return (
@@ -38,7 +30,15 @@ export default function App() {
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/registeruser" element={<RegisterCustomer />} />
-          <Route path="/registerowner" element={<RegisterOwner />} />
+          <Route
+            path="/registerowner"
+            element={
+              <ProtectedRoute>
+                <RegisterOwner />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/register-success" element={<RegisterSuccess />} />
           <Route path="/lodge/:id" element={<LodgeDetails />} />
 
           {/* <Route

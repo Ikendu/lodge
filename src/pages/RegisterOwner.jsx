@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
-export default function RegisterCustomer() {
+export default function RegisterOwner() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: "",
@@ -18,6 +18,7 @@ export default function RegisterCustomer() {
     country: "",
     passport: null,
   });
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -37,13 +38,29 @@ export default function RegisterCustomer() {
       formDataToSend.append(key, formData[key]);
     });
 
+    // optional: show loading UI
+    setSubmitting(true);
+
     fetch("http://localhost/lodge/register.php", {
       method: "POST",
       body: formDataToSend,
     })
       .then((res) => res.json())
-      .then((data) => console.log("Response:", data))
-      .catch((err) => console.error("Error:", err));
+      .then((data) => {
+        // assuming backend returns { success: true }
+        if (data && data.success) {
+          // redirect to a confirmation page
+          navigate("/register-success");
+        } else {
+          console.error("Registration failed", data);
+          alert("Registration failed. Please try again later.");
+        }
+      })
+      .catch((err) => {
+        console.error("Error:", err);
+        alert("Registration failed. Please try again later.");
+      })
+      .finally(() => setSubmitting(false));
   };
 
   return (
@@ -239,9 +256,12 @@ export default function RegisterCustomer() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="submit"
-              className="w-full py-3 mt-4 bg-gradient-to-r from-blue-400 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:opacity-90 transition-all"
+              disabled={submitting}
+              className={`w-full py-3 mt-4 bg-gradient-to-r from-blue-400 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:opacity-90 transition-all ${
+                submitting ? "opacity-60 cursor-not-allowed" : ""
+              }`}
             >
-              Register
+              {submitting ? "Submitting..." : "Register"}
             </motion.button>
           </div>
         </form>

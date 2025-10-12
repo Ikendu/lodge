@@ -12,7 +12,11 @@ import {
   socialSignIn,
   auth,
 } from "../firebaseConfig";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+} from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
 
 export default function LoginPage() {
@@ -21,6 +25,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isRegister, setIsRegister] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -59,12 +64,22 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("✅ Login successful!");
+      if (isRegister) {
+        // Create new account
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert("✅ Account created. You are now signed in.");
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+        alert("✅ Login successful!");
+      }
       navigate(fromTarget.path, { replace: true, state: fromTarget.state }); // redirect back (preserve state)
     } catch (err) {
-      setError("Invalid email or password.");
       console.error(err);
+      // surface firebase error messages more helpfully
+      const msg = err?.code
+        ? err.code.replace("auth/", "").replace(/-/g, " ")
+        : "Authentication failed.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -115,6 +130,18 @@ export default function LoginPage() {
 
         {/* Email Login Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-500">
+              {isRegister ? "Create account" : "Sign in with email"}
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsRegister((v) => !v)}
+              className="text-xs text-indigo-600 underline"
+            >
+              {isRegister ? "Have an account? Sign in" : "No account? Register"}
+            </button>
+          </div>
           {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-600">
@@ -157,15 +184,45 @@ export default function LoginPage() {
           </div>
 
           {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition ${
-              loading ? "opacity-70 cursor-not-allowed" : ""
-            }`}
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
+          <div className="space-y-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition ${
+                loading ? "opacity-70 cursor-not-allowed" : ""
+              }`}
+            >
+              {loading
+                ? isRegister
+                  ? "Creating..."
+                  : "Logging in..."
+                : isRegister
+                ? "Create account"
+                : "Login"}
+            </button>
+
+            {!isRegister && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!email)
+                    return setError(
+                      "Please enter your email to reset password."
+                    );
+                  try {
+                    await sendPasswordResetEmail(auth, email);
+                    alert("Password reset email sent. Check your inbox.");
+                  } catch (err) {
+                    console.error(err);
+                    setError("Failed to send reset email.");
+                  }
+                }}
+                className="w-full text-sm text-indigo-600 underline"
+              >
+                Forgot password?
+              </button>
+            )}
+          </div>
         </form>
 
         {/* Divider */}

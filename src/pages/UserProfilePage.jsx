@@ -4,6 +4,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
 import ownerImg from "../assets/logos/owner.png";
 import ownerImg2 from "../assets/logos/ownerh.png";
+import { motion } from "framer-motion";
 
 export default function UserProfilePage() {
   const [user, loading] = useAuthState(auth);
@@ -21,6 +22,19 @@ export default function UserProfilePage() {
   }, [loading, user, navigate, location]);
 
   if (loading || !user) return null; // redirect in progress
+
+  const pageVariants = {
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0, transition: { staggerChildren: 0.06 } },
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, scale: 0.995 },
+    show: { opacity: 1, scale: 1, transition: { duration: 0.45 } },
+  };
+
+  const imgHover = { scale: 1.03 };
+  const btnHover = { scale: 1.02 };
 
   // Build a profile object combining auth user and optional state-provided fields
   const profile = {
@@ -42,16 +56,31 @@ export default function UserProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+    <motion.div
+      className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex justify-center items-center p-6"
+      variants={pageVariants}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.div
+        className="max-w-4xl w-full bg-white rounded-lg shadow p-6"
+        variants={cardVariants}
+      >
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">User Profile</h1>
-          <button
+          <motion.h1
+            className="text-2xl font-bold"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            User Profile
+          </motion.h1>
+          <motion.button
             onClick={() => navigate(-1)}
             className="text-sm text-gray-600 hover:underline"
+            whileTap={{ scale: 0.98 }}
           >
             Back
-          </button>
+          </motion.button>
         </div>
 
         <div className="md:flex md:gap-6">
@@ -59,19 +88,23 @@ export default function UserProfilePage() {
           <div className="md:w-2/5 space-y-4">
             <div>
               <div className="text-sm text-gray-500 mb-2">NIN</div>
-              <img
+              <motion.img
                 src={profile.ninPhoto}
                 alt="NIN"
                 className="w-full h-48 object-cover rounded-md border"
+                whileHover={imgHover}
+                transition={{ type: "spring", stiffness: 220 }}
               />
             </div>
 
             <div>
               <div className="text-sm text-gray-500 mb-2">Uploaded (Given)</div>
-              <img
+              <motion.img
                 src={profile.givenPhoto}
                 alt="Given"
                 className="w-full h-48 object-cover rounded-md border"
+                whileHover={imgHover}
+                transition={{ type: "spring", stiffness: 220 }}
               />
             </div>
           </div>
@@ -140,22 +173,24 @@ export default function UserProfilePage() {
             </div>
 
             <div className="mt-6 flex gap-3">
-              <button
+              <motion.button
                 onClick={() => navigate("/profile/edit")}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md"
+                whileHover={btnHover}
               >
                 Edit Profile
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 onClick={() => navigate(-1)}
                 className="border border-gray-300 px-4 py-2 rounded-md"
+                whileHover={btnHover}
               >
                 Close
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
