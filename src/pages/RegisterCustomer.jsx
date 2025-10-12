@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 export default function RegisterCustomer() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     firstName: "",
     middleName: "",
@@ -41,7 +43,34 @@ export default function RegisterCustomer() {
       body: formDataToSend,
     })
       .then((res) => res.json())
-      .then((data) => console.log("Response:", data))
+      .then((data) => {
+        console.log("Response:", data);
+        // Assume backend responded successfully. Persist minimal profile info
+        // locally so booking flow can detect NIN completion. In a real app this
+        // should be fetched from the backend /profile endpoint after login.
+        const profile = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          nin: formData.nin,
+        };
+        try {
+          localStorage.setItem("customerProfile", JSON.stringify(profile));
+        } catch (e) {
+          // ignore storage errors
+        }
+
+        // If the user was redirected here from a booking flow, preserve and continue
+        const from = location.state && location.state.from;
+        if (from && from.pathname && from.state) {
+          // likely contains the lodge location object; navigate to payment
+          navigate("/payment", { state: { lodge: from.state.lodge, profile } });
+          return;
+        }
+
+        // otherwise just stay or navigate to home
+        navigate("/");
+      })
       .catch((err) => console.error("Error:", err));
   };
 

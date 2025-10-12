@@ -69,3 +69,10 @@ git reset HEAD~1
 - Full Adsress
 - LGA of Origin and Residence
 - State of Origin and Residence
+
+## Finantial Security
+
+- After payment, the owner will wait for the user to come see the lodge and confirm it before getting paid from the system.
+- The user will make payment before getting the contact details of the owner.
+- If the either party changes mind at any point before the lodge is taken, payment will be refunded but 5% charges will be deducted.
+- The system will have 10% of any payment made for a lodge.

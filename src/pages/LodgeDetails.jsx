@@ -16,7 +16,6 @@ export default function LodgeDetails() {
 
   // Use Firebase auth state to determine whether the user is signed in
   const [user] = useAuthState(auth);
-  const userRegistered = !!user;
 
   // Fullscreen viewer state (declare hooks early so they are not conditional)
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -29,12 +28,38 @@ export default function LodgeDetails() {
   const [viewerKind, setViewerKind] = useState("lodge");
 
   const handleBookNow = () => {
-    if (userRegistered) {
-      navigate(`/booking/${lodge.id}`, { state: { lodge } });
-    } else {
-      // Pass the full location object so the lodge data in location.state is preserved
-      navigate("/login", { state: { from: location } });
+    // If user is not signed in, send them to login first. After login we'll
+    // route them to the registration page so they can provide required NIN/details.
+    if (!user) {
+      navigate("/login", {
+        state: {
+          from: { pathname: "/registeruser", state: { from: location } },
+        },
+      });
+      return;
     }
+
+    // If signed in, check whether the user has completed the customer profile
+    // (NIN and details). We use a simple client-side check (localStorage) here
+    // as a lightweight fallback. The backend/profile endpoint can be used later
+    // to validate server-side.
+    let profile = null;
+    try {
+      profile = JSON.parse(localStorage.getItem("customerProfile") || "null");
+    } catch (e) {
+      profile = null;
+    }
+
+    if (!profile || !profile.nin) {
+      // Not authenticated for booking (missing NIN/details) -> ask them to
+      // complete registration. Preserve original lodge location so we can
+      // return after registration.
+      navigate("/registeruser", { state: { from: location } });
+      return;
+    }
+
+    // Profile exists and contains NIN -> proceed to payment and pass lodge + profile
+    navigate("/payment", { state: { lodge, profile } });
   };
 
   // Ensure lodge.images is an array of 3 URLs; fallback to empty strings if missing

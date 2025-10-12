@@ -31,10 +31,10 @@ export default function Home() {
   const handleListLodge = () => {
     if (!user) {
       // send to login and preserve the full target location so on return we can continue
-      navigate("/login", { state: { from: { pathname: "/registerowner" } } });
+      navigate("/login", { state: { from: { pathname: "/registeruser" } } });
       return;
     }
-    navigate("/registerowner");
+    navigate("/registeruser");
   };
 
   return (

@@ -18,6 +18,8 @@ import TermsAndConditions from "./pages/TermsAndConditions.jsx";
 import ContactUs from "./pages/ContactUs.jsx";
 import HelpCenter from "./pages/HelpCenter.jsx";
 import SafetyTips from "./pages/SaftyTips.jsx";
+import Payment from "./pages/Payment";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 // (links array removed; not used in this file)
 
@@ -51,6 +53,8 @@ export default function App() {
           /> */}
           <Route path="/apartments" element={<Apartments />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/payment" element={<Payment />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/profile" element={<UserProfilePage />} />
           <Route path="/faqs" element={<FAQPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
