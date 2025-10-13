@@ -164,7 +164,7 @@ export default function Footer() {
             <FaPhoneAlt className="text-yellow-400" /> +234 806 163 2276
           </p>
           <p className="flex items-center gap-2 mb-4">
-            <FaEnvelope className="text-yellow-400" /> support@morelinklodge.com
+            <FaEnvelope className="text-yellow-400" /> services@morelinks.com.ng
           </p>
 
           {/* Socials */}

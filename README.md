@@ -76,3 +76,8 @@ git reset HEAD~1
 - The user will make payment before getting the contact details of the owner.
 - If the either party changes mind at any point before the lodge is taken, payment will be refunded but 5% charges will be deducted.
 - The system will have 10% of any payment made for a lodge.
+
+## Email
+
+- services@morelinks.com.ng
+- 9652Aa@!@!@!@
