@@ -42,33 +42,30 @@ export default function RegisterCustomer() {
       method: "POST",
       body: formDataToSend,
     })
-      .then((res) => res.json())
+      .then(async (res) => {
+        const text = await res.text(); // get raw response
+        try {
+          return JSON.parse(text); // try to parse JSON
+        } catch {
+          console.error("Invalid JSON response:", text);
+          throw new Error("Server did not return valid JSON");
+        }
+      })
       .then((data) => {
         console.log("Response:", data);
-        // Assume backend responded successfully. Persist minimal profile info
-        // locally so booking flow can detect NIN completion. In a real app this
-        // should be fetched from the backend /profile endpoint after login.
+
+        if (!data.success) {
+          alert(data.message || "Registration failed");
+          return;
+        }
+
         const profile = {
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
           nin: formData.nin,
         };
-        try {
-          localStorage.setItem("customerProfile", JSON.stringify(profile));
-        } catch (e) {
-          // ignore storage errors
-        }
-
-        // If the user was redirected here from a booking flow, preserve and continue
-        const from = location.state && location.state.from;
-        if (from && from.pathname && from.state) {
-          // likely contains the lodge location object; navigate to payment
-          navigate("/payment", { state: { lodge: from.state.lodge, profile } });
-          return;
-        }
-
-        // otherwise just stay or navigate to home
+        localStorage.setItem("customerProfile", JSON.stringify(profile));
         navigate("/");
       })
       .catch((err) => console.error("Error:", err));
