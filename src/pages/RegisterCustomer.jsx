@@ -1,74 +1,51 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function RegisterCustomer() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [formData, setFormData] = useState({
-    firstName: "",
-    middleName: "",
-    lastName: "",
-    email: "",
+  const [form, setForm] = useState({
     nin: "",
-    dob: "",
-    address: "",
-    permanentAddress: "",
-    lga: "",
-    state: "",
-    country: "",
-    passport: null,
+    firstName: "",
+    lastName: "",
+    phone: "",
   });
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (files) {
-      setFormData((prev) => ({ ...prev, [name]: files[0] }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-  };
+  const handleChange = (e) =>
+    setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.nin || !form.firstName || !form.lastName)
+      return alert("Please fill required fields");
+    setLoading(true);
+    try {
+      const payload = new FormData();
+      payload.append("nin", form.nin);
 
-    const formDataToSend = new FormData();
-    Object.keys(formData).forEach((key) => {
-      formDataToSend.append(key, formData[key]);
-    });
+      const res = await fetch("/verify_nin.php", {
+        method: "POST",
+        body: payload,
+      });
+      const data = await res.json();
+      if (!data.success)
+        return alert(data.message || "NIN verification failed");
 
-    fetch("http://localhost/lodge/register.php", {
-      method: "POST",
-      body: formDataToSend,
-    })
-      .then(async (res) => {
-        const text = await res.text(); // get raw response
-        try {
-          return JSON.parse(text); // try to parse JSON
-        } catch {
-          console.error("Invalid JSON response:", text);
-          throw new Error("Server did not return valid JSON");
-        }
-      })
-      .then((data) => {
-        console.log("Response:", data);
-
-        if (!data.success) {
-          alert(data.message || "Registration failed");
-          return;
-        }
-
-        const profile = {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          nin: formData.nin,
-        };
-        localStorage.setItem("customerProfile", JSON.stringify(profile));
-        navigate("/");
-      })
-      .catch((err) => console.error("Error:", err));
+      // merge verified data returned from server with phone and navigate to details step
+      const verified = data.data || {};
+      const state = { verified, phone: form.phone };
+      // preserve original booking flow state if present
+      if (location.state && location.state.from)
+        state.from = location.state.from;
+      navigate("/registeruser/details", { state });
+    } catch (err) {
+      console.error(err);
+      alert("Verification failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -80,193 +57,66 @@ export default function RegisterCustomer() {
         className="bg-white/20 backdrop-blur-lg shadow-2xl rounded-2xl w-full max-w-3xl p-6 sm:p-8"
       >
         <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-6">
-          New User Registration
+          Verify NIN
         </h2>
-        <p
-          className="font-bold text-gray-700 text-center mb-6 cursor-pointer"
-          onClick={() => navigate("/registerowner")}
-        >
-          Want to rent out your lodge instead?{" "}
-          <i className="underline">Click here</i>
-        </p>
 
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
-          {/* First Name */}
-          <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">First Name</label>
-            <input
-              type="text"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
-              required
-            />
-          </div>
-
-          {/* Middle Name */}
-          <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">Middle Name</label>
-            <input
-              type="text"
-              name="middleName"
-              value={formData.middleName}
-              onChange={handleChange}
-              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
-            />
-          </div>
-
-          {/* Last Name */}
-          <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">Last Name</label>
-            <input
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
-              required
-            />
-          </div>
-
-          {/* Email */}
-          <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
-              required
-            />
-          </div>
-
-          {/* NIN */}
           <div className="flex flex-col">
             <label className="text-white mb-2 font-medium">NIN Number</label>
             <input
-              type="text"
               name="nin"
-              value={formData.nin}
+              value={form.nin}
               onChange={handleChange}
-              maxLength={11}
-              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
+              maxLength={20}
+              className="p-3 rounded-xl"
               required
             />
           </div>
 
-          {/* DOB */}
           <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">Date of Birth</label>
+            <label className="text-white mb-2 font-medium">First Name</label>
             <input
-              type="date"
-              name="dob"
-              value={formData.dob}
+              name="firstName"
+              value={form.firstName}
               onChange={handleChange}
-              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
+              className="p-3 rounded-xl"
               required
             />
           </div>
 
-          {/* Current Address */}
-          <div className="col-span-1 md:col-span-2 flex flex-col">
-            <label className="text-white mb-2 font-medium">
-              Current Address
-            </label>
-            <textarea
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              rows="2"
-              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none resize-none"
-              required
-            />
-          </div>
-
-          {/* Permanent Address */}
-          <div className="col-span-1 md:col-span-2 flex flex-col">
-            <label className="text-white mb-2 font-medium">
-              Permanent Address
-            </label>
-            <textarea
-              name="permanentAddress"
-              value={formData.permanentAddress}
-              onChange={handleChange}
-              rows="2"
-              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none resize-none"
-              required
-            />
-          </div>
-
-          {/* LGA */}
           <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">
-              Local Govt. of Origin
-            </label>
+            <label className="text-white mb-2 font-medium">Last Name</label>
             <input
-              type="text"
-              name="lga"
-              value={formData.lga}
+              name="lastName"
+              value={form.lastName}
               onChange={handleChange}
-              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
+              className="p-3 rounded-xl"
               required
             />
           </div>
 
-          {/* State */}
           <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">
-              State of Origin
-            </label>
+            <label className="text-white mb-2 font-medium">Phone</label>
             <input
-              type="text"
-              name="state"
-              value={formData.state}
+              name="phone"
+              value={form.phone}
               onChange={handleChange}
-              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
-              required
+              className="p-3 rounded-xl"
             />
           </div>
 
-          {/* Country */}
-          <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">Country</label>
-            <input
-              type="text"
-              name="country"
-              value={formData.country}
-              onChange={handleChange}
-              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
-              required
-            />
-          </div>
-
-          {/* Passport */}
-          <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">Passport</label>
-            <input
-              type="file"
-              name="passport"
-              accept="image/*"
-              onChange={handleChange}
-              className="p-2 rounded-xl border border-white/30 bg-white/10 text-white cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700"
-              required
-            />
-          </div>
-
-          {/* Submit */}
           <div className="col-span-1 md:col-span-2">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="submit"
-              className="w-full py-3 mt-4 bg-gradient-to-r from-blue-400 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:opacity-90 transition-all"
+              disabled={loading}
+              className="w-full py-3 mt-4 bg-gradient-to-r from-blue-400 to-purple-600 text-white font-semibold rounded-xl"
             >
-              Register
+              {loading ? "Verifying..." : "Verify & Continue"}
             </motion.button>
           </div>
         </form>

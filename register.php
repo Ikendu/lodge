@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // You can implement a token check here if needed.
 
 // Validate and sanitize inputs
-$expected = ['firstName','middleName','lastName','email','nin','dob','address','permanentAddress','lga','state','country'];
+$expected = ['firstName','middleName','lastName','email','nin','dob','address','permanentAddress','lga','state','country','phone'];
 $input = [];
 foreach ($expected as $key) {
     if (!isset($_POST[$key])) {
@@ -105,14 +105,14 @@ if ($mysqli->connect_errno) {
 $mysqli->set_charset('utf8mb4');
 
 // Prepare insert statement - adjust table/columns to your schema
-$sql = "INSERT INTO customers (first_name, middle_name, last_name, email, nin, dob, address, permanent_address, lga, state_of_origin, country, passport_path, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+$sql = "INSERT INTO customers (first_name, middle_name, last_name, email, nin, dob, address, permanent_address, lga, state_of_origin, country, phone, passport_path, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 $stmt = $mysqli->prepare($sql);
 if (!$stmt) {
     respond(false, 'Failed to prepare statement');
 }
 
 $stmt->bind_param(
-    'ssssssssssss',
+    'ssssssssssssss',
     $input['firstName'],
     $input['middleName'],
     $input['lastName'],
@@ -124,6 +124,7 @@ $stmt->bind_param(
     $input['lga'],
     $input['state'],
     $input['country'],
+    $input['phone'],
     $passport_path
 );
 
