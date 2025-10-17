@@ -111,3 +111,17 @@ git reset HEAD~1
 FB.getLoginStatus(function(response) {
 statusChangeCallback(response);
 });
+
+X Twitter
+
+Api Key
+AAAAAAAAAAAAAAAAAAAAAGeE4wEAAAAARHB12w2hji4%2Fhfat%2FWvOcsttXuo%3DhnCPPDXsixGFrMO4wC8ZG43YOZPuRJIsT73P7uXNsGfKLjVLZV
+
+Authentication Tokens
+AAAAAAAAAAAAAAAAAAAAAGeE4wEAAAAAqSp5rVCzl%2BFRAQ6ZCwRAYlQ%2BoqU%3DL4DXf0knZOQi3tZbl5gjgIa5SUCjlviyIG5UfaAbTRcii3ZEc6
+
+Access Token
+812265769660776448-fJW3xzAwEZU30VRa82jJ10OuDSNH05h
+
+Access Token Secret
+9V3wMdcHv17bIWLJYUoIviNN1GA0Ow4qpxrgKLgtxx2oU

@@ -236,9 +236,9 @@ export default function LoginPage() {
           {[
             { name: "Google", color: "bg-red-500" },
             { name: "Yahoo", color: "bg-purple-600" },
-            { name: "Apple", color: "bg-gray-900" },
+            // { name: "Apple", color: "bg-gray-900" },
             { name: "Facebook", color: "bg-blue-600" },
-            { name: "X", color: "bg-black" },
+            // { name: "X", color: "bg-black" },
           ].map((provider, i) => (
             <motion.button
               key={i}
