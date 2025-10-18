@@ -9,9 +9,23 @@ import { signOut } from "firebase/auth";
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchQ, setSearchQ] = useState("");
+  const [searchLocation, setSearchLocation] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [user] = useAuthState(auth);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+
+  const handleSearch = () => {
+    // build query params and navigate to apartments
+    const params = new URLSearchParams();
+    if (searchQ) params.set("q", searchQ);
+    if (searchLocation) params.set("location", searchLocation);
+    if (minPrice) params.set("min", minPrice);
+    if (maxPrice) params.set("max", maxPrice);
+    navigate("/apartments?" + params.toString());
+  };
 
   const links = [
     { name: "Find Lodge", path: "/apartments" },
@@ -35,8 +49,48 @@ export default function Header() {
           </span> */}
         </div>
 
+        {/* Search bar (desktop) */}
+        <div className="hidden md:flex items-center gap-2">
+          <input
+            value={searchQ}
+            onChange={(e) => setSearchQ(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSearch();
+            }}
+            placeholder="Search by name, city, state or text"
+            className="px-3 py-2 rounded-l-md text-gray-800 w-64"
+          />
+          <input
+            value={searchLocation}
+            onChange={(e) => setSearchLocation(e.target.value)}
+            placeholder="City or state"
+            className="px-3 py-2 text-gray-800 w-44"
+          />
+          <input
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            placeholder="Min ₦"
+            type="number"
+            className="px-3 py-2 text-gray-800 w-28"
+          />
+          <input
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            placeholder="Max ₦"
+            type="number"
+            className="px-3 py-2 text-gray-800 w-28"
+          />
+          <button
+            onClick={() => handleSearch()}
+            className="bg-yellow-400 text-blue-800 px-3 py-2 rounded-r-md font-semibold"
+          >
+            Search
+          </button>
+        </div>
+
         {/* Desktop Nav */}
         <nav className="hidden md:flex gap-6 font-medium justify-center">
+          {/* small search icon could be here for compact layouts */}
           {links.map((link, i) => (
             <button
               key={i}
@@ -178,6 +232,22 @@ export default function Header() {
       {/* Mobile Dropdown */}
       {menuOpen && (
         <div className="md:hidden bg-blue-700 px-4 py-3 space-y-3 text-center animate-slideDown">
+          <div className="flex gap-2">
+            <input
+              placeholder="Search"
+              className="w-full p-2 rounded"
+              onChange={(e) => setSearchQ(e.target.value)}
+            />
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                handleSearch();
+              }}
+              className="bg-yellow-400 text-blue-800 px-3 py-2 rounded"
+            >
+              Go
+            </button>
+          </div>
           {links.map((link, i) => (
             <button
               key={i}

@@ -1,11 +1,44 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { lodges } from "../lodgedata";
+import { useLocation } from "react-router-dom";
 
 export default function Apartments() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const params = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search]
+  );
+  const q = (params.get("q") || "").toLowerCase();
+  const loc = (params.get("location") || "").toLowerCase();
+  const min = parseFloat(params.get("min")) || 0;
+  const max = parseFloat(params.get("max")) || Number.POSITIVE_INFINITY;
+
+  const filtered = useMemo(() => {
+    return lodges.filter((l) => {
+      // price filter
+      if (l.price < min || l.price > max) return false;
+      // location filter
+      if (loc) {
+        if (!(l.location || "").toLowerCase().includes(loc)) return false;
+      }
+      if (q) {
+        const hay = (
+          l.title +
+          " " +
+          l.description +
+          " " +
+          l.location
+        ).toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [q, loc, min, max]);
 
   const handleRoomClick = (lodge) => {
     navigate(`/lodge/${lodge.id}`, { state: { lodge } });
@@ -18,7 +51,7 @@ export default function Apartments() {
       </h2>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {lodges.map((lodge, index) => (
+        {(filtered.length ? filtered : lodges).map((lodge, index) => (
           <motion.div
             key={lodge.id}
             initial={{ opacity: 0, y: 30 }}

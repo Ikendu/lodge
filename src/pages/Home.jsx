@@ -7,6 +7,8 @@ import guest from "../assets/logos/guest.png";
 import ownerh from "../assets/logos/ownerh.png";
 import { Star } from "lucide-react";
 import { lodges } from "../lodgedata";
+import { useLocation } from "react-router-dom";
+import { useMemo } from "react";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -27,6 +29,34 @@ export default function Home() {
   };
 
   const [user] = useAuthState(auth);
+  const location = useLocation();
+
+  const params = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search]
+  );
+  const q = (params.get("q") || "").toLowerCase();
+  const loc = (params.get("location") || "").toLowerCase();
+  const min = parseFloat(params.get("min")) || 0;
+  const max = parseFloat(params.get("max")) || Number.POSITIVE_INFINITY;
+
+  const filtered = useMemo(() => {
+    return lodges.filter((l) => {
+      if (l.price < min || l.price > max) return false;
+      if (loc && !(l.location || "").toLowerCase().includes(loc)) return false;
+      if (q) {
+        const hay = (
+          l.title +
+          " " +
+          l.description +
+          " " +
+          l.location
+        ).toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [q, loc, min, max]);
 
   const handleListLodge = () => {
     if (!user) {
@@ -114,7 +144,7 @@ export default function Home() {
         </h2>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {lodges.map((lodge, i) => (
+          {(filtered.length ? filtered : lodges).map((lodge, i) => (
             <motion.div
               key={lodge.id}
               className="rounded-2xl bg-white text-gray-800 shadow-lg hover:shadow-2xl overflow-hidden cursor-pointer transition-all"
