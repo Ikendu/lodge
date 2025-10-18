@@ -1,7 +1,6 @@
 // src/firebaseConfig.js
 
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 import {
   getAuth,
   GoogleAuthProvider,
@@ -40,8 +39,8 @@ setPersistence(auth, browserLocalPersistence).catch((err) => {
   console.warn("Could not set auth persistence:", err);
 });
 
-// Initialize Firebase
-const analytics = getAnalytics(app);
+// If you want to enable analytics later, re-enable the import and
+// initialization. Currently we don't use analytics in this app.
 
 // ===============================
 // 🔐 Authentication Providers

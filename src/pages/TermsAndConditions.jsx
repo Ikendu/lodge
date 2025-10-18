@@ -443,7 +443,7 @@ export default function TermsAndConditions() {
           <strong>Email:</strong> support@morelinklodge.com
         </p>
         <p className="mb-1">
-          <strong>Phone:</strong> +234 806 163 2276
+          <strong>Phone:</strong> +234 902 397 7057
         </p>
         <p className="mb-1">
           <strong>Address:</strong> 5 Aku Road, Nsukka, Enugu State, Nigeria

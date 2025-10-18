@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 export default function RegisterOwner() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    ownerName: "",
     firstName: "",
     middleName: "",
     lastName: "",
@@ -17,13 +18,19 @@ export default function RegisterOwner() {
     state: "",
     country: "",
     passport: null,
+    ninImage: null,
   });
   const [submitting, setSubmitting] = useState(false);
+  const [passportPreview, setPassportPreview] = useState(null);
+  const [ninPreview, setNinPreview] = useState(null);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (files) {
-      setFormData((prev) => ({ ...prev, [name]: files[0] }));
+      const file = files[0];
+      setFormData((prev) => ({ ...prev, [name]: file }));
+      if (name === "passport") setPassportPreview(URL.createObjectURL(file));
+      if (name === "ninImage") setNinPreview(URL.createObjectURL(file));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -86,6 +93,19 @@ export default function RegisterOwner() {
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
+          {/* Owner Name (single field) */}
+          <div className="flex flex-col md:col-span-2">
+            <label className="text-white mb-2 font-medium">Owner Name</label>
+            <input
+              type="text"
+              name="ownerName"
+              value={formData.ownerName}
+              onChange={handleChange}
+              className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
+              placeholder="Full name used on documents"
+              required
+            />
+          </div>
           {/* First Name */}
           <div className="flex flex-col">
             <label className="text-white mb-2 font-medium">First Name</label>
@@ -149,6 +169,29 @@ export default function RegisterOwner() {
               className="p-3 rounded-xl border border-white/30 bg-white/10 text-white focus:ring-2 focus:ring-blue-300 outline-none"
               required
             />
+          </div>
+
+          {/* NIN Image Upload */}
+          <div className="flex flex-col">
+            <label className="text-white mb-2 font-medium">NIN Image</label>
+            <input
+              type="file"
+              name="ninImage"
+              accept="image/*"
+              onChange={handleChange}
+              className="p-2 rounded-xl border border-white/30 bg-white/10 text-white cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700"
+            />
+            <div className="mt-2">
+              <img
+                src={ninPreview || "/images/userNin.png"}
+                alt="NIN preview"
+                onError={(e) => {
+                  e.currentTarget.src =
+                    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="100%" height="100%" fill="%23ddd"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23666" font-size="12">No NIN image</text></svg>';
+                }}
+                className="w-32 h-20 object-cover rounded-md border border-white/20 mt-2"
+              />
+            </div>
           </div>
 
           {/* DOB */}
@@ -248,6 +291,17 @@ export default function RegisterOwner() {
               className="p-2 rounded-xl border border-white/30 bg-white/10 text-white cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700"
               required
             />
+            <div className="mt-2">
+              <img
+                src={passportPreview || "/images/user.png"}
+                alt="Passport preview"
+                onError={(e) => {
+                  e.currentTarget.src =
+                    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="100%" height="100%" fill="%23ddd"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23666" font-size="12">No image</text></svg>';
+                }}
+                className="w-32 h-20 object-cover rounded-md border border-white/20 mt-2"
+              />
+            </div>
           </div>
 
           {/* Submit */}

@@ -199,7 +199,7 @@ export default function SafetyTips() {
             you need help or notice anything unusual.
           </p>
           <p className="font-medium text-blue-600">
-            📞 Front Desk: +234 806 163 2276 <br />
+            📞 Front Desk: +234 902 397 7057 <br />
             📧 Email: support@morelinkslodge.com <br />
             🕒 Available 24/7
           </p>

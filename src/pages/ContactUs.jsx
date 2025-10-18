@@ -1,5 +1,10 @@
 import { motion } from "framer-motion";
-import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
+import {
+  FaPhoneAlt,
+  FaEnvelope,
+  FaMapMarkerAlt,
+  FaWhatsapp,
+} from "react-icons/fa";
 
 export default function ContactUs() {
   const fadeInUp = {
@@ -74,7 +79,16 @@ export default function ContactUs() {
             >
               <div className="flex items-center gap-4">
                 <FaPhoneAlt className="text-indigo-700 text-xl" />
-                <span>+234 806 163 2276</span>
+                <span>+234 902 397 7057</span>
+                <a
+                  href="https://wa.me/2349023977057"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-white bg-green-500 p-2 rounded-full ml-2"
+                  aria-label="Chat on WhatsApp"
+                >
+                  <FaWhatsapp />
+                </a>
               </div>
               <div className="flex items-center gap-4">
                 <FaEnvelope className="text-indigo-700 text-xl" />

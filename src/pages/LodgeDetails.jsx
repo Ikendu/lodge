@@ -6,8 +6,9 @@ import { auth } from "../firebaseConfig";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
-import ownerImg from "../assets/logos/owner.png";
-import ownerImg2 from "../assets/logos/ownerh.png";
+import { FaWhatsapp } from "react-icons/fa";
+import ownerImg from "../assets/icons/user.png";
+import ownerImg2 from "../assets/icons/userNin.png";
 import { DateRange } from "react-date-range";
 import { addDays, differenceInCalendarDays } from "date-fns";
 import "react-date-range/dist/styles.css";
@@ -546,6 +547,37 @@ export default function LodgeDetails() {
               </div>
             </motion.aside>
           </motion.div>
+        </div>
+        {/* Admin contact block */}
+        <div className="p-6 bg-gray-50 border-t">
+          <div className="max-w-4xl mx-auto text-center">
+            <h4 className="text-lg font-semibold text-gray-800 mb-2">
+              Need help?
+            </h4>
+            <p className="text-gray-600 mb-3">
+              Contact our admin for assistance with bookings or questions.
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <a
+                href="tel:+2349023977057"
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-blue-700"
+                aria-label="Call admin"
+              >
+                Call Admin: +234 902 397 7057
+              </a>
+
+              <a
+                href="https://wa.me/2349023977057"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-full font-semibold hover:bg-green-600"
+                aria-label="Chat on WhatsApp"
+              >
+                <FaWhatsapp />
+                Chat on WhatsApp
+              </a>
+            </div>
+          </div>
         </div>
       </motion.div>
     </div>

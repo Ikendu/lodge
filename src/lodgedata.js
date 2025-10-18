@@ -5,10 +5,8 @@ import bed3 from "./assets/images/bed3.jpg";
 import bed4 from "./assets/images/bed4.jpg";
 import bed5 from "./assets/images/bed5.jpg";
 import bed6 from "./assets/images/bed6.jpg";
-import beda from "./assets/images/beda.jpg";
 import bedb from "./assets/images/bedb.jpg";
 import bedc from "./assets/images/bedc.jpg";
-import bedda from "./assets/images/bedda.jpg";
 import beddb from "./assets/images/beddb.jpg";
 import bedcc from "./assets/images/bedcc.webp";
 

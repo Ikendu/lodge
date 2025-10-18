@@ -5,6 +5,7 @@ import {
   FaTwitter,
   FaEnvelope,
   FaPhoneAlt,
+  FaWhatsapp,
 } from "react-icons/fa";
 import { Link as ScrollLink } from "react-scroll";
 import { Link, useNavigate } from "react-router-dom";
@@ -160,9 +161,21 @@ export default function Footer() {
         {/* Contact Info */}
         <div>
           <h4 className="text-xl font-semibold mb-4">Contact Us</h4>
-          <p className="flex items-center gap-2 mb-2">
-            <FaPhoneAlt className="text-yellow-400" /> +234 806 163 2276
-          </p>
+          <div className="flex items-center gap-3 mb-2">
+            <FaPhoneAlt className="text-yellow-400" />
+            <a href="tel:+2349023977057" className="hover:underline">
+              +234 902 397 7057
+            </a>
+            <a
+              href="https://wa.me/2349023977057"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-2 inline-flex items-center gap-2 text-white/90 bg-green-600 p-2 rounded-full"
+              aria-label="Chat on WhatsApp"
+            >
+              <FaWhatsapp />
+            </a>
+          </div>
           <p className="flex items-center gap-2 mb-4">
             <FaEnvelope className="text-yellow-400" /> services@morelinks.com.ng
           </p>
