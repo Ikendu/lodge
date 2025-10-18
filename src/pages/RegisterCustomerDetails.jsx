@@ -67,7 +67,9 @@ export default function RegisterCustomerDetails() {
       };
       try {
         localStorage.setItem("customerProfile", JSON.stringify(profile));
-      } catch (e) {}
+      } catch (e) {
+        console.warn("Failed to persist profile locally", e);
+      }
 
       // If the flow came from a booking, continue to payment
       if (from && from.state && from.state.lodge) {
