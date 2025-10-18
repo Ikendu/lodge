@@ -12,6 +12,7 @@ export default function Header() {
   const location = useLocation();
   const [query, setQuery] = useState("");
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [mobileSearchVisible, setMobileSearchVisible] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const hintRef = useRef(null);
@@ -21,9 +22,17 @@ export default function Header() {
     if (mobileSearchVisible && mobileSearchRef.current) {
       try {
         mobileSearchRef.current.focus();
-      } catch (e) {}
+      } catch {
+        // ignore focus errors
+      }
     }
   }, [mobileSearchVisible]);
+
+  // debounce query for suggestions/filtering
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 250);
+    return () => clearTimeout(t);
+  }, [query]);
   const [user] = useAuthState(auth);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const parsePriceRange = (text) => {
@@ -109,8 +118,8 @@ export default function Header() {
           {suggestionsOpen && query.trim() && (
             <div className="absolute top-full left-0 mt-2 w-96 bg-white text-gray-800 rounded shadow-lg z-50">
               {(() => {
-                const ql = query.toLowerCase();
-                const range = parsePriceRange(query);
+                const ql = debouncedQuery.toLowerCase();
+                const range = parsePriceRange(debouncedQuery);
                 const matches = lodges
                   .filter((l) => {
                     // ensure we only return matches when there's a non-empty query

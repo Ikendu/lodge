@@ -8,6 +8,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
 import ownerImg from "../assets/logos/owner.png";
 import ownerImg2 from "../assets/logos/ownerh.png";
+import { DateRange } from "react-date-range";
+import { addDays, differenceInCalendarDays } from "date-fns";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 
 export default function LodgeDetails() {
   const location = useLocation();
@@ -59,11 +63,39 @@ export default function LodgeDetails() {
     }
 
     // Profile exists and contains NIN -> proceed to payment and pass lodge + profile
-    navigate("/payment", { state: { lodge, profile } });
+    // include booking dates from selectionRange
+    const booking = {
+      lodge,
+      profile,
+      startDate: selectionRange.startDate?.toISOString()?.slice(0, 10) || null,
+      endDate: selectionRange.endDate?.toISOString()?.slice(0, 10) || null,
+      nights: nights || 0,
+      total: total || 0,
+    };
+    navigate("/payment", { state: booking });
   };
 
   // Ensure lodge.images is an array of 3 URLs; fallback to empty strings if missing
   const images = lodge.images || ["", "", ""];
+
+  // Booking date states (react-date-range)
+  const [selectionRange, setSelectionRange] = useState({
+    startDate: new Date(),
+    endDate: addDays(new Date(), 1),
+    key: "selection",
+  });
+  const [nights, setNights] = useState(1);
+  const [total, setTotal] = useState(Number(lodge.price) || 0);
+
+  // calculate nights and total when selectionRange changes
+  useEffect(() => {
+    const s = selectionRange.startDate;
+    const e = selectionRange.endDate;
+    const diff = differenceInCalendarDays(e, s);
+    const nightsCalc = diff > 0 ? diff : 0;
+    setNights(nightsCalc);
+    setTotal(nightsCalc * (Number(lodge.price) || 0));
+  }, [selectionRange, lodge.price]);
 
   // If lodge is not provided in location state, show a friendly message.
   // This check is placed after hooks/state to avoid violating the rules of hooks.
@@ -354,10 +386,59 @@ export default function LodgeDetails() {
                 </div>
               </div>
 
-              <p className="text-gray-700 mb-6">{lodge.description}</p>
+              <p className="text-gray-700 mb-4">{lodge.description}</p>
+
+              {/* Inline date range picker */}
+              <div className="mb-4">
+                <DateRange
+                  ranges={[selectionRange]}
+                  onChange={(ranges) => {
+                    const sel = ranges.selection;
+                    let end = sel.endDate;
+                    if (differenceInCalendarDays(end, sel.startDate) <= 0) {
+                      end = addDays(sel.startDate, 1);
+                    }
+                    setSelectionRange({
+                      startDate: sel.startDate,
+                      endDate: end,
+                      key: "selection",
+                    });
+                  }}
+                  minDate={new Date()}
+                  moveRangeOnFirstSelection={false}
+                  rangeColors={["#f6e05e"]}
+                />
+              </div>
+
+              <div className="mb-4 text-sm text-gray-700">
+                {nights > 0 ? (
+                  <>
+                    <div>
+                      <strong>{nights}</strong> night{nights > 1 ? "s" : ""}
+                    </div>
+                    <div>
+                      Total: <strong>₦{total.toLocaleString()}</strong>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-gray-500">Select dates</div>
+                )}
+              </div>
 
               <motion.button
-                onClick={handleBookNow}
+                onClick={() => {
+                  if (
+                    differenceInCalendarDays(
+                      selectionRange.endDate,
+                      selectionRange.startDate
+                    ) <= 0
+                  ) {
+                    return alert(
+                      "Please select an end date after the start date"
+                    );
+                  }
+                  handleBookNow();
+                }}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
                 className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 px-8 rounded-full shadow-md transition-all"
