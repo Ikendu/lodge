@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../assets/logos/logo.png";
-import { useState, useRef } from "react";
-import { Menu, X, User } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Menu, X, User, Search } from "lucide-react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
 import { signOut } from "firebase/auth";
@@ -12,8 +12,18 @@ export default function Header() {
   const location = useLocation();
   const [query, setQuery] = useState("");
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [mobileSearchVisible, setMobileSearchVisible] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const hintRef = useRef(null);
+  const mobileSearchRef = useRef(null);
+
+  useEffect(() => {
+    if (mobileSearchVisible && mobileSearchRef.current) {
+      try {
+        mobileSearchRef.current.focus();
+      } catch (e) {}
+    }
+  }, [mobileSearchVisible]);
   const [user] = useAuthState(auth);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const parsePriceRange = (text) => {
@@ -83,7 +93,7 @@ export default function Header() {
               }
             }}
             placeholder="Search lodges by name, city, state or price (e.g. 4000-8000)"
-            className="px-3 py-2 rounded-l-md text-gray-800 w-80"
+            className="px-3 py-2 rounded-l-md bg-white text-black placeholder-gray-500 w-80"
           />
           <button
             onClick={() => {
@@ -103,6 +113,8 @@ export default function Header() {
                 const range = parsePriceRange(query);
                 const matches = lodges
                   .filter((l) => {
+                    // ensure we only return matches when there's a non-empty query
+                    if (!ql) return false;
                     const hay = (
                       l.title +
                       " " +
@@ -118,7 +130,12 @@ export default function Header() {
                     if (hay.includes(ql)) return true;
                     // numeric search: match price
                     const num = Number(query.replace(/[^0-9]/g, ""));
-                    if (!Number.isNaN(num) && l.price === num) return true;
+                    if (
+                      !Number.isNaN(num) &&
+                      String(num).length &&
+                      l.price === num
+                    )
+                      return true;
                     return false;
                   })
                   .slice(0, 8);
@@ -232,6 +249,17 @@ export default function Header() {
 
         {/* Mobile Menu Button / Account */}
         <div className="md:hidden flex items-center gap-3">
+          {/* Mobile search icon */}
+          <button
+            className="text-yellow-300"
+            aria-label="Open search"
+            onClick={() => {
+              setMobileSearchVisible(true);
+              setSuggestionsOpen(Boolean(query.trim()));
+            }}
+          >
+            <Search size={20} />
+          </button>
           {!user ? (
             <button
               onClick={() =>
@@ -298,23 +326,71 @@ export default function Header() {
       {/* Mobile Dropdown */}
       {menuOpen && (
         <div className="md:hidden bg-blue-700 px-4 py-3 space-y-3 text-center animate-slideDown">
-          <div className="flex gap-2 relative">
-            <input
-              placeholder="Search lodges"
-              className="w-full p-2 rounded"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setSuggestionsOpen(Boolean(e.target.value.trim()));
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  setMenuOpen(false);
-                  handleSearch();
-                }
-              }}
-            />
+          <div className="flex gap-2 relative items-center">
+            <div className="relative flex-1">
+              <input
+                placeholder="Search lodges"
+                className="w-full p-2 rounded bg-white text-black placeholder-gray-500"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setSuggestionsOpen(Boolean(e.target.value.trim()));
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    setMenuOpen(false);
+                    handleSearch();
+                  }
+                }}
+              />
+
+              {suggestionsOpen && query.trim() && (
+                <div className="absolute top-full left-0 mt-2 w-full bg-white text-gray-800 rounded shadow-lg z-50">
+                  {lodges
+                    .filter((l) => {
+                      const ql2 = query.toLowerCase().trim();
+                      if (!ql2) return false;
+                      const hay = (
+                        l.title +
+                        " " +
+                        l.description +
+                        " " +
+                        l.location
+                      ).toLowerCase();
+                      return (
+                        hay.includes(ql2) ||
+                        (String(l.price).includes(query.replace(/\D/g, "")) &&
+                          query.replace(/\D/g, "").length)
+                      );
+                    })
+                    .slice(0, 6)
+                    .map((m) => (
+                      <button
+                        key={m.id}
+                        className="w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center gap-3"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          navigate(`/lodge/${m.id}`, { state: { lodge: m } });
+                        }}
+                      >
+                        <img
+                          src={m.images?.[0]}
+                          alt={m.title}
+                          className="w-12 h-8 object-cover rounded"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium">{m.title}</div>
+                          <div className="text-xs text-gray-500">
+                            {m.location} • ₦{m.price.toLocaleString()}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => {
                 setMenuOpen(false);
@@ -324,48 +400,6 @@ export default function Header() {
             >
               Go
             </button>
-
-            {suggestionsOpen && query.trim() && (
-              <div className="absolute top-full left-0 mt-2 w-full bg-white text-gray-800 rounded shadow-lg z-50">
-                {lodges
-                  .filter((l) => {
-                    const hay = (
-                      l.title +
-                      " " +
-                      l.description +
-                      " " +
-                      l.location
-                    ).toLowerCase();
-                    return (
-                      hay.includes(query.toLowerCase()) ||
-                      String(l.price).includes(query.replace(/\D/g, ""))
-                    );
-                  })
-                  .slice(0, 6)
-                  .map((m) => (
-                    <button
-                      key={m.id}
-                      className="w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center gap-3"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        navigate(`/lodge/${m.id}`, { state: { lodge: m } });
-                      }}
-                    >
-                      <img
-                        src={m.images?.[0]}
-                        alt={m.title}
-                        className="w-12 h-8 object-cover rounded"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium">{m.title}</div>
-                        <div className="text-xs text-gray-500">
-                          {m.location} • ₦{m.price.toLocaleString()}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-              </div>
-            )}
           </div>
           {links.map((link, i) => (
             <button
@@ -385,6 +419,89 @@ export default function Header() {
               {link.name}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Mobile search overlay */}
+      {mobileSearchVisible && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-start p-4 md:hidden">
+          <div className="w-full max-w-md bg-white rounded shadow p-3">
+            <div className="flex items-center gap-2">
+              <input
+                ref={mobileSearchRef}
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setSuggestionsOpen(Boolean(e.target.value.trim()));
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    setMobileSearchVisible(false);
+                    handleSearch();
+                  }
+                }}
+                placeholder="Search lodges"
+                className="flex-1 p-2 border rounded bg-white text-black placeholder-gray-500"
+              />
+              <button
+                onClick={() => {
+                  setMobileSearchVisible(false);
+                  setSuggestionsOpen(false);
+                }}
+                className="text-gray-600"
+                aria-label="Close search"
+              >
+                Close
+              </button>
+            </div>
+
+            {suggestionsOpen && query.trim() && (
+              <div className="mt-2 max-h-60 overflow-auto">
+                {lodges
+                  .filter((l) => {
+                    const ql3 = query.toLowerCase().trim();
+                    if (!ql3) return false;
+                    const hay = (
+                      l.title +
+                      " " +
+                      l.description +
+                      " " +
+                      l.location
+                    ).toLowerCase();
+                    return (
+                      hay.includes(ql3) ||
+                      (String(l.price).includes(query.replace(/\D/g, "")) &&
+                        query.replace(/\D/g, "").length)
+                    );
+                  })
+                  .slice(0, 8)
+                  .map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => {
+                        setMobileSearchVisible(false);
+                        setSuggestionsOpen(false);
+                        navigate(`/lodge/${m.id}`, { state: { lodge: m } });
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-gray-100 flex items-center gap-3"
+                    >
+                      <img
+                        src={m.images?.[0]}
+                        alt={m.title}
+                        className="w-12 h-8 object-cover rounded"
+                      />
+                      <div>
+                        <div className="font-medium">{m.title}</div>
+                        <div className="text-xs text-gray-500">
+                          {m.location} • ₦{m.price.toLocaleString()}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </header>
