@@ -125,3 +125,18 @@ Access Token
 
 Access Token Secret
 9V3wMdcHv17bIWLJYUoIviNN1GA0Ow4qpxrgKLgtxx2oU
+
+API KEY
+gz10MeVu6fknePIaUAQ4uFcCB
+
+API SECRET
+iCyt80tiMouJkTbsJ3xwj8dpvucp3JF3I7QMBujycvPeHZJYxy
+
+
+
+Client ID
+cFZOdGNjWXA3eUp0b284aWN4SWI6MTpjaQ
+
+clients Secret
+g7yYuvDL6bnG3IkhTFd7wCqrncpK_ujEQDnCs-O65W0qLgQ9lz
+
