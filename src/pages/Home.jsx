@@ -161,7 +161,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="md:w-1/2">
+          <div className="md:w-1/3">
             <img
               src={bed1}
               alt="affordable lodging mockup"
@@ -182,7 +182,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="md:w-1/2 md:order-1">
+          <div className="md:w-1/3 md:order-1">
             <img
               src={bed3}
               alt="earn income mockup"
@@ -204,7 +204,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="md:w-1/2">
+          <div className="md:w-1/3">
             <img
               src={bed5}
               alt="social lodging mockup"
