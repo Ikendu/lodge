@@ -80,9 +80,6 @@ export default function Header() {
           onClick={() => navigate("/")}
         >
           <img src={logo} alt="MoreLinks Logo" className="h-10 w-auto" />
-          {/* <span className="font-bold text-lg hidden sm:inline">
-            MoreLinks Lodge
-          </span> */}
         </div>
 
         {/* Search bar (desktop) - single input with suggestions */}
