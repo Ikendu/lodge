@@ -1,7 +1,16 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../assets/logos/logo.png";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, User, Search } from "lucide-react";
+import {
+  Menu,
+  X,
+  User,
+  Search,
+  PlusSquare,
+  Info,
+  Mail,
+  HelpCircle,
+} from "lucide-react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
 import { signOut } from "firebase/auth";
@@ -64,11 +73,11 @@ export default function Header() {
   };
 
   const links = [
-    { name: "Find Lodge", path: "/apartments" },
-    { name: "List Your Property", path: "/registerowner" },
-    { name: "About Us", path: "/about" },
-    { name: "Contact", path: "/contact" },
-    { name: "FAQs", path: "/faqs" },
+    { name: "Find Lodge", path: "/apartments", icon: Search },
+    { name: "List Your Property", path: "/registerowner", icon: PlusSquare },
+    { name: "About Us", path: "/about", icon: Info },
+    { name: "Contact", path: "/contact", icon: Mail },
+    { name: "FAQs", path: "/faqs", icon: HelpCircle },
   ];
 
   return (
@@ -180,23 +189,27 @@ export default function Header() {
         {/* Desktop Nav */}
         <nav className="hidden md:flex gap-6 font-medium justify-center">
           {/* small search icon could be here for compact layouts */}
-          {links.map((link, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                if (link.path === "/registerowner" && !user) {
-                  navigate("/login", {
-                    state: { from: { pathname: "/registerowner" } },
-                  });
-                } else {
-                  navigate(link.path);
-                }
-              }}
-              className="hover:text-yellow-300 transition-colors"
-            >
-              {link.name}
-            </button>
-          ))}
+          {links.map((link, i) => {
+            const Icon = link.icon;
+            return (
+              <button
+                key={i}
+                onClick={() => {
+                  if (link.path === "/registerowner" && !user) {
+                    navigate("/login", {
+                      state: { from: { pathname: "/registerowner" } },
+                    });
+                  } else {
+                    navigate(link.path);
+                  }
+                }}
+                className="hover:text-yellow-300 transition-colors flex items-center gap-2"
+              >
+                {Icon && <Icon size={16} />}
+                <span>{link.name}</span>
+              </button>
+            );
+          })}
           {/* Login / Account */}
           {!user ? (
             <button
@@ -407,24 +420,30 @@ export default function Header() {
               Go
             </button>
           </div>
-          {links.map((link, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                if (link.path === "/registerowner" && !user) {
-                  navigate("/login", {
-                    state: { from: { pathname: "/registerowner" } },
-                  });
-                } else {
-                  navigate(link.path);
-                }
-                setMenuOpen(false);
-              }}
-              className="block w-full hover:text-yellow-300 transition-colors"
-            >
-              {link.name}
-            </button>
-          ))}
+          {links.map((link, i) => {
+            const Icon = link.icon;
+            return (
+              <button
+                key={i}
+                onClick={() => {
+                  if (link.path === "/registerowner" && !user) {
+                    navigate("/login", {
+                      state: { from: { pathname: "/registerowner" } },
+                    });
+                  } else {
+                    navigate(link.path);
+                  }
+                  setMenuOpen(false);
+                }}
+                className="block w-full hover:text-yellow-300 transition-colors"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  {Icon && <Icon size={18} />}
+                  <span>{link.name}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
 
