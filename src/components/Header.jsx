@@ -42,8 +42,22 @@ export default function Header() {
     const t = setTimeout(() => setDebouncedQuery(query.trim()), 250);
     return () => clearTimeout(t);
   }, [query]);
-  const [user] = useAuthState(auth);
+  const [user, loading] = useAuthState(auth);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+
+  // keep account menu state in sync with auth changes
+  useEffect(() => {
+    if (!loading && !user) {
+      // user logged out — close any open account menus
+      setAccountMenuOpen(false);
+    }
+  }, [user, loading]);
+
+  // reset avatar error when user or their photo changes
+  useEffect(() => {
+    setAvatarError(false);
+  }, [user?.photoURL]);
   const parsePriceRange = (text) => {
     // detect patterns like 1000-5000 or ₦1,000-5,000 or min:1000 max:5000
     const cleaned = text.replace(/₦|,|\s/g, "");
@@ -195,9 +209,9 @@ export default function Header() {
               <button
                 key={i}
                 onClick={() => {
-                  if (link.path === "/registerowner" && !user) {
+                  if (link.path === "/registeruser" && !user) {
                     navigate("/login", {
-                      state: { from: { pathname: "/registerowner" } },
+                      state: { from: { pathname: "/registeruser" } },
                     });
                   } else {
                     navigate(link.path);
@@ -227,11 +241,12 @@ export default function Header() {
                 className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden"
                 aria-label="Account menu"
               >
-                {user.photoURL ? (
+                {user.photoURL && !avatarError ? (
                   <img
                     src={user.photoURL}
                     alt={user.displayName || "User"}
                     className="w-full h-full object-cover"
+                    onError={() => setAvatarError(true)}
                   />
                 ) : (
                   <User size={18} />
@@ -295,11 +310,12 @@ export default function Header() {
                 className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden"
                 aria-label="Account menu"
               >
-                {user.photoURL ? (
+                {user.photoURL && !avatarError ? (
                   <img
                     src={user.photoURL}
                     alt={user.displayName || "User"}
                     className="w-full h-full object-cover"
+                    onError={() => setAvatarError(true)}
                   />
                 ) : (
                   <User size={18} />
@@ -426,9 +442,9 @@ export default function Header() {
               <button
                 key={i}
                 onClick={() => {
-                  if (link.path === "/registerowner" && !user) {
+                  if (link.path === "/registeruser" && !user) {
                     navigate("/login", {
-                      state: { from: { pathname: "/registerowner" } },
+                      state: { from: { pathname: "/registeruser" } },
                     });
                   } else {
                     navigate(link.path);

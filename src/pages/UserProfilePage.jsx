@@ -1,16 +1,23 @@
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
-import { signInWithCredential, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import ownerImg from "../assets/logos/owner.png";
 import ownerImg2 from "../assets/logos/ownerh.png";
 import { lodges } from "../lodgedata";
 import { motion } from "framer-motion";
 
 export default function UserProfilePage() {
-  const [user, loading] = useAuthState(auth);
+  const [user, setUser] = useState(auth?.currentUser || null);
+  const [loading, setLoading] = useState(user === null);
+
+  useEffect(() => {
+    setLoading(true);
+    const unsub = auth.onAuthStateChanged((u) => {
+      setUser(u);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -38,7 +45,6 @@ export default function UserProfilePage() {
 
   const imgHover = { scale: 1.03 };
   const btnHover = { scale: 1.02 };
-  const [deleting, setDeleting] = useState(false);
 
   // Build a profile object combining auth user and optional state-provided fields
   const profile = {
@@ -191,48 +197,6 @@ export default function UserProfilePage() {
               >
                 Close
               </motion.button>
-              <motion.button
-                onClick={async () => {
-                  const confirmed = window.confirm(
-                    "Are you sure you want to permanently delete your account and all associated data? This action cannot be undone."
-                  );
-                  if (!confirmed) return;
-
-                  try {
-                    setDeleting(true);
-
-                    // Ensure we have a fresh ID token by re-authenticating if possible
-                    // For password users, attempt a reauth prompt. For social users, we rely on current token.
-                    let idToken = null;
-                    // try to get token directly
-                    idToken = await user.getIdToken(/* forceRefresh */ true);
-
-                    // Call the deletion endpoint. Configure endpoint via Vite env var VITE_DELETE_ENDPOINT
-                    const endpoint = import.meta.env.VITE_DELETE_ENDPOINT || "/.netlify/functions/deleteUserData";
-                    const resp = await fetch(endpoint, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ idToken, uid: user.uid, mode: "hard" }),
-                    });
-                    const data = await resp.json();
-                    if (!resp.ok) throw new Error(data?.error || JSON.stringify(data));
-
-                    // On success, navigate to a goodbye/landing page
-                    alert("Your account has been deleted. We're sorry to see you go.");
-                    navigate("/", { replace: true });
-                  } catch (err) {
-                    console.error("Delete account failed", err);
-                    alert("Could not delete account: " + err.message);
-                  } finally {
-                    setDeleting(false);
-                  }
-                }}
-                disabled={deleting}
-                className="ml-auto bg-red-600 text-white px-4 py-2 rounded-md"
-                whileHover={btnHover}
-              >
-                {deleting ? "Deleting..." : "Delete Account"}
-              </motion.button>
             </div>
           </div>
         </div>
@@ -253,7 +217,7 @@ export default function UserProfilePage() {
                       first listing and start earning.
                     </div>
                     <button
-                      onClick={() => navigate("/registerowner")}
+                      onClick={() => navigate("/registeruser")}
                       className="inline-block bg-green-500 text-white px-4 py-2 rounded-md"
                     >
                       List a Lodge

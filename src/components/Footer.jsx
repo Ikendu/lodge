@@ -104,7 +104,7 @@ export default function Footer() {
                 whileHover={{ x: 5, scale: 1.05 }}
                 transition={{ duration: 0.2 }}
                 className="cursor-pointer hover:text-yellow-300 flex items-center gap-2"
-                onClick={() => navigate("/registerowner")}
+                onClick={() => navigate("/registeruser")}
               >
                 <FaPlusSquare size={16} aria-hidden="true" />
                 <span>List Your Lodge</span>

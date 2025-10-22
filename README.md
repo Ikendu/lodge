@@ -154,3 +154,6 @@ Configuration ID:
 Apps that access user data must provide a way for users to request that their data be deleted. Your app can satisfy this requirement by providing either a data deletion request callback or instructions to inform people how to delete their data from your app or website
 
 at the user profile page add 2 sections, the first will be where the lodges the user posted is listed, the other will be where the lodge he currently rented or paid for is displayed.
+
+DATA DELETION
+https://us-central1-lodge-72abe.cloudfunctions.net/deleteUserData

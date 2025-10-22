@@ -2,7 +2,6 @@ import React from "react";
 // src/App.jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
-import ScrollToTop from "./components/ScrollToTop";
 import Home from "./pages/Home";
 import About from "./pages/AboutUs.jsx";
 import RegisterCustomer from "./pages/RegisterCustomer";
@@ -13,6 +12,11 @@ import LoginPage from "./pages/Login.jsx";
 import FAQPage from "./pages/FqaPage.jsx";
 import LodgeDetails from "./pages/LodgeDetails.jsx";
 import UserProfilePage from "./pages/UserProfilePage.jsx";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminUsers from "./pages/admin/Users";
+import AdminListings from "./pages/admin/Listings";
+import AdminBookings from "./pages/admin/Bookings";
 import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 import TermsAndConditions from "./pages/TermsAndConditions.jsx";
 import ContactUs from "./pages/ContactUs.jsx";
@@ -27,7 +31,6 @@ import RegisterCustomerDetails from "./pages/RegisterCustomerDetails";
 export default function App() {
   return (
     <BrowserRouter>
-      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
@@ -60,6 +63,13 @@ export default function App() {
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/safety" element={<SafetyTips />} />
+          {/* Admin area (protected separately) */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="listings" element={<AdminListings />} />
+            <Route path="bookings" element={<AdminBookings />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>
