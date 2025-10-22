@@ -142,74 +142,76 @@ export default function Home() {
 
       {/* Lodges List Section */}
       {/* Value Features Section */}
-      <section className="w-full max-w-6xl mt-8 mb-12 space-y-16">
+      <section className="w-full max-w-6xl mx-auto mt-8 mb-12 space-y-16 px-4">
         <h2 className="text-3xl font-semibold text-center text-white mb-6">
           Why MoreLink Lodge?
         </h2>
 
-        {/* Feature 1 - Image right */}
-        <div className="flex flex-col md:flex-row items-center gap-6">
-          <div className="md:w-1/2">
-            <h3 className="text-2xl font-bold mb-3">
-              Don't miss important opportunities
-            </h3>
-            <p className="text-white/90">
-              You shouldn't have to skip interviews, conferences, or training
-              because affordable lodging isn't available. MoreLink Lodge helps
-              you find nearby, budget-friendly stays so you can focus on your
-              goals — not accommodation costs.
-            </p>
+        <div className="mx-auto w-full max-w-5xl space-y-12">
+          {/* Feature 1 - Image right */}
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="md:w-1/2">
+              <h3 className="text-2xl font-bold mb-3">
+                Don't miss important opportunities
+              </h3>
+              <p className="text-white/90">
+                You shouldn't have to skip interviews, conferences, or training
+                because affordable lodging isn't available. MoreLink Lodge helps
+                you find nearby, budget-friendly stays so you can focus on your
+                goals — not accommodation costs.
+              </p>
+            </div>
+
+            <div className="md:w-1/3">
+              <img
+                src={bed1}
+                alt="affordable lodging mockup"
+                className="w-full rounded-2xl shadow-lg object-cover"
+              />
+            </div>
           </div>
 
-          <div className="md:w-1/3">
-            <img
-              src={bed1}
-              alt="affordable lodging mockup"
-              className="w-full rounded-2xl shadow-lg object-cover"
-            />
-          </div>
-        </div>
+          {/* Feature 2 - Image left (earn income) */}
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="md:w-1/2 md:order-2">
+              <h3 className="text-2xl font-bold mb-3">Earn extra income</h3>
+              <p className="text-white/90">
+                Have unused rooms or a spare unit? List your space on MoreLink
+                Lodge to generate extra income. Create a simple listing, set
+                your terms, and connect with verified guests — earn reliably
+                while helping others find affordable, convenient stays.
+              </p>
+            </div>
 
-        {/* Feature 2 - Image left (earn income) */}
-        <div className="flex flex-col md:flex-row items-center gap-6">
-          <div className="md:w-1/2 md:order-2">
-            <h3 className="text-2xl font-bold mb-3">Earn extra income</h3>
-            <p className="text-white/90">
-              Have unused rooms or a spare unit? List your space on MoreLink
-              Lodge to generate extra income. Create a simple listing, set your
-              terms, and connect with verified guests — earn reliably while
-              helping others find affordable, convenient stays.
-            </p>
-          </div>
-
-          <div className="md:w-1/3 md:order-1">
-            <img
-              src={bed3}
-              alt="earn income mockup"
-              className="w-full rounded-2xl shadow-lg object-cover"
-            />
-          </div>
-        </div>
-
-        {/* Feature 3 - Image right */}
-        <div className="flex flex-col md:flex-row items-center gap-6">
-          <div className="md:w-1/2">
-            <h3 className="text-2xl font-bold mb-3">
-              Connect, socialize, and save
-            </h3>
-            <p className="text-white/90">
-              Meet people, socialize, and enjoy community while getting the
-              lodging you need at low cost. Discover shared spaces and hosts
-              that match your lifestyle and budget.
-            </p>
+            <div className="md:w-1/3 md:order-1">
+              <img
+                src={bed3}
+                alt="earn income mockup"
+                className="w-full rounded-2xl shadow-lg object-cover"
+              />
+            </div>
           </div>
 
-          <div className="md:w-1/3">
-            <img
-              src={bed5}
-              alt="social lodging mockup"
-              className="w-full rounded-2xl shadow-lg object-cover"
-            />
+          {/* Feature 3 - Image right */}
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="md:w-1/2">
+              <h3 className="text-2xl font-bold mb-3">
+                Connect, socialize, and save
+              </h3>
+              <p className="text-white/90">
+                Meet people, socialize, and enjoy community while getting the
+                lodging you need at low cost. Discover shared spaces and hosts
+                that match your lifestyle and budget.
+              </p>
+            </div>
+
+            <div className="md:w-1/3">
+              <img
+                src={bed5}
+                alt="social lodging mockup"
+                className="w-full rounded-2xl shadow-lg object-cover"
+              />
+            </div>
           </div>
         </div>
       </section>
