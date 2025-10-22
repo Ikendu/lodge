@@ -25,6 +25,7 @@ import SafetyTips from "./pages/SaftyTips.jsx";
 import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import RegisterCustomerDetails from "./pages/RegisterCustomerDetails";
+import DojahNINTest from "./pages/Test.jsx";
 
 // (links array removed; not used in this file)
 
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/registeruser" element={<RegisterCustomer />} />
+          <Route path="/test" element={<DojahNINTest />} />
           <Route
             path="/registeruser/details"
             element={<RegisterCustomerDetails />}

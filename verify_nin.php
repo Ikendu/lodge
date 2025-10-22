@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $nin = isset($_POST['nin']) ? preg_replace('/\D/', '', trim($_POST['nin'])) : '';
+// $nin = '12345678901'
 if (!$nin) respond(false, 'Missing NIN');
 
 // DOJO API key from environment
