@@ -2,10 +2,10 @@ import React from "react";
 // src/App.jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
+import ScrollToTop from "./components/ScrollToTop";
 import Home from "./pages/Home";
 import About from "./pages/AboutUs.jsx";
 import RegisterCustomer from "./pages/RegisterCustomer";
-import RegisterOwner from "./pages/RegisterOwner";
 import RegisterSuccess from "./pages/RegisterSuccess";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Apartments from "./pages/Apartments.jsx";
@@ -27,6 +27,7 @@ import RegisterCustomerDetails from "./pages/RegisterCustomerDetails";
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
@@ -37,14 +38,7 @@ export default function App() {
             path="/registeruser/details"
             element={<RegisterCustomerDetails />}
           />
-          <Route
-            path="/registerowner"
-            element={
-              <ProtectedRoute>
-                <RegisterOwner />
-              </ProtectedRoute>
-            }
-          />
+
           <Route path="/register-success" element={<RegisterSuccess />} />
           <Route path="/lodge/:id" element={<LodgeDetails />} />
 

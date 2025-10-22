@@ -67,8 +67,6 @@ git reset HEAD~1
 - Two images [One from NIN the other from Form]
 - Fullname
 - Full Adsress
-- LGA of Origin and Residence
-- State of Origin and Residence
 
 ## Finantial Security
 
@@ -130,9 +128,19 @@ API KEY
 gz10MeVu6fknePIaUAQ4uFcCB
 
 API SECRET
+
+## Account deletion (privacy)
+
+This project includes an optional Firebase Cloud Function in the `functions/` folder that performs account deletion (deletes Firestore documents, Storage objects, and the Auth user).
+
+How to use:
+
+- Deploy the Cloud Function by running `npm install` inside `functions/` and then using the Firebase CLI: `firebase deploy --only functions:deleteUserData`.
+- Set `VITE_DELETE_ENDPOINT` in your Vite environment (for example, create a `.env` file with `VITE_DELETE_ENDPOINT="https://us-central1-YOUR_PROJECT.cloudfunctions.net/deleteUserData"`).
+- The client `UserProfilePage` will send a POST with a fresh ID token to that endpoint to request deletion.
+
+If you prefer soft-delete, set the request `mode` to `soft` or modify `functions/index.js` accordingly.
 iCyt80tiMouJkTbsJ3xwj8dpvucp3JF3I7QMBujycvPeHZJYxy
-
-
 
 Client ID
 cFZOdGNjWXA3eUp0b284aWN4SWI6MTpjaQ
@@ -140,3 +148,9 @@ cFZOdGNjWXA3eUp0b284aWN4SWI6MTpjaQ
 clients Secret
 g7yYuvDL6bnG3IkhTFd7wCqrncpK_ujEQDnCs-O65W0qLgQ9lz
 
+Configuration ID:
+1515938723061133
+
+Apps that access user data must provide a way for users to request that their data be deleted. Your app can satisfy this requirement by providing either a data deletion request callback or instructions to inform people how to delete their data from your app or website
+
+at the user profile page add 2 sections, the first will be where the lodges the user posted is listed, the other will be where the lodge he currently rented or paid for is displayed.

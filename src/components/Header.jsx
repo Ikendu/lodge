@@ -74,7 +74,7 @@ export default function Header() {
 
   const links = [
     { name: "Find Lodge", path: "/apartments", icon: Search },
-    { name: "List Your Property", path: "/registerowner", icon: PlusSquare },
+    { name: "List Your Property", path: "/registeruser", icon: PlusSquare },
     { name: "About Us", path: "/about", icon: Info },
     { name: "Contact", path: "/contact", icon: Mail },
     { name: "FAQs", path: "/faqs", icon: HelpCircle },
