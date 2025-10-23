@@ -1,28 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
 import ownerImg from "../assets/logos/owner.png";
 import ownerImg2 from "../assets/logos/ownerh.png";
-import { lodges } from "../lodgedata";
 import { motion } from "framer-motion";
 
 export default function UserProfilePage() {
-  const [user, setUser] = useState(auth?.currentUser || null);
-  const [loading, setLoading] = useState(user === null);
-
-  useEffect(() => {
-    setLoading(true);
-    const unsub = auth.onAuthStateChanged((u) => {
-      setUser(u);
-      setLoading(false);
-    });
-    return () => unsub();
-  }, []);
+  const [user, loading] = useAuthState(auth);
   const navigate = useNavigate();
   const location = useLocation();
 
   // Accept profile overrides from location.state.profile if available
   const profileFromState = location.state?.profile || {};
+  // Where the user came from before starting registration (used for Return)
+  const origin = location.state?.from || null;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -55,6 +47,40 @@ export default function UserProfilePage() {
     address: profileFromState.address || "Not provided",
     lgaResidence: profileFromState.lgaResidence || "Not provided",
     stateResidence: profileFromState.stateResidence || "Not provided",
+    lgaOrigin: profileFromState.lgaOrigin || "Not provided",
+    stateOrigin: profileFromState.stateOrigin || "Not provided",
+    nextOfKin: profileFromState.nextOfKin || {
+      name: "Not provided",
+      relation: "-",
+      phone: "-",
+    },
+    otherDetails: profileFromState.otherDetails || "-",
+  };
+
+  // If a profile was passed in navigation state prefer it; else try localStorage
+  const persisted = (() => {
+    try {
+      const raw = localStorage.getItem("customerProfile");
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  })();
+
+  const finalProfile = {
+    givenPhoto: profileFromState.givenPhoto || user.photoURL || ownerImg2,
+    ninPhoto: profileFromState.ninPhoto || ownerImg,
+    fullName:
+      profileFromState.fullName ||
+      user.displayName ||
+      (persisted && persisted.firstName + " " + (persisted.lastName || "")) ||
+      "Not provided",
+    dob: profileFromState.dob || persisted?.dob || "Not provided",
+    address: profileFromState.address || persisted?.address || "Not provided",
+    lgaResidence:
+      profileFromState.lgaResidence || persisted?.lga || "Not provided",
+    stateResidence:
+      profileFromState.stateResidence || persisted?.state || "Not provided",
     lgaOrigin: profileFromState.lgaOrigin || "Not provided",
     stateOrigin: profileFromState.stateOrigin || "Not provided",
     nextOfKin: profileFromState.nextOfKin || {
@@ -191,111 +217,26 @@ export default function UserProfilePage() {
                 Edit Profile
               </motion.button>
               <motion.button
-                onClick={() => navigate(-1)}
+                onClick={() => {
+                  if (origin) {
+                    // origin may be a location descriptor
+                    try {
+                      if (origin.pathname)
+                        navigate(origin.pathname, { state: origin.state });
+                      else navigate(-1);
+                    } catch (e) {
+                      navigate(-1);
+                    }
+                  } else {
+                    navigate(-1);
+                  }
+                }}
                 className="border border-gray-300 px-4 py-2 rounded-md"
                 whileHover={btnHover}
               >
-                Close
+                Return to previous page
               </motion.button>
             </div>
-          </div>
-        </div>
-
-        {/* User Lodges & Bookings */}
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">My Listings</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {(() => {
-              // show lodges where ownerId === user.uid if available
-              const myListings = lodges.filter((l) => l.ownerId === user.uid);
-              if (!myListings.length) {
-                return (
-                  <div className="col-span-2 p-6 bg-gray-50 rounded-md text-gray-700">
-                    <div className="font-medium mb-2">No listings yet</div>
-                    <div className="mb-3 text-sm">
-                      You haven't listed any lodges. Click below to add your
-                      first listing and start earning.
-                    </div>
-                    <button
-                      onClick={() => navigate("/registeruser")}
-                      className="inline-block bg-green-500 text-white px-4 py-2 rounded-md"
-                    >
-                      List a Lodge
-                    </button>
-                  </div>
-                );
-              }
-
-              return myListings.map((l) => (
-                <motion.div
-                  key={l.id}
-                  className="bg-white rounded-md shadow p-3 cursor-pointer"
-                  whileHover={{ scale: 1.02 }}
-                  onClick={() =>
-                    navigate(`/lodge/${l.id}`, { state: { lodge: l } })
-                  }
-                >
-                  <img
-                    src={l.images?.[0]}
-                    alt={l.title}
-                    className="h-32 w-full object-cover rounded-md mb-2"
-                  />
-                  <div className="font-medium">{l.title}</div>
-                  <div className="text-sm text-gray-500">{l.location}</div>
-                  <div className="text-sm font-semibold text-blue-600 mt-2">
-                    ₦{l.price.toLocaleString()}
-                  </div>
-                </motion.div>
-              ));
-            })()}
-          </div>
-
-          <h2 className="text-xl font-semibold mt-8 mb-4">My Bookings</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {(() => {
-              // profileFromState.bookings is expected to be an array of lodge ids
-              const bookedIds = profileFromState.bookings || [];
-              const myBookings = lodges.filter((l) => bookedIds.includes(l.id));
-              if (!myBookings.length) {
-                return (
-                  <div className="col-span-2 p-6 bg-gray-50 rounded-md text-gray-700">
-                    <div className="font-medium mb-2">No bookings found</div>
-                    <div className="mb-3 text-sm">
-                      You don't have any active bookings yet. Browse lodges and
-                      make a booking to see it listed here.
-                    </div>
-                    <button
-                      onClick={() => navigate("/apartments")}
-                      className="inline-block bg-yellow-400 text-black px-4 py-2 rounded-md"
-                    >
-                      Browse Lodges
-                    </button>
-                  </div>
-                );
-              }
-
-              return myBookings.map((l) => (
-                <motion.div
-                  key={l.id}
-                  className="bg-white rounded-md shadow p-3 cursor-pointer"
-                  whileHover={{ scale: 1.02 }}
-                  onClick={() =>
-                    navigate(`/lodge/${l.id}`, { state: { lodge: l } })
-                  }
-                >
-                  <img
-                    src={l.images?.[0]}
-                    alt={l.title}
-                    className="h-32 w-full object-cover rounded-md mb-2"
-                  />
-                  <div className="font-medium">{l.title}</div>
-                  <div className="text-sm text-gray-500">{l.location}</div>
-                  <div className="text-sm font-semibold text-blue-600 mt-2">
-                    ₦{l.price.toLocaleString()}
-                  </div>
-                </motion.div>
-              ));
-            })()}
           </div>
         </div>
       </motion.div>

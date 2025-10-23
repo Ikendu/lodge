@@ -6,18 +6,23 @@ export default function RegisterCustomerDetails() {
   const navigate = useNavigate();
   const location = useLocation();
   const verified = location.state?.verified || {};
-  const phone = location.state?.phone || "";
+  const provided = location.state?.provided || {};
+  const phone = provided.phone || provided.id || "";
   const from = location.state?.from;
 
   const [form, setForm] = useState({
     email: "",
-    dob: verified.dob || "",
+    dob: verified.date_of_birth || verified.dob || "",
     address: "",
+    addressLga: "",
+    addressState: "",
     permanentAddress: "",
     lga: "",
     state: "",
     country: "",
     passport: null,
+    phone: phone || "",
+    imageFile: null,
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -27,26 +32,50 @@ export default function RegisterCustomerDetails() {
     else setForm((p) => ({ ...p, [name]: value }));
   };
 
+  console.log("Verified data:", verified);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
       const payload = new FormData();
       // include verified fields
-      payload.append("firstName", verified.firstName || "");
-      payload.append("middleName", verified.middleName || "");
-      payload.append("lastName", verified.lastName || "");
-      payload.append("nin", verified.nin || "");
-      payload.append("phone", phone || "");
+      payload.append(
+        "firstName",
+        verified.first_name || verified.firstName || ""
+      );
+      payload.append(
+        "middleName",
+        verified.middle_name || verified.middleName || ""
+      );
+      payload.append("lastName", verified.last_name || verified.lastName || "");
+      payload.append("nin", verified.nin || verified.id || "");
+      // include phone: prefer verified, then provided, then form
+      payload.append(
+        "phone",
+        verified.phone_number || provided.phone || form.phone || ""
+      );
+      // include verified-only fields
+      payload.append("birth_country", verified.birth_country || "");
+      payload.append("birth_lga", verified.birth_lga || "");
+      payload.append("birth_state", verified.birth_state || "");
+      payload.append("gender", verified.gender || "");
+      if (verified.image && typeof verified.image === "string")
+        payload.append("verified_image", verified.image);
+      if (verified.signature && typeof verified.signature === "string")
+        payload.append("verified_signature", verified.signature);
       // include details from step 2
       payload.append("email", form.email);
       payload.append("dob", form.dob);
       payload.append("address", form.address);
+      payload.append("addressLga", form.addressLga);
+      payload.append("addressState", form.addressState);
       payload.append("permanentAddress", form.permanentAddress);
       payload.append("lga", form.lga);
       payload.append("state", form.state);
       payload.append("country", form.country);
       if (form.passport) payload.append("passport", form.passport);
+      if (form.imageFile) payload.append("image", form.imageFile);
 
       const res = await fetch("/register.php", {
         method: "POST",
@@ -60,10 +89,15 @@ export default function RegisterCustomerDetails() {
       }
 
       const profile = {
-        firstName: verified.firstName,
-        lastName: verified.lastName,
+        firstName: verified.first_name || verified.firstName,
+        middleName: verified.middle_name || verified.middleName,
+        lastName: verified.last_name || verified.lastName,
         email: form.email,
-        nin: verified.nin,
+        nin: verified.nin || verified.id,
+        phone: phone,
+        address: form.address,
+        addressLga: form.addressLga,
+        addressState: form.addressState,
       };
       try {
         localStorage.setItem("customerProfile", JSON.stringify(profile));
@@ -71,13 +105,8 @@ export default function RegisterCustomerDetails() {
         console.warn("Failed to persist profile locally", e);
       }
 
-      // If the flow came from a booking, continue to payment
-      if (from && from.state && from.state.lodge) {
-        navigate("/payment", { state: { lodge: from.state.lodge, profile } });
-        return;
-      }
-
-      navigate("/");
+      // Navigate to profile page and pass profile + origin
+      navigate("/profile", { state: { profile, from } });
     } catch (err) {
       console.error(err);
       alert("Registration request failed");
@@ -144,6 +173,29 @@ export default function RegisterCustomerDetails() {
             />
           </div>
 
+          {/* Address LGA and Address State below Current Address */}
+          <div className="flex flex-col">
+            <label className="text-white mb-2 font-medium">Address LGA</label>
+            <input
+              name="addressLga"
+              value={form.addressLga}
+              onChange={handleChange}
+              className="p-3 rounded-xl"
+              placeholder="e.g. Suleja"
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-white mb-2 font-medium">Address State</label>
+            <input
+              name="addressState"
+              value={form.addressState}
+              onChange={handleChange}
+              className="p-3 rounded-xl"
+              placeholder="e.g. Niger"
+            />
+          </div>
+
           <div className="col-span-1 md:col-span-2 flex flex-col">
             <label className="text-white mb-2 font-medium">
               Permanent Address
@@ -159,7 +211,7 @@ export default function RegisterCustomerDetails() {
           </div>
 
           <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">LGA</label>
+            <label className="text-white mb-2 font-medium">LGA of Origin</label>
             <input
               name="lga"
               value={form.lga}
@@ -170,7 +222,9 @@ export default function RegisterCustomerDetails() {
           </div>
 
           <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">State</label>
+            <label className="text-white mb-2 font-medium">
+              State of Origin
+            </label>
             <input
               name="state"
               value={form.state}
@@ -188,6 +242,31 @@ export default function RegisterCustomerDetails() {
               onChange={handleChange}
               className="p-3 rounded-xl"
               required
+            />
+          </div>
+
+          {/* Keep a phone field and optional image upload on the form as requested */}
+          <div className="flex flex-col">
+            <label className="text-white mb-2 font-medium">Phone</label>
+            <input
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              className="p-3 rounded-xl"
+              placeholder="e.g. 08012345678"
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-white mb-2 font-medium">
+              Image (optional)
+            </label>
+            <input
+              name="imageFile"
+              type="file"
+              accept="image/*"
+              onChange={handleChange}
+              className="p-2 rounded-xl"
             />
           </div>
 

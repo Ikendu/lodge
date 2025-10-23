@@ -144,3 +144,9 @@ Configuration ID:
 Apps that access user data must provide a way for users to request that their data be deleted. Your app can satisfy this requirement by providing either a data deletion request callback or instructions to inform people how to delete their data from your app or website
 
 at the user profile page add 2 sections, the first will be where the lodges the user posted is listed, the other will be where the lodge he currently rented or paid for is displayed.
+
+rewrite the RegisterCustomer and RegisterCustomerDetails pages.
+The RegisterCustomer page after getting the nin or phone should get the details save it and proceed to the next page RegisterCustomerDetails with the details, on the RegisterCustomerDetails add more inputs 1. Address LGA, 2. Address State below Current Address.
+After submitting the second page, it will call an endpoint to send all the details.
+After that it will proceed to the profile page that displays all the details.
+there should be a button on the profile page that takes a user back to the page the user was before registration

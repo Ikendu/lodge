@@ -8,6 +8,7 @@ export default function RegisterCustomer() {
   const [nin, setNin] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [verification, setVerification] = useState(null); // stores API payload.data
 
   const sanitizeDigits = (val) => (val || "").replace(/\D+/g, "");
 
@@ -29,6 +30,20 @@ export default function RegisterCustomer() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // If we already have verification data, navigate to details page
+    if (verification) {
+      const state = {
+        type:
+          verification?.id_type ||
+          (nin && phone ? "both" : nin ? "nin" : "phone"),
+        verified: verification,
+        provided: { nin: nin || null, phone: phone || null },
+      };
+      if (location.state?.from) state.from = location.state.from;
+      return navigate("/registeruser/details", { state });
+    }
+
     const ninVal = (nin || "").trim();
     const phoneVal = (phone || "").trim();
 
@@ -49,25 +64,31 @@ export default function RegisterCustomer() {
 
     setLoading(true);
     try {
-      const payload = new FormData();
-      if (ninVal) payload.append("nin", ninVal);
-      if (phoneVal) payload.append("phone", phoneVal);
+      const formData = new FormData();
+      if (ninVal) formData.append("nin", ninVal);
+      if (phoneVal) formData.append("phone", phoneVal);
 
-      const res = await fetch("/verify_nin.php", {
+      const res = await fetch("http://localhost/lodge/verify_nin.php", {
         method: "POST",
-        body: payload,
+        body: formData,
       });
       const data = await res.json();
-      if (!data || !data.success) {
+      console.debug("verify_nin response:", data);
+      // support both `success` and `status` boolean keys from different backends
+      const ok = Boolean(data && (data.success || data.status));
+      if (!ok) {
         return alert(data?.message || "Verification failed");
       }
 
-      const verified = data.data || {};
-      const provided = { nin: ninVal || null, phone: phoneVal || null };
+      // store the returned payload for review instead of navigating
+      const result = data.data || data || {};
+      console.debug("verification payload:", result);
+      // Navigate to details page with the verification payload and origin
       const state = {
-        type: ninVal && phoneVal ? "both" : ninVal ? "nin" : "phone",
-        verified,
-        provided,
+        type:
+          result?.id_type || (nin && phone ? "both" : nin ? "nin" : "phone"),
+        verified: result,
+        provided: { nin: ninVal || null, phone: phoneVal || null },
       };
       if (location.state?.from) state.from = location.state.from;
       navigate("/registeruser/details", { state });
@@ -102,7 +123,7 @@ export default function RegisterCustomer() {
               name="nin"
               value={nin}
               onChange={handleNinChange}
-              placeholder="e.g. 12345678"
+              placeholder="e.g. 41234567890"
               className="p-3 rounded-xl bg-white/5 text-white placeholder-white/60"
               inputMode="numeric"
               autoComplete="off"
@@ -144,10 +165,152 @@ export default function RegisterCustomer() {
               disabled={loading}
               className="w-full py-3 mt-4 bg-gradient-to-r from-blue-400 to-purple-600 text-white font-semibold rounded-xl disabled:opacity-60"
             >
-              {loading ? "Processing..." : "Continue"}
+              {loading ? "Processing..." : verification ? "Submit" : "Continue"}
             </motion.button>
           </div>
         </form>
+
+        {/* Verification review card (appears after successful verification) */}
+        {verification && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 bg-white/6 rounded-xl p-4"
+          >
+            <div className="flex gap-4 items-start">
+              <div className="w-28 h-28 bg-white/5 rounded-lg overflow-hidden flex-shrink-0">
+                {verification.image ? (
+                  <img
+                    src={
+                      verification.image && verification.image.startsWith
+                        ? verification.image.startsWith("data:")
+                          ? verification.image
+                          : `data:image/jpg;base64,${verification.image}`
+                        : verification.image
+                    }
+                    alt="user"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-white/60">
+                    No image
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 text-white">
+                <h3 className="text-lg font-semibold">
+                  {verification.first_name} {verification.middle_name}{" "}
+                  {verification.last_name}
+                </h3>
+                <div className="text-sm text-white/80 mt-1">
+                  {verification.id_type || "NIN/Phone"} •{" "}
+                  {verification.reference}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mt-3 text-sm text-white/85">
+                  <div>
+                    <div className="text-xs text-white/70">Date of birth</div>
+                    <div>{verification.date_of_birth}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-white/70">Gender</div>
+                    <div>{verification.gender}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-white/70">NIN</div>
+                    <div>{verification.nin || verification.id || "-"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-white/70">Phone</div>
+                    <div>
+                      {verification.phone_number || verification.id || "-"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 text-sm text-white/80">
+                  <div className="text-xs text-white/60">Address</div>
+                  <div>
+                    {verification.address?.street}, {verification.address?.town}
+                    , {verification.address?.lga}, {verification.address?.state}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* validation summary */}
+            {verification.validation && (
+              <div className="mt-4 text-sm text-white/85">
+                <div className="text-xs text-white/70 mb-2">Validation</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(verification.validation).map(([k, v]) => (
+                    <div key={k} className="p-2 bg-white/3 rounded">
+                      <div className="text-xs text-white/60">{k}</div>
+                      <div className="font-medium">
+                        {v.value || (v.match ? "Matched" : "-")}
+                      </div>
+                      {typeof v.match === "boolean" && (
+                        <div
+                          className={`text-xs mt-1 ${
+                            v.match ? "text-emerald-300" : "text-rose-300"
+                          }`}
+                        >
+                          {v.match ? "Match" : "Mismatch"}
+                        </div>
+                      )}
+                      {v.confidence_rating && (
+                        <div className="text-xs text-white/60">
+                          Confidence: {v.confidence_rating}%
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setVerification(null)}
+                className="px-4 py-2 rounded-lg bg-white/6 text-white"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const state = {
+                    type:
+                      verification?.id_type ||
+                      (nin && phone ? "both" : nin ? "nin" : "phone"),
+                    verified: verification,
+                    provided: { nin: nin || null, phone: phone || null },
+                  };
+                  if (location.state?.from) state.from = location.state.from;
+                  navigate("/registeruser/details", { state });
+                }}
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-400 to-purple-600 text-white font-semibold"
+              >
+                Continue
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Debug: if verification exists but key fields are missing, show raw JSON for troubleshooting */}
+        {verification &&
+          !(
+            verification.first_name ||
+            verification.last_name ||
+            verification.nin ||
+            verification.phone_number
+          ) && (
+            <pre className="mt-4 text-xs text-white/80 overflow-auto max-h-40 bg-black/20 p-3 rounded">
+              {JSON.stringify(verification, null, 2)}
+            </pre>
+          )}
       </motion.div>
     </div>
   );
