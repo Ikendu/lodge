@@ -1,15 +1,16 @@
 import React, { useState } from "react";
 
 export default function DojahNINTest() {
-  const [nin, setNin] = useState("70123456789");
+  const [nin, setNin] = useState("55555555555");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  //   const DOJA_TEST_PUBLIC_KEY = "test_pk_xBqyPxRGAACASQgvhAF57UlCq"; // 🔹 Replace with your Dojah test public key
-
-  const DOJA_TEST_PUBLIC_KEY = "test_sk_1BDJiWdVVPjUcpdK0YA5cHUZn"; // 🔹 Replace with your Dojah test public key
-  const API_URL = "https://sandbox.dojah.io/api/v1/kyc/nin/verify"; // Sandbox base URL
+  // const DOJA_TEST_PUBLIC_KEY = "test_sk_1BDJiWdVVPjUcpdK0YA5cHUZn"; // 🔹 Replace with your Dojah test public key
+  const DOJA_TEST_PUBLIC_KEY =
+    "sk_test_diVJ33chcUTmUNTeLnwaa4s8fSvDT9SqK5sJW5N5"; // 🔹 Replace with your Dojah test public key
+  // const API_URL = "https://sandbox.dojah.io/api/v1/kyc/nin/verify"; // Sandbox base URL
+  const API_URL = "https://api.korapay.com/merchant/api/v1/identities/ng/nin"; // Sandbox base URL
 
   const verifyNIN = async () => {
     if (!nin) return alert("Please enter a NIN");
@@ -22,11 +23,15 @@ export default function DojahNINTest() {
       const response = await fetch(API_URL, {
         method: "POST",
         headers: {
-          Authorization: DOJA_TEST_PUBLIC_KEY,
-          AppId: "68ee3f3ffd71c34bdb0c6524",
+          Authorization: `Bearer ${DOJA_TEST_PUBLIC_KEY}`,
+          // AppId: "68ee3f3ffd71c34bdb0c6524",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ nin }),
+        // body: JSON.stringify({ nin }),
+        body: JSON.stringify({
+          id: nin,
+          verification_consent: true,
+        }),
       });
 
       const data = await response.json();
@@ -60,7 +65,7 @@ export default function DojahNINTest() {
       {result && (
         <pre style={styles.result}>{JSON.stringify(result, null, 2)}</pre>
       )}
-      <img src={`data:image/jpeg;base64,${result?.entity?.image}`} alt="" />
+      <img src={`data:image/jpeg;base64,${result?.data?.image}`} alt="" />
     </div>
   );
 }
