@@ -73,6 +73,27 @@ export const socialSignIn = async (provider) => {
     // You can store user info in localStorage or your backend
     console.log("✅ Login Successful:", user);
     alert(`Welcome ${user.displayName || "User"}!`);
+    
+    // --- Persist firebase user on the server ---
+    try {
+      const idToken = await user.getIdToken();
+      // Send idToken and uid to the backend to link/create profile
+      fetch('/save_firebase_user.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken, uid: user.uid, email: user.email }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log('save_firebase_user response', data);
+          // Optionally, store profile locally or trigger a profile refresh
+        })
+        .catch((err) => {
+          console.warn('Could not save firebase user on server:', err);
+        });
+    } catch (e) {
+      console.warn('Could not obtain ID token from Firebase user:', e);
+    }
     return user;
   } catch (error) {
     console.error("❌ Social Login Error:", error);

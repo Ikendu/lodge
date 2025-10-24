@@ -1,65 +1,107 @@
 <?php
-// verify_nin.php
-// Server-side proxy to verify NIN via Dojo API (or mock if no API key provided)
-header('Content-Type: application/json; charset=utf-8');
+declare(strict_types=1);
 
-function respond($success, $message = '', $extra = []) {
-    http_response_code($success ? 200 : 400);
-    echo json_encode(array_merge(['success' => $success, 'message' => $message], $extra));
+header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+// For preflight OPTIONS requests (CORS)
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    respond(false, 'Invalid request method');
+// Disable detailed error messages in production
+error_reporting(0);
+
+class NINVerification {
+    private string $apiKey;
+    private string $ninUrl = "https://api.korapay.com/merchant/api/v1/identities/ng/nin";
+    private string $phoneUrl = "https://api.korapay.com/merchant/api/v1/identities/ng/nin-phone";
+
+    public function __construct(string $apiKey) {
+        $this->apiKey = $apiKey;
+    }
+
+    private function sanitizeInput(?string $value): ?string {
+        return $value ? trim(filter_var($value, FILTER_SANITIZE_STRING)) : null;
+    }
+
+    public function handleRequest(): void {
+        $nin = $this->sanitizeInput($_POST['nin'] ?? null);
+        $phone = $this->sanitizeInput($_POST['phone'] ?? null);
+
+        if (empty($nin) && empty($phone)) {
+            $this->respond(false, "Please provide either 'nin' or 'phone'.");
+        }
+
+        if (!empty($nin)) {
+            $this->verifyNIN($nin);
+        } elseif (!empty($phone)) {
+            $this->verifyPhone($phone);
+        } else {
+            $this->respond(false, "Invalid request.");
+        }
+    }
+
+    private function verifyNIN(string $nin): void {
+        $payload = json_encode([
+            "id" => $nin,
+            "verification_consent" => true
+        ]);
+        $this->callKoraAPI($this->ninUrl, $payload);
+    }
+
+    private function verifyPhone(string $phone): void {
+        $payload = json_encode([
+            "id" => $phone,
+            "verification_consent" => true
+        ]);
+        $this->callKoraAPI($this->phoneUrl, $payload);
+    }
+
+    private function callKoraAPI(string $url, string $payload): void {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_HTTPHEADER => [
+                "Content-Type: application/json",
+                "Authorization: Bearer " . $this->apiKey,
+            ],
+            CURLOPT_TIMEOUT => 60,
+        ]);
+
+        $response = curl_exec($ch);
+        $err = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($err) {
+            $this->respond(false, "Request error: " . $err);
+        }
+
+        $data = json_decode($response, true);
+        if ($httpCode >= 400 || !is_array($data)) {
+            $this->respond(false, "Verification failed (HTTP $httpCode).", $data ?: []);
+        }
+
+        $this->respond(true, "Verification successful", $data);
+    }
+
+    private function respond(bool $success, string $message, array $data = []): void {
+        echo json_encode([
+            "success" => $success,
+            "message" => $message,
+            "data" => $data,
+        ]);
+        exit;
+    }
 }
 
-$nin = isset($_POST['nin']) ? preg_replace('/\D/', '', trim($_POST['nin'])) : '';
-// $nin = '12345678901'
-if (!$nin) respond(false, 'Missing NIN');
-
-// DOJO API key from environment
-$dojo_key = getenv('DOJO_API_KEY') ?: '';
-
-// If no DOJO API key is configured, return mock data (useful for local/dev)
-if (!$dojo_key) {
-    // Mocked response (simulate successful lookup)
-    $mock = [
-        'firstName' => 'John',
-        'middleName' => 'A',
-        'lastName' => 'Doe',
-        'dob' => '1988-01-01',
-        'nin' => $nin,
-    ];
-    respond(true, 'Mock lookup success', ['data' => $mock]);
-}
-
-// Call the Dojo API (example endpoint - adapt to your provider docs)
-$url = "https://api.dojo.example/verify/nin/" . urlencode($nin);
-$ch = curl_init($url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer $dojo_key", 'Accept: application/json']);
-curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-$resp = curl_exec($ch);
-$err = curl_error($ch);
-$status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-
-if ($err) respond(false, 'Verification request failed');
-
-$json = json_decode($resp, true);
-if (!$json || $status !== 200) {
-    respond(false, 'NIN verification failed');
-}
-
-// Map provider response to fields used by the frontend
-$data = [
-    'firstName' => $json['first_name'] ?? ($json['firstName'] ?? ''),
-    'middleName' => $json['middle_name'] ?? ($json['middleName'] ?? ''),
-    'lastName' => $json['last_name'] ?? ($json['lastName'] ?? ''),
-    'dob' => $json['dob'] ?? '',
-    'nin' => $nin,
-];
-
-respond(true, 'Verification successful', ['data' => $data]);
-
-?>
+// === RUN SCRIPT ===
+$apiKey = "sk_test_diVJ33chcUTmUNTeLnwaa4s8fSvDT9SqK5sJW5N5"; // Your Kora test key
+$verify = new NINVerification($apiKey);
+$verify->handleRequest();

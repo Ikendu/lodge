@@ -1,146 +1,186 @@
 <?php
-// register.php
-// Accepts multipart/form-data from RegisterCustomer form
-// Stores uploaded passport and inserts user data into MySQL using mysqli with prepared statements
-// Returns JSON responses { success: bool, message: string }
+// Secure headers and CORS
+header("Access-Control-Allow-Origin: http://localhost:5173"); // change to your frontend domain
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Content-Type: application/json; charset=UTF-8");
 
-// Basic configuration - use environment variables for sensitive data
-$db_host = getenv('DB_HOST') ?: '127.0.0.1';
-$db_user = getenv('DB_USER') ?: 'root';
-$db_pass = getenv('DB_PASS') ?: '9652Aa@!@!@!';
-$db_name = getenv('DB_NAME') ?: 'morelink_lodge';
+// ===========================
+// CONFIGURATION CLASS
+// ===========================
+class Config {
+    private $host = "localhost";
+    private $db_name = "lodge";
+    private $username = "root";
+    private $password = "";
+    public $conn;
 
-// Where to store uploaded passports (ensure writable by the webserver)
-$upload_dir = __DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'passports' . DIRECTORY_SEPARATOR;
-if (!is_dir($upload_dir)) {
-    mkdir($upload_dir, 0755, true);
-}
-
-header('Content-Type: application/json; charset=utf-8');
-
-function respond($success, $message = '', $extra = []) {
-    http_response_code($success ? 200 : 400);
-    echo json_encode(array_merge(['success' => $success, 'message' => $message], $extra));
-    exit;
-}
-
-// Only accept POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    respond(false, 'Invalid request method');
-}
-
-// Basic CSRF protection: Expect a custom header or token. For now we allow same-origin via CORS and advise enabling CSRF tokens.
-// You can implement a token check here if needed.
-
-// Validate and sanitize inputs
-$expected = ['firstName','middleName','lastName','email','nin','dob','address','permanentAddress','lga','state','country','phone'];
-$input = [];
-foreach ($expected as $key) {
-    if (!isset($_POST[$key])) {
-        respond(false, "Missing field: $key");
+    public function connect() {
+        $this->conn = null;
+        try {
+            $this->conn = new PDO(
+                "mysql:host=" . $this->host . ";dbname=" . $this->db_name,
+                $this->username,
+                $this->password
+            );
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => "Database connection failed"]);
+            exit;
+        }
+        return $this->conn;
     }
-    $val = trim($_POST[$key]);
-    $input[$key] = $val;
 }
 
-// Basic validation rules
-if (!filter_var($input['email'], FILTER_VALIDATE_EMAIL)) {
-    respond(false, 'Invalid email address');
-}
+// ===========================
+// USER CLASS
+// ===========================
+class User {
+    private $conn;
+    private $table = "customers";
 
-// NIN: allow digits with length between 6 and 20 (adjust to local rules)
-$nin = preg_replace('/\D/', '', $input['nin']);
-if (strlen($nin) < 6 || strlen($nin) > 20) {
-    respond(false, 'Invalid NIN');
-}
-$input['nin'] = $nin;
-
-// DOB validation (YYYY-MM-DD)
-if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $input['dob'])) {
-    respond(false, 'Invalid date of birth format');
-}
-
-// Handle passport upload
-$passport_path = null;
-if (isset($_FILES['passport']) && is_uploaded_file($_FILES['passport']['tmp_name'])) {
-    $file = $_FILES['passport'];
-    // Validate upload errors
-    if ($file['error'] !== UPLOAD_ERR_OK) {
-        respond(false, 'File upload error');
+    public function __construct($db) {
+        $this->conn = $db;
     }
 
-    // Validate MIME type and extension
-    $finfo = new finfo(FILEINFO_MIME_TYPE);
-    $mime = $finfo->file($file['tmp_name']);
-    $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-    if (!array_key_exists($mime, $allowed)) {
-        respond(false, 'Invalid passport file type (allowed: jpg, png, webp)');
+    // --- CHECK IF USER EXISTS ---
+    public function exists($nin, $phone) {
+        $sql = "SELECT id FROM {$this->table} WHERE nin = :nin OR phone = :phone LIMIT 1";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(":nin", $nin);
+        $stmt->bindValue(":phone", $phone);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
     }
 
-    // Limit size (e.g., 5MB)
-    $maxBytes = 5 * 1024 * 1024;
-    if ($file['size'] > $maxBytes) {
-        respond(false, 'Passport file too large (max 5MB)');
+    // --- REGISTER USER ---
+    public function register($data, $file) {
+        // Sanitize input data
+        foreach ($data as $key => $value) {
+            $data[$key] = htmlspecialchars(strip_tags(trim($value)));
+        }
+
+        $nin = $data["nin"] ?? null;
+        $phone = $data["phone"] ?? null;
+
+        // Check if customer already exists
+        if ($this->exists($nin, $phone)) {
+            throw new Exception("Customer with this NIN or phone number already exists.");
+        }
+
+        // Handle file upload if provided
+        $imagePath = null;
+        if ($file && isset($file["tmp_name"]) && is_uploaded_file($file["tmp_name"])) {
+            $uploadDir = __DIR__ . "/uploads/";
+            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+
+            $allowedExts = ["jpg", "jpeg", "png"];
+            $fileExt = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
+
+            if (!in_array($fileExt, $allowedExts)) {
+                throw new Exception("Invalid file type. Only JPG, JPEG, PNG allowed.");
+            }
+
+            if ($file["size"] > 2 * 1024 * 1024) {
+                throw new Exception("File too large. Max 2MB allowed.");
+            }
+
+            $fileName = uniqid("img_", true) . "." . $fileExt;
+            $targetPath = $uploadDir . $fileName;
+
+            if (!move_uploaded_file($file["tmp_name"], $targetPath)) {
+                throw new Exception("File upload failed.");
+            }
+
+            $imagePath = "uploads/" . $fileName;
+        }
+
+        // Insert new record securely
+        // Detect if customers table has firebase_uid column
+        $hasFirebase = false;
+        try {
+            $check = $this->conn->query("SHOW COLUMNS FROM {$this->table} LIKE 'firebase_uid'");
+            if ($check && $check->rowCount() > 0) $hasFirebase = true;
+        } catch (Exception $e) {
+            // ignore
+        }
+
+        $cols = [
+            'first_name','middle_name','last_name','nin','phone','mobile','email','dob',
+            'address','address_lga','address_state','permanent_address','lga','state','country',
+            'gender','birth_country','birth_lga','birth_state','verified_image','verified_signature','nin_email','image_path'
+        ];
+        if ($hasFirebase) $cols[] = 'firebase_uid';
+
+        $placeholders = array_map(function($c){ return ':' . $c; }, $cols);
+        $sql = "INSERT INTO {$this->table} (" . implode(',', $cols) . ") VALUES (" . implode(',', $placeholders) . ")";
+        $stmt = $this->conn->prepare($sql);
+
+        // bind common values
+        $stmt->bindValue(":first_name", $data["firstName"] ?? null);
+        $stmt->bindValue(":middle_name", $data["middleName"] ?? null);
+        $stmt->bindValue(":last_name", $data["lastName"] ?? null);
+        $stmt->bindValue(":nin", $nin);
+        $stmt->bindValue(":phone", $phone);
+        $stmt->bindValue(":mobile", $data["mobile"] ?? null);
+        $stmt->bindValue(":email", $data["email"] ?? null);
+        $stmt->bindValue(":dob", $data["dob"] ?? null);
+        $stmt->bindValue(":address", $data["address"] ?? null);
+        $stmt->bindValue(":address_lga", $data["addressLga"] ?? null);
+        $stmt->bindValue(":address_state", $data["addressState"] ?? null);
+        $stmt->bindValue(":permanent_address", $data["permanentAddress"] ?? null);
+        $stmt->bindValue(":lga", $data["lga"] ?? null);
+        $stmt->bindValue(":state", $data["state"] ?? null);
+        $stmt->bindValue(":country", $data["country"] ?? null);
+        $stmt->bindValue(":gender", $data["gender"] ?? null);
+        $stmt->bindValue(":birth_country", $data["birth_country"] ?? null);
+        $stmt->bindValue(":birth_lga", $data["birth_lga"] ?? null);
+        $stmt->bindValue(":birth_state", $data["birth_state"] ?? null);
+        $stmt->bindValue(":verified_image", $data["verified_image"] ?? null);
+        $stmt->bindValue(":verified_signature", $data["verified_signature"] ?? null);
+        $stmt->bindValue(":nin_email", $data["nin_email"] ?? null);
+        $stmt->bindValue(":image_path", $imagePath);
+
+        if ($hasFirebase) {
+            $stmt->bindValue(":firebase_uid", $data["firebase_uid"] ?? null);
+        }
+
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
+    }
+}
+
+// ===========================
+// MAIN EXECUTION
+// ===========================
+try {
+    if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+        http_response_code(405);
+        echo json_encode(["success" => false, "message" => "Method not allowed"]);
+        exit;
     }
 
-    // Create a safe filename
-    $ext = $allowed[$mime];
-    $basename = bin2hex(random_bytes(12));
-    $filename = $basename . '.' . $ext;
-    $target = $upload_dir . $filename;
+    $database = new Config();
+    $db = $database->connect();
+    $user = new User($db);
 
-    if (!move_uploaded_file($file['tmp_name'], $target)) {
-        respond(false, 'Failed to move uploaded file');
-    }
+    $postData = $_POST;
+    $fileData = $_FILES["image"] ?? null;
 
-    // store relative path for DB
-    $passport_path = 'uploads/passports/' . $filename;
+    $success = $user->register($postData, $fileData);
+
+    echo json_encode([
+        "success" => $success,
+        "message" => $success ? "Registration successful" : "Registration failed"
+    ]);
+
+} catch (Exception $e) {
+    http_response_code(400);
+    echo json_encode(["success" => false, "message" => $e->getMessage()]);
 }
-
-// Connect to DB using mysqli
-$mysqli = new mysqli($db_host, $db_user, $db_pass, $db_name);
-if ($mysqli->connect_errno) {
-    respond(false, 'Database connection failed');
-}
-$mysqli->set_charset('utf8mb4');
-
-// Prepare insert statement - adjust table/columns to your schema
-$sql = "INSERT INTO customers (first_name, middle_name, last_name, email, nin, dob, address, permanent_address, lga, state_of_origin, country, phone, passport_path, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-$stmt = $mysqli->prepare($sql);
-if (!$stmt) {
-    respond(false, 'Failed to prepare statement');
-}
-
-$stmt->bind_param(
-    'ssssssssssssss',
-    $input['firstName'],
-    $input['middleName'],
-    $input['lastName'],
-    $input['email'],
-    $input['nin'],
-    $input['dob'],
-    $input['address'],
-    $input['permanentAddress'],
-    $input['lga'],
-    $input['state'],
-    $input['country'],
-    $input['phone'],
-    $passport_path
-);
-
-$exec = $stmt->execute();
-if (!$exec) {
-    // If DB insert fails, remove uploaded file to avoid orphan files
-    if ($passport_path && file_exists(__DIR__ . DIRECTORY_SEPARATOR . $passport_path)) {
-        @unlink(__DIR__ . DIRECTORY_SEPARATOR . $passport_path);
-    }
-    respond(false, 'Failed to save registration');
-}
-
-$stmt->close();
-$mysqli->close();
-
-// Success
-respond(true, 'Registration saved');
-
 ?>
