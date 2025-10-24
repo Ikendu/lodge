@@ -42,7 +42,9 @@ export default function UserProfilePage() {
       console.log("Params", params);
 
       try {
-        const res = await fetch(`/get_profile.php?${params.toString()}`);
+        const res = await fetch(
+          `http://localhost/lodge/get_profile.php?${params.toString()}`
+        );
         const j = await res.json();
         const p = j?.profile || j?.data || (j?.success ? j : null);
         if (p) setProfileData(p);
