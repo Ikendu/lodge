@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
@@ -11,10 +11,12 @@ export default function UserProfilePage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Accept profile overrides from location.state.profile if available
-  const profileFromState = location.state?.profile || {};
-  // Where the user came from before starting registration (used for Return)
+  // origin (where the user came from) may still be provided
   const origin = location.state?.from || null;
+
+  // Profile is always loaded from the backend API. No localStorage or navigation-state fallbacks.
+  const [profileData, setProfileData] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -22,6 +24,39 @@ export default function UserProfilePage() {
       navigate("/login", { state: { from: location } });
     }
   }, [loading, user, navigate, location]);
+
+  // fetch profile from backend using authenticated identifiers
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoadingProfile(true);
+      const params = new URLSearchParams();
+      if (user?.uid) params.append("uid", user.uid);
+      if (user?.email) params.append("email", user.email);
+      if (user?.phoneNumber)
+        params.append("phone", user.phoneNumber.replace(/^\+/, ""));
+
+      if (!params.toString()) {
+        setLoadingProfile(false);
+        return;
+      }
+      console.log("Params", params);
+
+      try {
+        const res = await fetch(`/get_profile.php?${params.toString()}`);
+        const j = await res.json();
+        const p = j?.profile || j?.data || (j?.success ? j : null);
+        if (p) setProfileData(p);
+      } catch (e) {
+        console.warn("Failed to fetch profile", e);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    if (!loading && user) fetchProfile();
+    if (!loading && !user) setLoadingProfile(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, user]);
 
   if (loading || !user) return null; // redirect in progress
 
@@ -38,57 +73,64 @@ export default function UserProfilePage() {
   const imgHover = { scale: 1.03 };
   const btnHover = { scale: 1.02 };
 
-  // Build a profile object combining auth user and optional state-provided fields
-  const profile = {
-    givenPhoto: user.photoURL || profileFromState.givenPhoto || ownerImg2,
-    ninPhoto: profileFromState.ninPhoto || ownerImg,
-    fullName: user.displayName || profileFromState.fullName || "Not provided",
-    dob: profileFromState.dob || "Not provided",
-    address: profileFromState.address || "Not provided",
-    lgaResidence: profileFromState.lgaResidence || "Not provided",
-    stateResidence: profileFromState.stateResidence || "Not provided",
-    lgaOrigin: profileFromState.lgaOrigin || "Not provided",
-    stateOrigin: profileFromState.stateOrigin || "Not provided",
-    nextOfKin: profileFromState.nextOfKin || {
-      name: "Not provided",
-      relation: "-",
-      phone: "-",
-    },
-    otherDetails: profileFromState.otherDetails || "-",
+  // display is strictly from fetched profile data (backend)
+  const display = profileData || {};
+  console.log("Displaying profile:", display);
+
+  const getImageSrc = (val) => {
+    if (!val) return null;
+    if (typeof val !== "string") return null;
+    if (val.startsWith("data:")) return val;
+    // if looks like base64 (long string) add prefix
+    if (/^[A-Za-z0-9+/=\s]+$/.test(val) && val.length > 100)
+      return `data:image/jpeg;base64,${val}`;
+    return val; // assume it's a URL
   };
 
-  // If a profile was passed in navigation state prefer it; else try localStorage
-  const persisted = (() => {
-    try {
-      const raw = localStorage.getItem("customerProfile");
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      return null;
-    }
-  })();
+  const ninImage =
+    getImageSrc(display.verified_image) ||
+    getImageSrc(display.ninPhoto) ||
+    getImageSrc(display.nin_image) ||
+    ownerImg;
 
-  const finalProfile = {
-    givenPhoto: profileFromState.givenPhoto || user.photoURL || ownerImg2,
-    ninPhoto: profileFromState.ninPhoto || ownerImg,
+  const uploadedImage =
+    getImageSrc(display.image) ||
+    getImageSrc(display.uploaded_image) ||
+    getImageSrc(display.givenPhoto) ||
+    user.photoURL ||
+    ownerImg2;
+
+  const profile = {
+    givenPhoto: uploadedImage,
+    ninPhoto: ninImage,
     fullName:
-      profileFromState.fullName ||
+      display.firstName ||
+      display.first_name ||
       user.displayName ||
-      (persisted && persisted.firstName + " " + (persisted.lastName || "")) ||
       "Not provided",
-    dob: profileFromState.dob || persisted?.dob || "Not provided",
-    address: profileFromState.address || persisted?.address || "Not provided",
-    lgaResidence:
-      profileFromState.lgaResidence || persisted?.lga || "Not provided",
-    stateResidence:
-      profileFromState.stateResidence || persisted?.state || "Not provided",
-    lgaOrigin: profileFromState.lgaOrigin || "Not provided",
-    stateOrigin: profileFromState.stateOrigin || "Not provided",
-    nextOfKin: profileFromState.nextOfKin || {
-      name: "Not provided",
-      relation: "-",
-      phone: "-",
-    },
-    otherDetails: profileFromState.otherDetails || "-",
+    dob: display.dob || display.date_of_birth || "Not provided",
+    email: display.email || "-",
+    phone: display.phone || display.phone_number || display.mobile || "-",
+    nin: display.nin || display.id || "-",
+    birthCountry: display.birth_country || "-",
+    birthLga: display.birth_lga || "-",
+    birthState: display.birth_state || "-",
+    gender: display.gender || "-",
+    address: display.address || "Not provided",
+    addressLga: display.addressLga || display.address_lga || "Not provided",
+    addressState:
+      display.addressState || display.address_state || "Not provided",
+    lgaResidence: display.lgaResidence || display.lga || "Not provided",
+    stateResidence: display.stateResidence || display.state || "Not provided",
+    lgaOrigin: display.lgaOrigin || "Not provided",
+    stateOrigin: display.stateOrigin || "Not provided",
+    nextOfKin: display.nextOfKin ||
+      display.next_of_kin || {
+        name: "Not provided",
+        relation: "-",
+        phone: "-",
+      },
+    otherDetails: display.otherDetails || "-",
   };
 
   return (
@@ -157,6 +199,21 @@ export default function UserProfilePage() {
                 <div className="font-medium">{profile.dob}</div>
               </div>
 
+              <div>
+                <div className="text-xs text-gray-500">Email</div>
+                <div className="font-medium">{profile.email}</div>
+              </div>
+
+              <div>
+                <div className="text-xs text-gray-500">Phone</div>
+                <div className="font-medium">{profile.phone}</div>
+              </div>
+
+              <div>
+                <div className="text-xs text-gray-500">NIN</div>
+                <div className="font-medium">{profile.nin}</div>
+              </div>
+
               <div className="col-span-2">
                 <div className="text-xs text-gray-500">Address</div>
                 <div className="font-medium">{profile.address}</div>
@@ -199,11 +256,31 @@ export default function UserProfilePage() {
                   </div>
                 </div>
               </div>
-
               <div className="col-span-2 mt-4">
-                <div className="text-xs text-gray-500">Other details</div>
-                <div className="text-sm text-gray-700">
-                  {profile.otherDetails}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-xs text-gray-500">Birth Country</div>
+                    <div className="font-medium">{profile.birthCountry}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">Birth LGA</div>
+                    <div className="font-medium">{profile.birthLga}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">Birth State</div>
+                    <div className="font-medium">{profile.birthState}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">Gender</div>
+                    <div className="font-medium">{profile.gender}</div>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <div className="text-xs text-gray-500">Other details</div>
+                  <div className="text-sm text-gray-700">
+                    {profile.otherDetails}
+                  </div>
                 </div>
               </div>
             </div>
@@ -217,24 +294,11 @@ export default function UserProfilePage() {
                 Edit Profile
               </motion.button>
               <motion.button
-                onClick={() => {
-                  if (origin) {
-                    // origin may be a location descriptor
-                    try {
-                      if (origin.pathname)
-                        navigate(origin.pathname, { state: origin.state });
-                      else navigate(-1);
-                    } catch (e) {
-                      navigate(-1);
-                    }
-                  } else {
-                    navigate(-1);
-                  }
-                }}
+                onClick={() => navigate(-1)}
                 className="border border-gray-300 px-4 py-2 rounded-md"
                 whileHover={btnHover}
               >
-                Return to previous page
+                Close
               </motion.button>
             </div>
           </div>

@@ -146,7 +146,7 @@ export default function RegisterCustomerDetails() {
         payload.append("image", fileToSend, fileToSend.name || "image.jpg");
       }
 
-      const res = await fetch("/register.php", {
+      const res = await fetch("http://localhost/lodge/register.php", {
         method: "POST",
         body: payload,
       });
@@ -158,9 +158,9 @@ export default function RegisterCustomerDetails() {
       }
 
       const profile = {
-        firstName: verified.first_name || verified.firstName,
-        middleName: verified.middle_name || verified.middleName,
-        lastName: verified.last_name || verified.lastName,
+        firstName: verified.first_name || "",
+        middleName: verified.middle_name || "",
+        lastName: verified.last_name || "",
         email: form.email,
         nin: verified.id,
         nin_address: verified.address || "",
@@ -168,11 +168,17 @@ export default function RegisterCustomerDetails() {
         birth_state: verified.birth_state || "",
         birth_lga: verified.birth_lga || "",
         nin_email: verified.email || "",
+        nin_image: verified.image || "",
 
         phone: phone,
         address: form.address,
         addressLga: form.addressLga,
         addressState: form.addressState,
+        image: fileToSend || "",
+        permanentAddress: form.permanentAddress,
+        lga: form.lga,
+        state: form.state,
+        country: form.country,
       };
       try {
         localStorage.setItem("customerProfile", JSON.stringify(profile));

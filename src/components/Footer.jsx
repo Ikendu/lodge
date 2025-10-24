@@ -6,13 +6,6 @@ import {
   FaEnvelope,
   FaPhoneAlt,
   FaWhatsapp,
-  FaHome,
-  FaSearch,
-  FaPlusSquare,
-  FaQuestionCircle,
-  FaFileAlt,
-  FaLifeRing,
-  FaShieldAlt,
 } from "react-icons/fa";
 import { Link as ScrollLink } from "react-scroll";
 import { Link, useNavigate } from "react-router-dom";
@@ -72,11 +65,10 @@ export default function Footer() {
               <motion.span
                 whileHover={{ x: 5, scale: 1.05 }}
                 transition={{ duration: 0.2 }}
-                className="cursor-pointer hover:text-yellow-300 flex items-center gap-2"
+                className="cursor-pointer hover:text-yellow-300"
                 onClick={() => navigate("/")}
               >
-                <FaHome size={16} aria-hidden="true" />
-                <span>Home</span>
+                Home
               </motion.span>
             </li>
 
@@ -89,12 +81,8 @@ export default function Footer() {
                 offset={-80}
                 className="cursor-pointer hover:text-yellow-300 block"
               >
-                <motion.span
-                  whileHover={{ x: 5, scale: 1.05 }}
-                  className="flex items-center gap-2"
-                >
-                  <FaSearch size={16} aria-hidden="true" />
-                  <span>Find a Lodge</span>
+                <motion.span whileHover={{ x: 5, scale: 1.05 }}>
+                  Find a Lodge
                 </motion.span>
               </ScrollLink>
             </li>
@@ -103,33 +91,30 @@ export default function Footer() {
               <motion.span
                 whileHover={{ x: 5, scale: 1.05 }}
                 transition={{ duration: 0.2 }}
-                className="cursor-pointer hover:text-yellow-300 flex items-center gap-2"
-                onClick={() => navigate("/registeruser")}
+                className="cursor-pointer hover:text-yellow-300"
+                onClick={() => navigate("/registerowner")}
               >
-                <FaPlusSquare size={16} aria-hidden="true" />
-                <span>List Your Lodge</span>
+                List Your Lodge
               </motion.span>
             </li>
 
             <li>
               <motion.span
                 whileHover={{ x: 5, scale: 1.05 }}
-                className="cursor-pointer hover:text-yellow-300 flex items-center gap-2"
+                className="cursor-pointer hover:text-yellow-300"
                 onClick={() => navigate("/faqs")}
               >
-                <FaQuestionCircle size={16} aria-hidden="true" />
-                <span>FAQs</span>
+                FAQs
               </motion.span>
             </li>
 
             <li>
               <motion.span
                 whileHover={{ x: 5, scale: 1.05 }}
-                className="cursor-pointer hover:text-yellow-300 flex items-center gap-2"
+                className="cursor-pointer hover:text-yellow-300"
                 onClick={() => navigate("/contact")}
               >
-                <FaPhoneAlt size={16} aria-hidden="true" />
-                <span>Contact Us</span>
+                Contact Us
               </motion.span>
             </li>
           </ul>
@@ -144,45 +129,29 @@ export default function Footer() {
                 to="/privacy-policy"
                 className="hover:text-yellow-300 block"
               >
-                <motion.span
-                  whileHover={{ x: 5, scale: 1.05 }}
-                  className="flex items-center gap-2"
-                >
-                  <FaFileAlt size={16} aria-hidden="true" />
-                  <span>Privacy Policy</span>
+                <motion.span whileHover={{ x: 5, scale: 1.05 }}>
+                  Privacy Policy
                 </motion.span>
               </Link>
             </li>
             <li>
               <Link to="/terms" className="hover:text-yellow-300 block">
-                <motion.span
-                  whileHover={{ x: 5, scale: 1.05 }}
-                  className="flex items-center gap-2"
-                >
-                  <FaFileAlt size={16} aria-hidden="true" />
-                  <span>Terms & Conditions</span>
+                <motion.span whileHover={{ x: 5, scale: 1.05 }}>
+                  Terms & Conditions
                 </motion.span>
               </Link>
             </li>
             <li>
               <Link to="/help" className="hover:text-yellow-300 block">
-                <motion.span
-                  whileHover={{ x: 5, scale: 1.05 }}
-                  className="flex items-center gap-2"
-                >
-                  <FaLifeRing size={16} aria-hidden="true" />
-                  <span>Help Center</span>
+                <motion.span whileHover={{ x: 5, scale: 1.05 }}>
+                  Help Center
                 </motion.span>
               </Link>
             </li>
             <li>
               <Link to="/safety" className="hover:text-yellow-300 block">
-                <motion.span
-                  whileHover={{ x: 5, scale: 1.05 }}
-                  className="flex items-center gap-2"
-                >
-                  <FaShieldAlt size={16} aria-hidden="true" />
-                  <span>Safety Tips</span>
+                <motion.span whileHover={{ x: 5, scale: 1.05 }}>
+                  Safety Tips
                 </motion.span>
               </Link>
             </li>

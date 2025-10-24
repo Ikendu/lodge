@@ -12,11 +12,6 @@ import LoginPage from "./pages/Login.jsx";
 import FAQPage from "./pages/FqaPage.jsx";
 import LodgeDetails from "./pages/LodgeDetails.jsx";
 import UserProfilePage from "./pages/UserProfilePage.jsx";
-import AdminLayout from "./components/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/Dashboard";
-import AdminUsers from "./pages/admin/Users";
-import AdminListings from "./pages/admin/Listings";
-import AdminBookings from "./pages/admin/Bookings";
 import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 import TermsAndConditions from "./pages/TermsAndConditions.jsx";
 import ContactUs from "./pages/ContactUs.jsx";
@@ -25,7 +20,6 @@ import SafetyTips from "./pages/SaftyTips.jsx";
 import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import RegisterCustomerDetails from "./pages/RegisterCustomerDetails";
-import DojahNINTest from "./pages/Test.jsx";
 
 // (links array removed; not used in this file)
 
@@ -38,7 +32,6 @@ export default function App() {
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/registeruser" element={<RegisterCustomer />} />
-          <Route path="/test" element={<DojahNINTest />} />
           <Route
             path="/registeruser/details"
             element={<RegisterCustomerDetails />}
@@ -65,13 +58,6 @@ export default function App() {
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/safety" element={<SafetyTips />} />
-          {/* Admin area (protected separately) */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="listings" element={<AdminListings />} />
-            <Route path="bookings" element={<AdminBookings />} />
-          </Route>
         </Route>
       </Routes>
     </BrowserRouter>
