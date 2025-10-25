@@ -28,6 +28,9 @@ export default function Home() {
     navigate(`/lodge/${lodge.id}`, { state: { lodge } });
   };
 
+  const userDetails = localStorage.getItem("customerProfile");
+  console.log("User Details", JSON.parse(userDetails));
+
   const [user] = useAuthState(auth);
   const location = useLocation();
 

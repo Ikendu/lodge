@@ -7,12 +7,15 @@ export default function RegisterCustomerDetails() {
   const location = useLocation();
   const verified = location.state?.verified?.data || {};
   const provided = location.state?.provided || {};
-  const phone = provided.phone || provided.id || "";
   const from = location.state?.from;
+  const [imageFile, setImageFile] = useState(null);
+
+  const userLogin = JSON.parse(localStorage.getItem("userLogin"));
+  console.log("User Login Data:", userLogin);
 
   const [form, setForm] = useState({
     email: "",
-    dob: verified.date_of_birth || verified.dob || "",
+    dob: verified.date_of_birth || "",
     address: "",
     addressLga: "",
     addressState: "",
@@ -22,6 +25,9 @@ export default function RegisterCustomerDetails() {
     country: "",
     mobile: "",
     imageFile: null,
+    nextOfKinName: "",
+    nextOfKinPhone: "",
+    nextOfKinAddress: "",
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -108,13 +114,17 @@ export default function RegisterCustomerDetails() {
     try {
       const payload = new FormData();
       // include verified fields
+      payload.append("userUid", userLogin?.uid || "");
+      payload.append("userLoginMail", userLogin?.email || "");
       payload.append("firstName", verified.first_name || "");
       payload.append("middleName", verified.middle_name || "");
       payload.append("lastName", verified.last_name || "");
       payload.append("nin", verified.id);
+      payload.append("dob", dob);
+
       // include phone: prefer verified, then provided, then form
       payload.append("phone", verified.phone_number);
-      payload.append("mobile", verified.phone_number);
+      payload.append("mobile", form.mobile);
       // include verified-only fields
       payload.append("birth_country", verified.birth_country || "");
       payload.append("birth_lga", verified.birth_lga || "");
@@ -123,16 +133,20 @@ export default function RegisterCustomerDetails() {
       payload.append("verified_image", verified.image);
       payload.append("verified_signature", verified.signature);
       payload.append("nin_email", verified.email);
+
       // include details from step 2
-      payload.append("email", form.email);
-      payload.append("dob", form.dob);
       payload.append("address", form.address);
       payload.append("addressLga", form.addressLga);
       payload.append("addressState", form.addressState);
       payload.append("permanentAddress", form.permanentAddress);
+      payload.append("email", form.email);
+      payload.append("mobile", form.mobile);
       payload.append("lga", form.lga);
       payload.append("state", form.state);
       payload.append("country", form.country);
+      payload.append("nextOfKinName", form.nextOfKinName);
+      payload.append("nextOfKinPhone", form.nextOfKinPhone);
+      payload.append("nextOfKinAddress", form.nextOfKinAddress);
       // If the user uploaded an image, compress it if >1MB before appending
       if (form.imageFile) {
         let fileToSend = form.imageFile;
@@ -144,6 +158,7 @@ export default function RegisterCustomerDetails() {
           console.warn("Image compression failed, sending original file", err);
         }
         payload.append("image", fileToSend, fileToSend.name || "image.jpg");
+        setImageFile(fileToSend);
       }
 
       const res = await fetch("http://localhost/lodge/register.php", {
@@ -151,6 +166,7 @@ export default function RegisterCustomerDetails() {
         body: payload,
       });
       const data = await res.json();
+      console.log("Registration response:", data);
       if (!data.success) {
         alert(data.message || "Registration failed");
         setSubmitting(false);
@@ -158,10 +174,11 @@ export default function RegisterCustomerDetails() {
       }
 
       const profile = {
+        userUid: userLogin?.uid || "",
+        userLoginMail: userLogin?.email || "",
         firstName: verified.first_name || "",
         middleName: verified.middle_name || "",
         lastName: verified.last_name || "",
-        email: form.email,
         nin: verified.id,
         nin_address: verified.address || "",
         birth_country: verified.birth_country || "",
@@ -169,16 +186,22 @@ export default function RegisterCustomerDetails() {
         birth_lga: verified.birth_lga || "",
         nin_email: verified.email || "",
         nin_image: verified.image || "",
+        nin_phone: verified.phone_number || "",
+        gender: verified.gender || "",
+        dob: dob,
 
-        phone: phone,
+        mobile: form.mobile,
         address: form.address,
         addressLga: form.addressLga,
         addressState: form.addressState,
-        image: fileToSend || "",
+        image: imageFile || "",
         permanentAddress: form.permanentAddress,
         lga: form.lga,
         state: form.state,
         country: form.country,
+        nextOfKinName: form.nextOfKinName,
+        nextOfKinPhone: form.nextOfKinPhone,
+        nextOfKinAddress: form.nextOfKinAddress,
       };
       try {
         localStorage.setItem("customerProfile", JSON.stringify(profile));
@@ -218,18 +241,6 @@ export default function RegisterCustomerDetails() {
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
-          <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">Email</label>
-            <input
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              type="email"
-              className="p-3 rounded-xl"
-              required
-            />
-          </div>
-
           {/* <div className="flex flex-col">
             <label className="text-white mb-2 font-medium">Date of Birth</label>
             <input
@@ -329,10 +340,10 @@ export default function RegisterCustomerDetails() {
             />
           </div>
 
-          {/* Keep a phone field and optional image upload on the form as requested */}
+          {/* Keep a phone field and image upload on the form as requested */}
           <div className="flex flex-col">
             <label className="text-white mb-2 font-medium">
-              Current Mobile Number
+              WhatsApp Mobile Number
             </label>
             <input
               name="mobile"
@@ -351,6 +362,45 @@ export default function RegisterCustomerDetails() {
               accept="image/*"
               onChange={handleChange}
               className="p-2 rounded-xl"
+            />
+          </div>
+          <div></div>
+
+          <div className="flex flex-col">
+            <label className="text-white mb-2 font-medium">
+              Next of Kin Fullname
+            </label>
+            <input
+              name="mobile"
+              value={form.mobile}
+              onChange={handleChange}
+              className="p-3 rounded-xl"
+              placeholder="e.g. 08012345678"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-white mb-2 font-medium">
+              Next of Kin Mobile Number
+            </label>
+            <input
+              name="mobile"
+              value={form.mobile}
+              onChange={handleChange}
+              className="p-3 rounded-xl"
+              placeholder="e.g. 08012345678"
+            />
+          </div>
+          <div className="col-span-1 md:col-span-2 flex flex-col">
+            <label className="text-white mb-2 font-medium">
+              Next of Kin Address
+            </label>
+            <textarea
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+              rows="2"
+              className="p-3 rounded-xl"
+              required
             />
           </div>
 

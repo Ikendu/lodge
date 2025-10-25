@@ -150,3 +150,33 @@ The RegisterCustomer page after getting the nin or phone should get the details 
 After submitting the second page, it will call an endpoint to send all the details.
 After that it will proceed to the profile page that displays all the details.
 there should be a button on the profile page that takes a user back to the page the user was before registration
+
+DATABASE
+
+CREATE TABLE customers (
+id INT AUTO_INCREMENT PRIMARY KEY,
+userUid VARCHAR(255),
+userLoginMail VARCHAR(255),
+firstName VARCHAR(100),
+middleName VARCHAR(100),
+lastName VARCHAR(100),
+nin VARCHAR(50) UNIQUE,
+phone VARCHAR(20),
+mobile VARCHAR(20),
+birth_country VARCHAR(100),
+birth_lga VARCHAR(100),
+birth_state VARCHAR(100),
+gender VARCHAR(10),
+verified_image TEXT,
+verified_signature TEXT,
+nin_email VARCHAR(255),
+address TEXT,
+addressLga VARCHAR(100),
+addressState VARCHAR(100),
+permanentAddress TEXT,
+lga VARCHAR(100),
+state VARCHAR(100),
+country VARCHAR(100),
+image TEXT,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

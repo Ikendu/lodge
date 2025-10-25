@@ -73,6 +73,7 @@ export const socialSignIn = async (provider) => {
     // You can store user info in localStorage or your backend
     console.log("✅ Login Successful:", user);
     alert(`Welcome ${user.displayName || "User"}!`);
+    localStorage.setItem("userLogin", JSON.stringify(user));
 
     // --- Persist firebase user on the server ---
     try {

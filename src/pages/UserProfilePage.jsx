@@ -17,6 +17,7 @@ export default function UserProfilePage() {
   // Profile is always loaded from the backend API. No localStorage or navigation-state fallbacks.
   const [profileData, setProfileData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const savedData = JSON.parse(localStorage.getItem("customerProfile"));
 
   useEffect(() => {
     if (!loading && !user) {
@@ -76,7 +77,7 @@ export default function UserProfilePage() {
   const btnHover = { scale: 1.02 };
 
   // display is strictly from fetched profile data (backend)
-  const display = profileData || {};
+  const display = profileData || savedData || {};
   console.log("Displaying profile:", display);
 
   const getImageSrc = (val) => {
@@ -85,34 +86,26 @@ export default function UserProfilePage() {
     if (val.startsWith("data:")) return val;
     // if looks like base64 (long string) add prefix
     if (/^[A-Za-z0-9+/=\s]+$/.test(val) && val.length > 100)
-      return `data:image/jpeg;base64,${val}`;
+      return `data:image/jpeg;base64,${val}` || val;
     return val; // assume it's a URL
   };
 
   const ninImage =
-    getImageSrc(display.verified_image) ||
-    getImageSrc(display.ninPhoto) ||
-    getImageSrc(display.nin_image) ||
-    ownerImg;
+    getImageSrc(display.verified_image) || getImageSrc(display.nin_image);
 
   const uploadedImage =
-    getImageSrc(display.image) ||
-    getImageSrc(display.uploaded_image) ||
-    getImageSrc(display.givenPhoto) ||
-    user.photoURL ||
-    ownerImg2;
+    display.image || display.uploaded_image || display.givenPhoto || user.image;
 
   const profile = {
     givenPhoto: uploadedImage,
     ninPhoto: ninImage,
     fullName:
-      display.firstName ||
-      display.first_name ||
-      user.displayName ||
+      `${display.firstName} ${display.middleName} ${display.lastName}` ||
       "Not provided",
-    dob: display.dob || display.date_of_birth || "Not provided",
-    email: display.email || "-",
-    phone: display.phone || display.phone_number || display.mobile || "-",
+    dob: display.dob || "Not provided",
+    email: display.userLoginMail || "-",
+    nin_phone: display.phone || "-",
+    mobile: display.mobile || "-",
     nin: display.nin || display.id || "-",
     birthCountry: display.birth_country || "-",
     birthLga: display.birth_lga || "-",
@@ -124,8 +117,8 @@ export default function UserProfilePage() {
       display.addressState || display.address_state || "Not provided",
     lgaResidence: display.lgaResidence || display.lga || "Not provided",
     stateResidence: display.stateResidence || display.state || "Not provided",
-    lgaOrigin: display.lgaOrigin || "Not provided",
-    stateOrigin: display.stateOrigin || "Not provided",
+    lgaOrigin: display.birth_lga || "Not provided",
+    stateOrigin: display.birth_state || "Not provided",
     nextOfKin: display.nextOfKin ||
       display.next_of_kin || {
         name: "Not provided",
@@ -134,6 +127,8 @@ export default function UserProfilePage() {
       },
     otherDetails: display.otherDetails || "-",
   };
+
+  // console.log("Final profile to display:", profile);
 
   return (
     <motion.div
@@ -232,7 +227,7 @@ export default function UserProfilePage() {
 
               <div>
                 <div className="text-xs text-gray-500">LGA of Origin</div>
-                <div className="font-medium">{profile.lgaOrigin}</div>
+                <div className="font-medium">{profile.birthLga}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-500">State of Origin</div>
@@ -261,11 +256,11 @@ export default function UserProfilePage() {
               <div className="col-span-2 mt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-xs text-gray-500">Birth Country</div>
+                    <div className="text-xs text-gray-500">Country</div>
                     <div className="font-medium">{profile.birthCountry}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-gray-500">Birth LGA</div>
+                    <div className="text-xs text-gray-500">LGA</div>
                     <div className="font-medium">{profile.birthLga}</div>
                   </div>
                   <div>
