@@ -73,59 +73,6 @@ export const socialSignIn = async (provider) => {
     // You can store user info in localStorage or your backend
     console.log("✅ Login Successful:", user);
     alert(`Welcome ${user.displayName || "User"}!`);
-    localStorage.setItem("userLogin", JSON.stringify(user));
-
-    // --- Persist firebase user on the server ---
-    try {
-      const idToken = await user.getIdToken();
-      // Send idToken and uid to the backend to link/create profile
-      fetch("http://localhost/lodge/save_firebase_user.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken, uid: user.uid, email: user.email }),
-      })
-        .then((res) => res.json())
-        .then(async (data) => {
-          console.log("save_firebase_user response", data);
-          // After save, refresh the canonical profile from the backend
-          try {
-            const profRes = await fetch(
-              "http://localhost/lodge/get_profile.php?uid=" +
-                encodeURIComponent(user.uid)
-            );
-            const profJson = await profRes.json();
-            if (profJson && profJson.success && profJson.profile) {
-              try {
-                localStorage.setItem(
-                  "customerProfile",
-                  JSON.stringify(profJson.profile)
-                );
-              } catch (e) {
-                console.warn("Failed to persist profile locally", e);
-              }
-              // Notify the app that profile updated
-              try {
-                window.dispatchEvent(
-                  new CustomEvent("profileUpdated", {
-                    detail: profJson.profile,
-                  })
-                );
-              } catch (e) {
-                // CustomEvent may fail in very old browsers; ignore
-              }
-            } else {
-              console.warn("get_profile returned no profile", profJson);
-            }
-          } catch (err) {
-            console.warn("Could not refresh profile from server:", err);
-          }
-        })
-        .catch((err) => {
-          console.warn("Could not save firebase user on server:", err);
-        });
-    } catch (e) {
-      console.warn("Could not obtain ID token from Firebase user:", e);
-    }
     return user;
   } catch (error) {
     console.error("❌ Social Login Error:", error);

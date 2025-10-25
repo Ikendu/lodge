@@ -11,25 +11,16 @@ export default function UserProfilePage() {
   const [user, loading] = useAuthState(auth);
   const navigate = useNavigate();
   const location = useLocation();
-
-  // origin (where the user came from) may still be provided
   const origin = location.state?.from || null;
 
-  // Profile is always loaded from the backend API. No localStorage or navigation-state fallbacks.
   const [profileData, setProfileData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const savedData = JSON.parse(localStorage.getItem("customerProfile"));
 
-  console.log("Saved Data", savedData);
-
   useEffect(() => {
-    if (!loading && !user) {
-      // send user to login and preserve current location so they can come back
-      navigate("/login", { state: { from: location } });
-    }
+    if (!loading && !user) navigate("/login", { state: { from: location } });
   }, [loading, user, navigate, location]);
 
-  // fetch profile from backend using authenticated identifiers
   useEffect(() => {
     const fetchProfile = async () => {
       setLoadingProfile(true);
@@ -38,16 +29,16 @@ export default function UserProfilePage() {
       if (user?.email) params.append("email", user.email);
       if (user?.phoneNumber)
         params.append("phone", user.phoneNumber.replace(/^\+/, ""));
+      console.log("Fetching profile with params:", params.toString());
 
       if (!params.toString()) {
         setLoadingProfile(false);
         return;
       }
-      console.log("Params", params);
 
       try {
         const res = await fetch(
-          `http://localhost/lodge/get_profile.php?${params.toString()}`
+          `http://localhost/lodge/get_profile.php?${params}`
         );
         const j = await res.json();
         const p = j?.profile || j?.data || (j?.success ? j : null);
@@ -61,10 +52,9 @@ export default function UserProfilePage() {
 
     if (!loading && user) fetchProfile();
     if (!loading && !user) setLoadingProfile(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, user]);
 
-  if (loading || !user) return null; // redirect in progress
+  if (loading || !user) return null;
 
   const pageVariants = {
     hidden: { opacity: 0, y: 12 },
@@ -72,25 +62,22 @@ export default function UserProfilePage() {
   };
 
   const cardVariants = {
-    hidden: { opacity: 0, scale: 0.995 },
-    show: { opacity: 1, scale: 1, transition: { duration: 0.45 } },
+    hidden: { opacity: 0, scale: 0.98 },
+    show: { opacity: 1, scale: 1, transition: { duration: 0.6 } },
   };
 
-  const imgHover = { scale: 1.03 };
-  const btnHover = { scale: 1.02 };
+  const imgHover = { scale: 1.05, rotate: 1.5 };
+  const btnHover = { scale: 1.05 };
 
-  // display is strictly from fetched profile data (backend)
   const display = profileData || savedData || {};
-  console.log("Displaying profile:", display);
 
   const getImageSrc = (val) => {
     if (!val) return null;
     if (typeof val !== "string") return null;
     if (val.startsWith("data:")) return val;
-    // if looks like base64 (long string) add prefix
     if (/^[A-Za-z0-9+/=\s]+$/.test(val) && val.length > 100)
       return `data:image/jpeg;base64,${val}` || val;
-    return val; // assume it's a URL
+    return val;
   };
 
   const ninImage =
@@ -98,7 +85,6 @@ export default function UserProfilePage() {
 
   const uploadedImage =
     display.image || display.uploaded_image || display.givenPhoto || user.image;
-  console.log("Image", uploadedImage);
 
   const profile = {
     givenPhoto: uploadedImage,
@@ -130,188 +116,154 @@ export default function UserProfilePage() {
     otherDetails: display.otherDetails || "-",
   };
 
-  // console.log("Final profile to display:", profile);
-
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex justify-center items-center p-6"
+      className="min-h-screen bg-gradient-to-br from-purple-700 via-indigo-800 to-blue-900 flex justify-center items-center p-6 overflow-y-auto"
       variants={pageVariants}
       initial="hidden"
       animate="show"
     >
       <motion.div
-        className="max-w-4xl w-full bg-white rounded-lg shadow p-6"
+        className="max-w-5xl w-full bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8 text-white"
         variants={cardVariants}
       >
-        <div className="flex items-center justify-between mb-6">
-          <motion.h1
-            className="text-2xl font-bold"
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+        <motion.div
+          className="flex items-center justify-between mb-8 border-b border-white/20 pb-4"
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className="text-3xl font-bold tracking-wide text-white drop-shadow">
             User Profile
-          </motion.h1>
+          </h1>
           <motion.button
             onClick={() => navigate(-1)}
-            className="text-sm text-gray-600 hover:underline"
-            whileTap={{ scale: 0.98 }}
+            className="text-sm text-gray-200 hover:text-white transition"
+            whileTap={{ scale: 0.96 }}
           >
-            Back
+            ⬅ Back
           </motion.button>
-        </div>
+        </motion.div>
 
-        <div className="md:flex md:gap-6">
+        <div className="md:flex md:gap-8">
           {/* Left column: images */}
-          <div className="md:w-2/5 space-y-4">
-            <div>
-              <div className="text-sm text-gray-500 mb-2">Verified Image</div>
-              <motion.img
-                src={profile.ninPhoto}
+          <div className="md:w-2/5 space-y-6">
+            <motion.div
+              className="relative group rounded-2xl overflow-hidden shadow-lg border border-white/20"
+              whileHover={imgHover}
+            >
+              <img
+                src={profile.ninPhoto || questImgs}
                 alt="NIN"
-                className="w-full h-48 object-cover rounded-md border"
-                whileHover={imgHover}
-                transition={{ type: "spring", stiffness: 220 }}
+                className="w-full h-60 object-cover rounded-2xl group-hover:opacity-90 transition-all duration-300"
               />
-            </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all flex items-end p-3 text-sm">
+                <span className="text-white/90 font-medium">
+                  Verified Image
+                </span>
+              </div>
+            </motion.div>
 
-            <div>
-              <div className="text-sm text-gray-500 mb-2">Uploaded (Given)</div>
-              <motion.img
+            <motion.div
+              className="relative group rounded-2xl overflow-hidden shadow-lg border border-white/20"
+              whileHover={imgHover}
+            >
+              <img
                 src={questImgs}
                 alt="Given"
-                className="w-full h-48 object-cover rounded-md border"
-                whileHover={imgHover}
-                transition={{ type: "spring", stiffness: 220 }}
+                className="w-full h-60 object-cover rounded-2xl group-hover:opacity-90 transition-all duration-300"
               />
-            </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all flex items-end p-3 text-sm">
+                <span className="text-white/90 font-medium">Given Image</span>
+              </div>
+            </motion.div>
           </div>
 
           {/* Right column: details */}
-          <div className="md:w-3/5 mt-6 md:mt-0">
+          <motion.div
+            className="md:w-3/5 mt-8 md:mt-0 space-y-4 text-white/90"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-xs text-gray-500">Full name</div>
-                <div className="font-medium">{profile.fullName}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">Date of Birth</div>
-                <div className="font-medium">{profile.dob}</div>
-              </div>
+              {[
+                ["Full Name", profile.fullName],
+                ["Date of Birth", profile.dob],
+                ["Email", profile.email],
+                ["Phone", profile.nin_phone],
+                ["Mobile", profile.mobile],
+                ["Gender", profile.gender],
+                ["NIN", profile.nin],
+                ["Contact Address", profile.address],
+                ["LGA of Residence", display.addressLga],
+                ["State of Residence", display.addressState],
+                ["Registered Address", display.nin_address],
+                ["LGA of Origin", display.lga],
+                ["State of Origin", display.state],
+                ["Country", profile.birthCountry],
+              ].map(([label, value], i) => (
+                <motion.div
+                  key={i}
+                  className="bg-white/5 p-3 rounded-lg hover:bg-white/10 transition-all"
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <div className="text-xs text-gray-300 uppercase">{label}</div>
+                  <div className="font-semibold">{value}</div>
+                </motion.div>
+              ))}
+            </div>
 
-              <div>
-                <div className="text-xs text-gray-500">Email</div>
-                <div className="font-medium">{profile.email}</div>
-              </div>
-
-              <div>
-                <div className="text-xs text-gray-500">Phone</div>
-                <div className="font-medium">{profile.nin_phone}</div>
-              </div>
-
-              <div>
-                <div className="text-xs text-gray-500">Mobile</div>
-                <div className="font-medium">{profile.mobile}</div>
-              </div>
-
-              <div>
-                <div className="text-xs text-gray-500">Gender</div>
-                <div className="font-medium">{display.gender}</div>
-              </div>
-
-              <div>
-                <div className="text-xs text-gray-500">NIN</div>
-                <div className="font-medium">{profile.nin}</div>
-              </div>
-
-              <div className="col-span-2">
-                <div className="text-xs text-gray-500">Contact Address</div>
-                <div className="font-medium">{display.address}</div>
-              </div>
-
-              <div>
-                <div className="text-xs text-gray-500">LGA of Residence</div>
-                <div className="font-medium">{display.addressLga}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">State of Residence</div>
-                <div className="font-medium">{display.addressState}</div>
-              </div>
-
-              <div className="col-span-2">
-                <div className="text-xs text-gray-500">Registered Address</div>
-                <div className="font-medium">{display.nin_address}</div>
-              </div>
-
-              <div>
-                <div className="text-xs text-gray-500">LGA of Origin</div>
-                <div className="font-medium">{display.lga}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">State of Origin</div>
-                <div className="font-medium">{display.state}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">Country</div>
-                <div className="font-medium">{profile.birthCountry}</div>
-              </div>
-
-              <div className="col-span-2 mt-2 border-t pt-3">
-                <div className="text-sm font-semibold mb-2">Next of Kin</div>
-                <div className="grid grid-cols-3 gap-4 text-sm text-gray-700">
-                  <div>
-                    <div className="text-xs text-gray-500">Name</div>
-                    <div className="font-medium">{display.nextOfKinName}</div>
+            <div className="mt-6 border-t border-white/20 pt-4">
+              <h2 className="text-lg font-semibold mb-3">Next of Kin</h2>
+              <div className="grid grid-cols-3 gap-4">
+                <motion.div whileHover={{ scale: 1.02 }}>
+                  <div className="text-xs text-gray-300 uppercase">Name</div>
+                  <div className="font-semibold">{display.nextOfKinName}</div>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.02 }}>
+                  <div className="text-xs text-gray-300 uppercase">
+                    Relation
                   </div>
-                  <div>
-                    <div className="text-xs text-gray-500">Relation</div>
-                    <div className="font-medium">
-                      {display.nextOfKinRelation}
-                    </div>
+                  <div className="font-semibold">
+                    {display.nextOfKinRelation}
                   </div>
-                  <div>
-                    <div className="text-xs text-gray-500">Phone</div>
-                    <div className="font-medium">{display.nextOfKinPhone}</div>
-                  </div>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.02 }}>
+                  <div className="text-xs text-gray-300 uppercase">Phone</div>
+                  <div className="font-semibold">{display.nextOfKinPhone}</div>
+                </motion.div>
+              </div>
+              <div className="mt-2">
+                <div className="text-xs text-gray-300 uppercase">
+                  Registered Address
                 </div>
-              </div>
-              <div className="col-span-2 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-xs text-gray-500">LGA</div>
-                    <div className="font-medium">{profile.birthLga}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500">Birth State</div>
-                    <div className="font-medium">{profile.birthState}</div>
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <div className="text-xs text-gray-500">Other details</div>
-                  <div className="text-sm text-gray-700">
-                    {profile.otherDetails}
-                  </div>
-                </div>
+                <div className="font-semibold">{display.nextOfKinAddress}</div>
               </div>
             </div>
 
-            <div className="mt-6 flex gap-3">
+            {/* Buttons */}
+            <motion.div
+              className="mt-8 flex gap-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
               <motion.button
                 onClick={() => navigate("/profile/edit")}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md"
+                className="px-6 py-2 rounded-md font-semibold bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all"
                 whileHover={btnHover}
               >
                 Edit Profile
               </motion.button>
               <motion.button
                 onClick={() => navigate(-1)}
-                className="border border-gray-300 px-4 py-2 rounded-md"
+                className="px-6 py-2 rounded-md font-semibold border border-white/30 hover:bg-white/10 transition-all"
                 whileHover={btnHover}
               >
                 Close
               </motion.button>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </motion.div>
     </motion.div>

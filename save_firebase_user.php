@@ -66,31 +66,7 @@ if (!$providedEmail) $providedEmail = $tokenEmail ?? null;
 // ====================
 // Database connection (same pattern as register.php)
 // ====================
-class ConfigLocal {
-    private $host = "localhost";
-    private $db_name = "lodge";
-    private $username = "root";
-    private $password = "";
-    public $conn;
-
-    public function connect() {
-        $this->conn = null;
-        try {
-            $this->conn = new PDO(
-                "mysql:host=" . $this->host . ";dbname=" . $this->db_name,
-                $this->username,
-                $this->password
-            );
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Database connection failed']);
-            exit;
-        }
-        return $this->conn;
-    }
-}
+include "config.php"
 
 try {
     $db = (new ConfigLocal())->connect();

@@ -16,6 +16,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
+  signOut,
 } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
 
@@ -31,27 +32,51 @@ export default function LoginPage() {
   const location = useLocation();
   const [user] = useAuthState(auth);
 
-  // Get previous page (or default to home). `from` may be a string path or a full location object.
   const rawFrom = location.state?.from || "/";
-
   const buildTarget = (raw) => {
     if (!raw) return { path: "/", state: undefined };
     if (typeof raw === "string") return { path: raw, state: undefined };
-    // raw is a location object
     const path = `${raw.pathname || "/"}${raw.search || ""}${raw.hash || ""}`;
     return { path, state: raw.state };
   };
-
   const fromTarget = buildTarget(rawFrom);
 
-  // If user already signed in, return them to the page they came from (preserve state)
+  // Fetch profile from backend
+  const fetchUserProfile = async (uid, emailAddr) => {
+    try {
+      const res = await fetch("http://localhost/lodge/get_profile.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid, email: emailAddr }),
+      });
+
+      const data = await res.json();
+
+      console.log("Data", data);
+
+      if (data.success && data.profile) {
+        localStorage.setItem("customerProfile", JSON.stringify(data.profile));
+        console.log("✅ Profile saved to localStorage:", data.profile);
+      } else {
+        localStorage.removeItem("customerProfile");
+        console.warn("⚠️ No profile found for this user.");
+      }
+    } catch (err) {
+      console.error("❌ Profile fetch failed:", err);
+      localStorage.removeItem("customerProfile");
+    }
+  };
+
+  // When Firebase user changes (auto-login)
   useEffect(() => {
     if (user) {
+      console.log("Auto-login detected for user:", user.email, user.uid);
+      fetchUserProfile(user.uid, user.email);
       navigate(fromTarget.path, { replace: true, state: fromTarget.state });
     }
-  }, [user, fromTarget.path, fromTarget.state, navigate]);
+  }, [user]);
 
-  // Email/Password Login
+  // Email/Password login
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -64,18 +89,30 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      let userCredential;
       if (isRegister) {
-        // Create new account
-        await createUserWithEmailAndPassword(auth, email, password);
-        alert("✅ Account created. You are now signed in.");
+        userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        alert("✅ Account created successfully.");
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        userCredential = await signInWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
         alert("✅ Login successful!");
       }
-      navigate(fromTarget.path, { replace: true, state: fromTarget.state }); // redirect back (preserve state)
+
+      const uid = userCredential.user.uid;
+      const userEmail = userCredential.user.email;
+      await fetchUserProfile(uid, userEmail);
+
+      navigate(fromTarget.path, { replace: true, state: fromTarget.state });
     } catch (err) {
       console.error(err);
-      // surface firebase error messages more helpfully
       const msg = err?.code
         ? err.code.replace("auth/", "").replace(/-/g, " ")
         : "Authentication failed.";
@@ -85,7 +122,7 @@ export default function LoginPage() {
     }
   };
 
-  // Social Login
+  // Social login
   const handleSocialLogin = async (providerName) => {
     const providerMap = {
       Google: googleProvider,
@@ -100,13 +137,29 @@ export default function LoginPage() {
 
     try {
       setLoading(true);
-      await socialSignIn(provider);
-      navigate(fromTarget.path, { replace: true, state: fromTarget.state }); // redirect to previous page (preserve state)
+      const result = await socialSignIn(provider);
+      const signedUser = result.user;
+      if (signedUser) {
+        await fetchUserProfile(signedUser.uid, signedUser.email);
+      }
+      navigate(fromTarget.path, { replace: true, state: fromTarget.state });
     } catch (error) {
       console.error("Social login failed:", error);
       setError("Login failed. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Logout function
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      localStorage.removeItem("customerProfile");
+      alert("You have logged out.");
+      navigate("/login");
+    } catch (err) {
+      console.error("Logout failed:", err);
     }
   };
 
@@ -128,7 +181,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Email Login Form */}
+        {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-500">
@@ -142,6 +195,7 @@ export default function LoginPage() {
               {isRegister ? "Have an account? Sign in" : "No account? Register"}
             </button>
           </div>
+
           {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-600">
@@ -200,28 +254,6 @@ export default function LoginPage() {
                 ? "Create account"
                 : "Login"}
             </button>
-
-            {!isRegister && (
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!email)
-                    return setError(
-                      "Please enter your email to reset password."
-                    );
-                  try {
-                    await sendPasswordResetEmail(auth, email);
-                    alert("Password reset email sent. Check your inbox.");
-                  } catch (err) {
-                    console.error(err);
-                    setError("Failed to send reset email.");
-                  }
-                }}
-                className="w-full text-sm text-indigo-600 underline"
-              >
-                Forgot password?
-              </button>
-            )}
           </div>
         </form>
 
@@ -231,14 +263,12 @@ export default function LoginPage() {
           <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-full h-px bg-gray-300"></div>
         </div>
 
-        {/* Social Login Buttons */}
+        {/* Social Logins */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
             { name: "Google", color: "bg-red-500" },
             { name: "Yahoo", color: "bg-purple-600" },
-            // { name: "Apple", color: "bg-gray-900" },
             { name: "Facebook", color: "bg-blue-600" },
-            // { name: "X", color: "bg-black" },
           ].map((provider, i) => (
             <motion.button
               key={i}
@@ -253,13 +283,15 @@ export default function LoginPage() {
           ))}
         </div>
 
-        {/* Register Link */}
-        <div className="text-center mt-6 text-sm text-gray-600">
-          Don’t have an account?{" "}
-          <a href="/registeruser" className="text-indigo-600 font-semibold">
-            Register
-          </a>
-        </div>
+        {/* Logout (for testing) */}
+        {user && (
+          <button
+            onClick={handleLogout}
+            className="w-full mt-4 bg-gray-300 py-2 rounded-lg hover:bg-gray-400"
+          >
+            Logout
+          </button>
+        )}
       </motion.div>
     </div>
   );

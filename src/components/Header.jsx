@@ -1,16 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../assets/logos/logo.png";
 import { useState, useRef, useEffect } from "react";
-import {
-  Menu,
-  X,
-  User,
-  Search,
-  PlusSquare,
-  Info,
-  Mail,
-  HelpCircle,
-} from "lucide-react";
+import { Menu, X, User, Search } from "lucide-react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
 import { signOut } from "firebase/auth";
@@ -42,22 +33,8 @@ export default function Header() {
     const t = setTimeout(() => setDebouncedQuery(query.trim()), 250);
     return () => clearTimeout(t);
   }, [query]);
-  const [user, loading] = useAuthState(auth);
+  const [user] = useAuthState(auth);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const [avatarError, setAvatarError] = useState(false);
-
-  // keep account menu state in sync with auth changes
-  useEffect(() => {
-    if (!loading && !user) {
-      // user logged out — close any open account menus
-      setAccountMenuOpen(false);
-    }
-  }, [user, loading]);
-
-  // reset avatar error when user or their photo changes
-  useEffect(() => {
-    setAvatarError(false);
-  }, [user?.photoURL]);
   const parsePriceRange = (text) => {
     // detect patterns like 1000-5000 or ₦1,000-5,000 or min:1000 max:5000
     const cleaned = text.replace(/₦|,|\s/g, "");
@@ -87,11 +64,11 @@ export default function Header() {
   };
 
   const links = [
-    { name: "Find Lodge", path: "/apartments", icon: Search },
-    { name: "List Your Property", path: "/registeruser", icon: PlusSquare },
-    { name: "About Us", path: "/about", icon: Info },
-    { name: "Contact", path: "/contact", icon: Mail },
-    { name: "FAQs", path: "/faqs", icon: HelpCircle },
+    { name: "Find Lodge", path: "/apartments" },
+    { name: "List Your Property", path: "/registerowner" },
+    { name: "About Us", path: "/about" },
+    { name: "Contact", path: "/contact" },
+    { name: "FAQs", path: "/faqs" },
   ];
 
   return (
@@ -203,27 +180,23 @@ export default function Header() {
         {/* Desktop Nav */}
         <nav className="hidden md:flex gap-6 font-medium justify-center">
           {/* small search icon could be here for compact layouts */}
-          {links.map((link, i) => {
-            const Icon = link.icon;
-            return (
-              <button
-                key={i}
-                onClick={() => {
-                  if (link.path === "/registeruser" && !user) {
-                    navigate("/login", {
-                      state: { from: { pathname: "/registeruser" } },
-                    });
-                  } else {
-                    navigate(link.path);
-                  }
-                }}
-                className="hover:text-yellow-300 transition-colors flex items-center gap-2"
-              >
-                {Icon && <Icon size={16} />}
-                <span>{link.name}</span>
-              </button>
-            );
-          })}
+          {links.map((link, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                if (link.path === "/registerowner" && !user) {
+                  navigate("/login", {
+                    state: { from: { pathname: "/registerowner" } },
+                  });
+                } else {
+                  navigate(link.path);
+                }
+              }}
+              className="hover:text-yellow-300 transition-colors"
+            >
+              {link.name}
+            </button>
+          ))}
           {/* Login / Account */}
           {!user ? (
             <button
@@ -241,12 +214,11 @@ export default function Header() {
                 className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden"
                 aria-label="Account menu"
               >
-                {user.photoURL && !avatarError ? (
+                {user.photoURL ? (
                   <img
                     src={user.photoURL}
                     alt={user.displayName || "User"}
                     className="w-full h-full object-cover"
-                    onError={() => setAvatarError(true)}
                   />
                 ) : (
                   <User size={18} />
@@ -269,6 +241,10 @@ export default function Header() {
                       await signOut(auth);
                       setAccountMenuOpen(false);
                       // after logout, redirect to home
+
+                      localStorage.removeItem("customerProfile");
+                      localStorage.removeItem("userLogin");
+                      alert("Logged out successfully!");
                       navigate("/");
                     }}
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100"
@@ -310,12 +286,11 @@ export default function Header() {
                 className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden"
                 aria-label="Account menu"
               >
-                {user.photoURL && !avatarError ? (
+                {user.photoURL ? (
                   <img
                     src={user.photoURL}
                     alt={user.displayName || "User"}
                     className="w-full h-full object-cover"
-                    onError={() => setAvatarError(true)}
                   />
                 ) : (
                   <User size={18} />
@@ -337,6 +312,9 @@ export default function Header() {
                     onClick={async () => {
                       await signOut(auth);
                       setAccountMenuOpen(false);
+                      localStorage.removeItem("customerProfile");
+                      localStorage.removeItem("userLogin");
+                      alert("Logged out successfully!");
                       navigate("/");
                     }}
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100"
@@ -436,30 +414,24 @@ export default function Header() {
               Go
             </button>
           </div>
-          {links.map((link, i) => {
-            const Icon = link.icon;
-            return (
-              <button
-                key={i}
-                onClick={() => {
-                  if (link.path === "/registeruser" && !user) {
-                    navigate("/login", {
-                      state: { from: { pathname: "/registeruser" } },
-                    });
-                  } else {
-                    navigate(link.path);
-                  }
-                  setMenuOpen(false);
-                }}
-                className="block w-full hover:text-yellow-300 transition-colors"
-              >
-                <div className="flex items-center justify-center gap-2">
-                  {Icon && <Icon size={18} />}
-                  <span>{link.name}</span>
-                </div>
-              </button>
-            );
-          })}
+          {links.map((link, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                if (link.path === "/registerowner" && !user) {
+                  navigate("/login", {
+                    state: { from: { pathname: "/registerowner" } },
+                  });
+                } else {
+                  navigate(link.path);
+                }
+                setMenuOpen(false);
+              }}
+              className="block w-full hover:text-yellow-300 transition-colors"
+            >
+              {link.name}
+            </button>
+          ))}
         </div>
       )}
 

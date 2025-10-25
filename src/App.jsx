@@ -20,6 +20,7 @@ import SafetyTips from "./pages/SaftyTips.jsx";
 import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import RegisterCustomerDetails from "./pages/RegisterCustomerDetails";
+import AddNewLodge from "./pages/AddNewLodge.jsx";
 
 // (links array removed; not used in this file)
 
@@ -40,15 +41,8 @@ export default function App() {
           <Route path="/register-success" element={<RegisterSuccess />} />
           <Route path="/lodge/:id" element={<LodgeDetails />} />
 
-          {/* <Route
-            path="/lodge/:id"
-            element={
-              <ProtectedRoute>
-                <LodgeDetails />
-              </ProtectedRoute>
-            }
-          /> */}
           <Route path="/apartments" element={<Apartments />} />
+          <Route path="/add-lodge" element={<AddNewLodge />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
