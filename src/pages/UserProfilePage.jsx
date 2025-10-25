@@ -4,6 +4,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
 import ownerImg from "../assets/logos/owner.png";
 import ownerImg2 from "../assets/logos/ownerh.png";
+import questImgs from "./uploads/IMG_68fcacc55d41f.jpg";
 import { motion } from "framer-motion";
 
 export default function UserProfilePage() {
@@ -18,6 +19,8 @@ export default function UserProfilePage() {
   const [profileData, setProfileData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const savedData = JSON.parse(localStorage.getItem("customerProfile"));
+
+  console.log("Saved Data", savedData);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -95,13 +98,12 @@ export default function UserProfilePage() {
 
   const uploadedImage =
     display.image || display.uploaded_image || display.givenPhoto || user.image;
+  console.log("Image", uploadedImage);
 
   const profile = {
     givenPhoto: uploadedImage,
     ninPhoto: ninImage,
-    fullName:
-      `${display.firstName} ${display.middleName} ${display.lastName}` ||
-      "Not provided",
+    fullName: `${display?.firstName} ${display?.middleName} ${display?.lastName}`,
     dob: display.dob || "Not provided",
     email: display.userLoginMail || "-",
     nin_phone: display.phone || "-",
@@ -162,7 +164,7 @@ export default function UserProfilePage() {
           {/* Left column: images */}
           <div className="md:w-2/5 space-y-4">
             <div>
-              <div className="text-sm text-gray-500 mb-2">NIN</div>
+              <div className="text-sm text-gray-500 mb-2">Verified Image</div>
               <motion.img
                 src={profile.ninPhoto}
                 alt="NIN"
@@ -175,7 +177,7 @@ export default function UserProfilePage() {
             <div>
               <div className="text-sm text-gray-500 mb-2">Uploaded (Given)</div>
               <motion.img
-                src={profile.givenPhoto}
+                src={questImgs}
                 alt="Given"
                 className="w-full h-48 object-cover rounded-md border"
                 whileHover={imgHover}
@@ -203,7 +205,17 @@ export default function UserProfilePage() {
 
               <div>
                 <div className="text-xs text-gray-500">Phone</div>
-                <div className="font-medium">{profile.phone}</div>
+                <div className="font-medium">{profile.nin_phone}</div>
+              </div>
+
+              <div>
+                <div className="text-xs text-gray-500">Mobile</div>
+                <div className="font-medium">{profile.mobile}</div>
+              </div>
+
+              <div>
+                <div className="text-xs text-gray-500">Gender</div>
+                <div className="font-medium">{display.gender}</div>
               </div>
 
               <div>
@@ -212,26 +224,35 @@ export default function UserProfilePage() {
               </div>
 
               <div className="col-span-2">
-                <div className="text-xs text-gray-500">Address</div>
-                <div className="font-medium">{profile.address}</div>
+                <div className="text-xs text-gray-500">Contact Address</div>
+                <div className="font-medium">{display.address}</div>
               </div>
 
               <div>
                 <div className="text-xs text-gray-500">LGA of Residence</div>
-                <div className="font-medium">{profile.lgaResidence}</div>
+                <div className="font-medium">{display.addressLga}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-500">State of Residence</div>
-                <div className="font-medium">{profile.stateResidence}</div>
+                <div className="font-medium">{display.addressState}</div>
+              </div>
+
+              <div className="col-span-2">
+                <div className="text-xs text-gray-500">Registered Address</div>
+                <div className="font-medium">{display.nin_address}</div>
               </div>
 
               <div>
                 <div className="text-xs text-gray-500">LGA of Origin</div>
-                <div className="font-medium">{profile.birthLga}</div>
+                <div className="font-medium">{display.lga}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-500">State of Origin</div>
-                <div className="font-medium">{profile.stateOrigin}</div>
+                <div className="font-medium">{display.state}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">Country</div>
+                <div className="font-medium">{profile.birthCountry}</div>
               </div>
 
               <div className="col-span-2 mt-2 border-t pt-3">
@@ -239,26 +260,22 @@ export default function UserProfilePage() {
                 <div className="grid grid-cols-3 gap-4 text-sm text-gray-700">
                   <div>
                     <div className="text-xs text-gray-500">Name</div>
-                    <div className="font-medium">{profile.nextOfKin.name}</div>
+                    <div className="font-medium">{display.nextOfKinName}</div>
                   </div>
                   <div>
                     <div className="text-xs text-gray-500">Relation</div>
                     <div className="font-medium">
-                      {profile.nextOfKin.relation}
+                      {display.nextOfKinRelation}
                     </div>
                   </div>
                   <div>
                     <div className="text-xs text-gray-500">Phone</div>
-                    <div className="font-medium">{profile.nextOfKin.phone}</div>
+                    <div className="font-medium">{display.nextOfKinPhone}</div>
                   </div>
                 </div>
               </div>
               <div className="col-span-2 mt-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-xs text-gray-500">Country</div>
-                    <div className="font-medium">{profile.birthCountry}</div>
-                  </div>
                   <div>
                     <div className="text-xs text-gray-500">LGA</div>
                     <div className="font-medium">{profile.birthLga}</div>
@@ -266,10 +283,6 @@ export default function UserProfilePage() {
                   <div>
                     <div className="text-xs text-gray-500">Birth State</div>
                     <div className="font-medium">{profile.birthState}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500">Gender</div>
-                    <div className="font-medium">{profile.gender}</div>
                   </div>
                 </div>
 

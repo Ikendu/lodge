@@ -1,186 +1,137 @@
 <?php
-// Secure headers and CORS
-header("Access-Control-Allow-Origin: http://localhost:5173"); // change to your frontend domain
-header("Access-Control-Allow-Methods: POST");
+// ===========================================
+// Secure headers and CORS setup
+// ===========================================
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Content-Type: application/json; charset=UTF-8");
+header("Content-Type: application/json");
 
-// ===========================
-// CONFIGURATION CLASS
-// ===========================
-class Config {
-    private $host = "localhost";
-    private $db_name = "lodge";
-    private $username = "root";
-    private $password = "";
-    public $conn;
-
-    public function connect() {
-        $this->conn = null;
-        try {
-            $this->conn = new PDO(
-                "mysql:host=" . $this->host . ";dbname=" . $this->db_name,
-                $this->username,
-                $this->password
-            );
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Database connection failed"]);
-            exit;
-        }
-        return $this->conn;
-    }
+// Preflight request (for OPTIONS)
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
 }
 
-// ===========================
-// USER CLASS
-// ===========================
-class User {
+// ===========================================
+// Include database config
+// ===========================================
+require_once "config.php"; // Contains Database connection class
+
+// ===========================================
+// Customer Registration Class
+// ===========================================
+class RegisterCustomer {
     private $conn;
-    private $table = "customers";
 
     public function __construct($db) {
         $this->conn = $db;
     }
 
-    // --- CHECK IF USER EXISTS ---
-    public function exists($nin, $phone) {
-        $sql = "SELECT id FROM {$this->table} WHERE nin = :nin OR phone = :phone LIMIT 1";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue(":nin", $nin);
-        $stmt->bindValue(":phone", $phone);
-        $stmt->execute();
-
-        return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+    private function sanitize($data) {
+        return htmlspecialchars(strip_tags(trim($data)));
     }
 
-    // --- REGISTER USER ---
-    public function register($data, $file) {
-        // Sanitize input data
-        foreach ($data as $key => $value) {
-            $data[$key] = htmlspecialchars(strip_tags(trim($value)));
+    private function customerExists($nin) {
+        $query = "SELECT id FROM customers WHERE nin = :nin LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":nin", $nin);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    private function uploadImage($file) {
+        if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) return null;
+
+        $targetDir = __DIR__ . "/uploads/";
+        if (!file_exists($targetDir)) mkdir($targetDir, 0777, true);
+
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png'];
+        if (!in_array($ext, $allowed)) {
+            throw new Exception("Invalid image format. Only JPG, JPEG, PNG allowed.");
         }
 
-        $nin = $data["nin"] ?? null;
-        $phone = $data["phone"] ?? null;
+        $fileName = uniqid("IMG_", true) . "." . $ext;
+        $targetPath = $targetDir . $fileName;
 
-        // Check if customer already exists
-        if ($this->exists($nin, $phone)) {
-            throw new Exception("Customer with this NIN or phone number already exists.");
+        if (move_uploaded_file($file["tmp_name"], $targetPath)) {
+            return "uploads/" . $fileName; // relative path for frontend
+        }
+        return null;
+    }
+
+    public function register($data, $files) {
+        $nin = $this->sanitize($data['nin'] ?? '');
+        if (empty($nin)) {
+            return ["success" => false, "message" => "NIN is required"];
         }
 
-        // Handle file upload if provided
-        $imagePath = null;
-        if ($file && isset($file["tmp_name"]) && is_uploaded_file($file["tmp_name"])) {
-            $uploadDir = __DIR__ . "/uploads/";
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
-
-            $allowedExts = ["jpg", "jpeg", "png"];
-            $fileExt = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
-
-            if (!in_array($fileExt, $allowedExts)) {
-                throw new Exception("Invalid file type. Only JPG, JPEG, PNG allowed.");
-            }
-
-            if ($file["size"] > 2 * 1024 * 1024) {
-                throw new Exception("File too large. Max 2MB allowed.");
-            }
-
-            $fileName = uniqid("img_", true) . "." . $fileExt;
-            $targetPath = $uploadDir . $fileName;
-
-            if (!move_uploaded_file($file["tmp_name"], $targetPath)) {
-                throw new Exception("File upload failed.");
-            }
-
-            $imagePath = "uploads/" . $fileName;
+        if ($this->customerExists($nin)) {
+            return ["success" => false, "message" => "Customer already exists"];
         }
 
-        // Insert new record securely
-        // Detect if customers table has firebase_uid column
-        $hasFirebase = false;
-        try {
-            $check = $this->conn->query("SHOW COLUMNS FROM {$this->table} LIKE 'firebase_uid'");
-            if ($check && $check->rowCount() > 0) $hasFirebase = true;
-        } catch (Exception $e) {
-            // ignore
-        }
+        // Upload image
+        $uploadedImage = $this->uploadImage($files['image'] ?? null);
 
-        $cols = [
-            'first_name','middle_name','last_name','nin','phone','mobile','email','dob',
-            'address','address_lga','address_state','permanent_address','lga','state','country',
-            'gender','birth_country','birth_lga','birth_state','verified_image','verified_signature','nin_email','image_path'
+        // Prepare SQL
+        $query = "INSERT INTO customers (
+            userUid, userLoginMail, firstName, middleName, lastName,
+            nin, phone, mobile, birth_country, birth_lga, birth_state,
+            gender, verified_image, verified_signature, nin_email,
+            address, addressLga, addressState, permanentAddress,
+            lga, state, country, image, created_at
+        ) VALUES (
+            :userUid, :userLoginMail, :firstName, :middleName, :lastName,
+            :nin, :phone, :mobile, :birth_country, :birth_lga, :birth_state,
+            :gender, :verified_image, :verified_signature, :nin_email,
+            :address, :addressLga, :addressState, :permanentAddress,
+            :lga, :state, :country, :image, NOW()
+        )";
+
+        $stmt = $this->conn->prepare($query);
+
+        // Bind values
+        $fields = [
+            "userUid", "userLoginMail", "firstName", "middleName", "lastName",
+            "nin", "phone", "mobile", "birth_country", "birth_lga", "birth_state",
+            "gender", "verified_image", "verified_signature", "nin_email",
+            "address", "addressLga", "addressState", "permanentAddress",
+            "lga", "state", "country"
         ];
-        if ($hasFirebase) $cols[] = 'firebase_uid';
-
-        $placeholders = array_map(function($c){ return ':' . $c; }, $cols);
-        $sql = "INSERT INTO {$this->table} (" . implode(',', $cols) . ") VALUES (" . implode(',', $placeholders) . ")";
-        $stmt = $this->conn->prepare($sql);
-
-        // bind common values
-        $stmt->bindValue(":first_name", $data["firstName"] ?? null);
-        $stmt->bindValue(":middle_name", $data["middleName"] ?? null);
-        $stmt->bindValue(":last_name", $data["lastName"] ?? null);
-        $stmt->bindValue(":nin", $nin);
-        $stmt->bindValue(":phone", $phone);
-        $stmt->bindValue(":mobile", $data["mobile"] ?? null);
-        $stmt->bindValue(":email", $data["email"] ?? null);
-        $stmt->bindValue(":dob", $data["dob"] ?? null);
-        $stmt->bindValue(":address", $data["address"] ?? null);
-        $stmt->bindValue(":address_lga", $data["addressLga"] ?? null);
-        $stmt->bindValue(":address_state", $data["addressState"] ?? null);
-        $stmt->bindValue(":permanent_address", $data["permanentAddress"] ?? null);
-        $stmt->bindValue(":lga", $data["lga"] ?? null);
-        $stmt->bindValue(":state", $data["state"] ?? null);
-        $stmt->bindValue(":country", $data["country"] ?? null);
-        $stmt->bindValue(":gender", $data["gender"] ?? null);
-        $stmt->bindValue(":birth_country", $data["birth_country"] ?? null);
-        $stmt->bindValue(":birth_lga", $data["birth_lga"] ?? null);
-        $stmt->bindValue(":birth_state", $data["birth_state"] ?? null);
-        $stmt->bindValue(":verified_image", $data["verified_image"] ?? null);
-        $stmt->bindValue(":verified_signature", $data["verified_signature"] ?? null);
-        $stmt->bindValue(":nin_email", $data["nin_email"] ?? null);
-        $stmt->bindValue(":image_path", $imagePath);
-
-        if ($hasFirebase) {
-            $stmt->bindValue(":firebase_uid", $data["firebase_uid"] ?? null);
+        foreach ($fields as $f) {
+            $stmt->bindValue(":$f", $this->sanitize($data[$f] ?? ""));
         }
+        $stmt->bindValue(":image", $uploadedImage);
 
-        if ($stmt->execute()) {
-            return true;
+        try {
+            $result = $stmt->execute();
+            if ($result) {
+                return ["success" => true, "message" => "Customer registered successfully"];
+            } else {
+                return ["success" => false, "message" => "Registration failed during execution."];
+            }
+        } catch (PDOException $e) {
+            return ["success" => false, "message" => "Database error: " . $e->getMessage()];
+        } catch (Exception $e) {
+            return ["success" => false, "message" => $e->getMessage()];
         }
-        return false;
     }
 }
 
-// ===========================
-// MAIN EXECUTION
-// ===========================
+// ===========================================
+// Main Execution
+// ===========================================
 try {
-    if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-        http_response_code(405);
-        echo json_encode(["success" => false, "message" => "Method not allowed"]);
-        exit;
-    }
-
-    $database = new Config();
+    $database = new Database();
     $db = $database->connect();
-    $user = new User($db);
+    $register = new RegisterCustomer($db);
 
-    $postData = $_POST;
-    $fileData = $_FILES["image"] ?? null;
+    $response = $register->register($_POST, $_FILES);
 
-    $success = $user->register($postData, $fileData);
-
-    echo json_encode([
-        "success" => $success,
-        "message" => $success ? "Registration successful" : "Registration failed"
-    ]);
-
+    echo json_encode($response, JSON_UNESCAPED_SLASHES);
 } catch (Exception $e) {
-    http_response_code(400);
+    http_response_code(500);
     echo json_encode(["success" => false, "message" => $e->getMessage()]);
 }
 ?>
