@@ -1,4 +1,7 @@
+// src/pages/RegisterCustomer.jsx
 import { useEffect, useState } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "../firebaseConfig";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -12,50 +15,93 @@ export default function RegisterCustomer() {
     phone: "",
   });
   const [loading, setLoading] = useState(false);
+  const [checkingLogin, setCheckingLogin] = useState(true);
 
+  // also accept Firebase auth presence as a valid login
+  const [firebaseUser, loadingAuth] = useAuthState(auth);
+
+  // ✅ Wait for localStorage before deciding redirect
   useEffect(() => {
-    const user = localStorage.getItem("userLogin");
+    // Allow access to this page if either we have a local storage flag
+    // or Firebase reports a signed-in user. Otherwise redirect to login.
+    const userData = localStorage.getItem("userLogin");
 
-    if (!user) {
+    // While Firebase auth is initializing, wait to avoid flicker
+    if (loadingAuth) return;
+
+    if (!userData && !firebaseUser) {
+      console.log(
+        "No user found (localStorage + firebase) → redirecting to /login"
+      );
       navigate("/login");
-      return;
+    } else {
+      console.log("User present → allow register page");
     }
-  }, [navigate]);
+    setCheckingLogin(false);
+  }, [navigate, firebaseUser, loadingAuth]);
 
   const handleChange = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.nin || !form.firstName || !form.lastName)
-      return alert("Please fill required fields");
+
+    if (!form.nin || !form.firstName || !form.lastName) {
+      alert("Please fill required fields");
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = new FormData();
       payload.append("nin", form.nin);
+      payload.append("firstName", form.firstName);
+      payload.append("lastName", form.lastName);
+      payload.append("phone", form.phone);
 
-      const res = await fetch("http://localhost/verify_nin.php", {
+      const res = await fetch("http://localhost/lodge/verify_nin.php", {
         method: "POST",
         body: payload,
       });
-      const data = await res.json();
-      if (!data.success)
-        return alert(data.message || "NIN verification failed");
+
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        console.error("Invalid JSON response:", text);
+        throw new Error("Invalid JSON from server");
+      }
+
+      if (!data.success) {
+        alert(data.message || "NIN verification failed");
+        return;
+      }
 
       // merge verified data returned from server with phone and navigate to details step
       const verified = data.data || {};
       const state = { verified, phone: form.phone };
-      // preserve original booking flow state if present
+
       if (location.state && location.state.from)
         state.from = location.state.from;
+
       navigate("/registeruser/details", { state });
     } catch (err) {
       console.error(err);
-      alert("Verification failed");
+      alert("Verification failed, please try again.");
     } finally {
       setLoading(false);
     }
   };
+
+  // ✅ Prevent render flicker while checking login
+  if (checkingLogin) {
+    return (
+      <div className="flex items-center justify-center h-screen text-white bg-indigo-700">
+        Checking login...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 p-4">

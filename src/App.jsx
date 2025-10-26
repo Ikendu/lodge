@@ -2,6 +2,7 @@ import React from "react";
 // src/App.jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
+import ScrollToTop from "./components/ScrollToTop";
 import Home from "./pages/Home";
 import About from "./pages/AboutUs.jsx";
 import RegisterCustomer from "./pages/RegisterCustomer";
@@ -27,6 +28,7 @@ import AddNewLodge from "./pages/AddNewLodge.jsx";
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />

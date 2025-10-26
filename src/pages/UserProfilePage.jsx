@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
-import ownerImg from "../assets/logos/owner.png";
-import ownerImg2 from "../assets/logos/ownerh.png";
 import questImgs from "./uploads/IMG_68fcacc55d41f.jpg";
 import { motion } from "framer-motion";
 

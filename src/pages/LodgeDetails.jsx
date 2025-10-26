@@ -21,34 +21,44 @@ export default function LodgeDetails() {
 
   // Use Firebase auth state to determine whether the user is signed in
   const [user] = useAuthState(auth);
-  const profile = JSON.parse(localStorage.getItem("customerProfile"));
 
   // Fullscreen viewer state (declare hooks early so they are not conditional)
   const [viewerOpen, setViewerOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   // direction: 1 for next (forward), -1 for prev (back)
   const [direction, setDirection] = useState(0);
+  // Modal state for booking flow (not signed in / missing profile)
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [bookingModalType, setBookingModalType] = useState(null); // 'notSignedIn' | 'noProfile' | null
   // viewerSources: array of image urls currently shown in the fullscreen viewer
   const [viewerSources, setViewerSources] = useState([]);
   // track whether viewer is showing lodge images or owner images
   const [viewerKind, setViewerKind] = useState("lodge");
 
   const handleBookNow = () => {
-    if (!user) {
-      navigate("/login", { state: { from: location.pathname, lodge } });
+    // Booking flow logic now shows a modal instead of immediate redirects
+    // when the user is not signed in or missing profile information.
+    if (!user || !user.email) {
+      setBookingModalType("notSignedIn");
+      setBookingModalOpen(true);
       return;
     }
 
-    const storedProfile = localStorage.getItem("customerProfile");
-    const profile = storedProfile ? JSON.parse(storedProfile) : null;
+    // If signed in, check client-side stored profile
+    let profile = null;
+    try {
+      profile = JSON.parse(localStorage.getItem("customerProfile") || "null");
+    } catch (e) {
+      profile = null;
+    }
 
     if (!profile || !profile.nin) {
-      console.log("No profile found, redirecting to /registeruser...");
-      navigate("/registeruser", { state: { from: location.pathname, lodge } });
+      setBookingModalType("noProfile");
+      setBookingModalOpen(true);
       return;
     }
 
-    // Profile exists and contains NIN -> proceed to payment and pass lodge + profile
+    // Profile exists -> proceed to payment
     const booking = {
       lodge,
       profile,
@@ -57,7 +67,6 @@ export default function LodgeDetails() {
       nights: nights || 0,
       total: total || 0,
     };
-
     navigate("/payment", { state: booking });
   };
 
@@ -564,6 +573,93 @@ export default function LodgeDetails() {
             </div>
           </div>
         </div>
+        {/* Booking modal (login/register/complete profile) */}
+        <AnimatePresence>
+          {bookingModalOpen && (
+            <motion.div
+              className="fixed inset-0 z-60 flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div
+                className="absolute inset-0 bg-black/60"
+                onClick={() => setBookingModalOpen(false)}
+              />
+
+              <motion.div
+                className="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6 z-50"
+                initial={{ scale: 0.98, y: 12, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.98, y: 8, opacity: 0 }}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      {bookingModalType === "notSignedIn"
+                        ? "Please sign in or register"
+                        : "Complete your profile"}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-2">
+                      {bookingModalType === "notSignedIn"
+                        ? "You must be signed in to make a booking. Sign in or create an account to continue."
+                        : "We couldn't find your profile details (NIN or phone). Please complete your profile before booking."}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setBookingModalOpen(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                    aria-label="Close modal"
+                  >
+                    <FiX size={20} />
+                  </button>
+                </div>
+
+                <div className="mt-5 flex gap-3">
+                  {bookingModalType === "notSignedIn" ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          setBookingModalOpen(false);
+                          navigate("/login", { state: { from: location } });
+                        }}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md font-semibold"
+                      >
+                        Login / Register
+                      </button>
+                      <button
+                        onClick={() => setBookingModalOpen(false)}
+                        className="px-4 py-2 border rounded-md"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setBookingModalOpen(false);
+                          navigate("/registeruser", {
+                            state: { from: location },
+                          });
+                        }}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-md font-semibold"
+                      >
+                        Complete Profile
+                      </button>
+                      <button
+                        onClick={() => setBookingModalOpen(false)}
+                        className="px-4 py-2 border rounded-md"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );
