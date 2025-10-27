@@ -1,29 +1,12 @@
 <?php
-// ===========================================
-// Secure headers and CORS setup
-// ===========================================
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json");
+require_once "config.php";
 
-// Preflight request (for OPTIONS)
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
-// ===========================================
-// Include database config
-// ===========================================
-require_once "config.php"; // Contains Database connection class
-
-// ===========================================
-// Customer Registration Class
-// ===========================================
 class RegisterCustomer {
     private $conn;
-
     public function __construct($db) {
         $this->conn = $db;
     }
@@ -41,22 +24,26 @@ class RegisterCustomer {
     }
 
     private function uploadImage($file) {
-        if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) return null;
-
-        $targetDir = __DIR__ . "/uploads/";
-        if (!file_exists($targetDir)) mkdir($targetDir, 0777, true);
-
-        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        $allowed = ['jpg', 'jpeg', 'png'];
-        if (!in_array($ext, $allowed)) {
-            throw new Exception("Invalid image format. Only JPG, JPEG, PNG allowed.");
+        if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) {
+            return null;
         }
 
-        $fileName = uniqid("IMG_", true) . "." . $ext;
-        $targetPath = $targetDir . $fileName;
+        $targetDir = "uploads/";
+        if (!file_exists($targetDir)) {
+            mkdir($targetDir, 0777, true);
+        }
 
-        if (move_uploaded_file($file["tmp_name"], $targetPath)) {
-            return "uploads/" . $fileName; // relative path for frontend
+        $fileExt = pathinfo($file["name"], PATHINFO_EXTENSION);
+        $fileName = uniqid("IMG_") . "." . $fileExt;
+        $targetFilePath = $targetDir . $fileName;
+
+        $check = getimagesize($file["tmp_name"]);
+        if ($check === false) {
+            return null;
+        }
+
+        if (move_uploaded_file($file["tmp_name"], $targetFilePath)) {
+            return $targetFilePath;
         }
         return null;
     }
@@ -71,67 +58,68 @@ class RegisterCustomer {
             return ["success" => false, "message" => "Customer already exists"];
         }
 
-        // Upload image
-        $uploadedImage = $this->uploadImage($files['image'] ?? null);
-
-        // Prepare SQL
         $query = "INSERT INTO customers (
-            userUid, userLoginMail, firstName, middleName, lastName,
-            nin, phone, mobile, birth_country, birth_lga, birth_state,
-            gender, verified_image, verified_signature, nin_email,
-            address, addressLga, addressState, permanentAddress,
-            lga, state, country, image, created_at
+            userUid, userLoginMail, firstName, middleName, lastName, nin, nin_address, dob,
+            phone, mobile, birth_country, birth_lga, birth_state, gender,
+            verified_image, verified_signature, nin_email, address, addressLga, addressState,
+            permanentAddress, email, lga, state, country,
+            nextOfKinName, nextOfKinPhone, nextOfKinAddress, nextOfKinRelation, image, created_at
         ) VALUES (
-            :userUid, :userLoginMail, :firstName, :middleName, :lastName,
-            :nin, :phone, :mobile, :birth_country, :birth_lga, :birth_state,
-            :gender, :verified_image, :verified_signature, :nin_email,
-            :address, :addressLga, :addressState, :permanentAddress,
-            :lga, :state, :country, :image, NOW()
+            :userUid, :userLoginMail, :firstName, :middleName, :lastName, :nin, :nin_address, :dob,
+            :phone, :mobile, :birth_country, :birth_lga, :birth_state, :gender,
+            :verified_image, :verified_signature, :nin_email, :address, :addressLga, :addressState,
+            :permanentAddress, :email, :lga, :state, :country,
+            :nextOfKinName, :nextOfKinPhone, :nextOfKinAddress, :nextOfKinRelation, :image, NOW()
         )";
 
         $stmt = $this->conn->prepare($query);
 
-        // Bind values
+        $uploadedImage = $this->uploadImage($files['image'] ?? null);
+
+        // Bind parameters safely
         $fields = [
-            "userUid", "userLoginMail", "firstName", "middleName", "lastName",
-            "nin", "phone", "mobile", "birth_country", "birth_lga", "birth_state",
-            "gender", "verified_image", "verified_signature", "nin_email",
-            "address", "addressLga", "addressState", "permanentAddress",
-            "lga", "state", "country"
+            "userUid", "userLoginMail", "firstName", "middleName", "lastName", "nin",
+            "nin_address", "dob", "phone", "mobile", "birth_country", "birth_lga",
+            "birth_state", "gender", "verified_image", "verified_signature", "nin_email",
+            "address", "addressLga", "addressState", "permanentAddress", "email", "lga",
+            "state", "country", "nextOfKinName", "nextOfKinPhone", "nextOfKinAddress", "nextOfKinRelation"
         ];
-        foreach ($fields as $f) {
-            $stmt->bindValue(":$f", $this->sanitize($data[$f] ?? ""));
+
+        foreach ($fields as $field) {
+            $stmt->bindValue(":$field", $this->sanitize($data[$field] ?? ''));
         }
-        $stmt->bindValue(":image", $uploadedImage);
+
+        $stmt->bindValue(":image", $uploadedImage ?? '');
 
         try {
-            $result = $stmt->execute();
-            if ($result) {
-                return ["success" => true, "message" => "Customer registered successfully"];
+            if ($stmt->execute()) {
+                $insertedId = $this->conn->lastInsertId();
+
+                // Fetch the full record
+                $fetchQuery = "SELECT * FROM customers WHERE id = :id LIMIT 1";
+                $fetchStmt = $this->conn->prepare($fetchQuery);
+                $fetchStmt->bindParam(":id", $insertedId);
+                $fetchStmt->execute();
+                $customerData = $fetchStmt->fetch(PDO::FETCH_ASSOC);
+
+                return [
+                    "success" => true,
+                    "message" => "Customer registered successfully!",
+                    "data" => $customerData
+                ];
             } else {
-                return ["success" => false, "message" => "Registration failed during execution."];
+                return ["success" => false, "message" => "Failed to register customer"];
             }
         } catch (PDOException $e) {
             return ["success" => false, "message" => "Database error: " . $e->getMessage()];
-        } catch (Exception $e) {
-            return ["success" => false, "message" => $e->getMessage()];
         }
     }
 }
 
-// ===========================================
-// Main Execution
-// ===========================================
-try {
-    $database = new Database();
-    $db = $database->connect();
-    $register = new RegisterCustomer($db);
-
-    $response = $register->register($_POST, $_FILES);
-
-    echo json_encode($response, JSON_UNESCAPED_SLASHES);
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(["success" => false, "message" => $e->getMessage()]);
-}
+// --- Initialize DB Connection and Handle Request ---
+$database = new Database();
+$db = $database->connect();
+$customer = new RegisterCustomer($db);
+$response = $customer->register($_POST, $_FILES);
+echo json_encode($response);
 ?>

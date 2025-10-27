@@ -35,6 +35,14 @@ export default function Header() {
   }, [query]);
   const [user] = useAuthState(auth);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  // Prefer stored login info for avatar (set at login) falling back to Firebase user.photoURL
+  let storedLogin = null;
+  try {
+    storedLogin = JSON.parse(localStorage.getItem("userLogin") || "null");
+  } catch (e) {
+    storedLogin = null;
+  }
+  const avatarSrc = storedLogin?.photoURL || (user && user.photoURL) || null;
   const parsePriceRange = (text) => {
     // detect patterns like 1000-5000 or ₦1,000-5,000 or min:1000 max:5000
     const cleaned = text.replace(/₦|,|\s/g, "");
@@ -214,10 +222,12 @@ export default function Header() {
                 className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden"
                 aria-label="Account menu"
               >
-                {user.photoURL ? (
+                {avatarSrc ? (
                   <img
-                    src={user.photoURL}
-                    alt={user.displayName || "User"}
+                    src={avatarSrc}
+                    alt={
+                      user?.displayName || storedLogin?.displayName || "User"
+                    }
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -286,10 +296,12 @@ export default function Header() {
                 className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden"
                 aria-label="Account menu"
               >
-                {user.photoURL ? (
+                {avatarSrc ? (
                   <img
-                    src={user.photoURL}
-                    alt={user.displayName || "User"}
+                    src={avatarSrc}
+                    alt={
+                      user?.displayName || storedLogin?.displayName || "User"
+                    }
                     className="w-full h-full object-cover"
                   />
                 ) : (

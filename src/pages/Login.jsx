@@ -72,6 +72,18 @@ export default function LoginPage() {
     if (user) {
       console.log("Auto-login detected for user:", user.email, user.uid);
       fetchUserProfile(user.uid, user.email);
+      // persist lightweight login info for other pages/components
+      try {
+        const userLogin = {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || null,
+          photoURL: user.photoURL || null,
+        };
+        localStorage.setItem("userLogin", JSON.stringify(userLogin));
+      } catch (e) {
+        console.warn("Failed to persist userLogin", e);
+      }
       navigate(fromTarget.path, { replace: true, state: fromTarget.state });
     }
   }, [user]);
@@ -108,6 +120,18 @@ export default function LoginPage() {
 
       const uid = userCredential.user.uid;
       const userEmail = userCredential.user.email;
+      // persist lightweight login info
+      try {
+        const userLogin = {
+          uid: userCredential.user.uid,
+          email: userCredential.user.email,
+          displayName: userCredential.user.displayName || null,
+          photoURL: userCredential.user.photoURL || null,
+        };
+        localStorage.setItem("userLogin", JSON.stringify(userLogin));
+      } catch (e) {
+        console.warn("Failed to persist userLogin", e);
+      }
       await fetchUserProfile(uid, userEmail);
 
       navigate(fromTarget.path, { replace: true, state: fromTarget.state });
@@ -141,6 +165,18 @@ export default function LoginPage() {
       const signedUser = result.user;
       if (signedUser) {
         await fetchUserProfile(signedUser.uid, signedUser.email);
+        // persist lightweight login info for social sign-ins too
+        try {
+          const userLogin = {
+            uid: signedUser.uid,
+            email: signedUser.email,
+            displayName: signedUser.displayName || null,
+            photoURL: signedUser.photoURL || null,
+          };
+          localStorage.setItem("userLogin", JSON.stringify(userLogin));
+        } catch (e) {
+          console.warn("Failed to persist social userLogin", e);
+        }
       }
       navigate(fromTarget.path, { replace: true, state: fromTarget.state });
     } catch (error) {
