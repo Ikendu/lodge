@@ -24,27 +24,7 @@ class RegisterCustomer {
     }
 
     private function uploadImage($file) {
-        if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) {
-            return null;
-        }
-
-        $targetDir = "uploads/";
-        if (!file_exists($targetDir)) {
-            mkdir($targetDir, 0777, true);
-        }
-
-        $fileExt = pathinfo($file["name"], PATHINFO_EXTENSION);
-        $fileName = uniqid("IMG_") . "." . $fileExt;
-        $targetFilePath = $targetDir . $fileName;
-
-        $check = getimagesize($file["tmp_name"]);
-        if ($check === false) {
-            return null;
-        }
-
-        if (move_uploaded_file($file["tmp_name"], $targetFilePath)) {
-            return $targetFilePath;
-        }
+        // legacy helper kept for compatibility - not used for named save
         return null;
     }
 
@@ -74,7 +54,52 @@ class RegisterCustomer {
 
         $stmt = $this->conn->prepare($query);
 
-        $uploadedImage = $this->uploadImage($files['image'] ?? null);
+        // Prepare userImage directory
+        $userImageDir = __DIR__ . DIRECTORY_SEPARATOR . 'userImage' . DIRECTORY_SEPARATOR;
+        if (!file_exists($userImageDir)) mkdir($userImageDir, 0777, true);
+
+        // Helper to validate and save uploaded file to userImage with desired base name
+        $saveFileWithBase = function ($fileArr, $baseName) use ($userImageDir) {
+            if (!isset($fileArr) || !isset($fileArr['tmp_name']) || $fileArr['error'] !== UPLOAD_ERR_OK) return null;
+            $check = @getimagesize($fileArr['tmp_name']);
+            if ($check === false) return null;
+            $allowed = ['jpg','jpeg','png'];
+            $ext = strtolower(pathinfo($fileArr['name'], PATHINFO_EXTENSION)) ?: 'jpg';
+            if (!in_array($ext, $allowed)) return null;
+            $targetName = $baseName . '.' . $ext;
+            $targetPath = $userImageDir . $targetName;
+            if (move_uploaded_file($fileArr['tmp_name'], $targetPath)) {
+                return $targetName; // return filename only
+            }
+            return null;
+        };
+
+        $uploadedImage = null;
+        $verifiedImageName = null;
+
+        // Save given/uploaded image (field name: image)
+        if (isset($files['image'])) {
+            $uploadedImage = $saveFileWithBase($files['image'], $nin . '_given');
+        }
+
+        // Save verified_image either from uploaded file or base64 in POST
+        if (isset($files['verified_image']) && isset($files['verified_image']['tmp_name'])) {
+            $verifiedImageName = $saveFileWithBase($files['verified_image'], $nin . '_verified');
+        } elseif (!empty($data['verified_image']) && is_string($data['verified_image']) && strpos($data['verified_image'], 'data:') === 0) {
+            // decode data URL
+            $dataUrl = $data['verified_image'];
+            $parts = explode(',', $dataUrl, 2);
+            if (count($parts) === 2) {
+                if (preg_match('/^data:(image\/\w+);base64$/', $parts[0], $m)) {
+                    $mime = $m[1];
+                    $ext = str_replace('image/', '', $mime);
+                    if ($ext === 'jpeg') $ext = 'jpg';
+                    $bin = base64_decode($parts[1]);
+                    $verifiedImageName = $nin . '_verified.' . $ext;
+                    file_put_contents($userImageDir . $verifiedImageName, $bin);
+                }
+            }
+        }
 
         // Bind parameters safely
         $fields = [
@@ -89,7 +114,12 @@ class RegisterCustomer {
             $stmt->bindValue(":$field", $this->sanitize($data[$field] ?? ''));
         }
 
+        // bind image filename (only filename, not full path)
         $stmt->bindValue(":image", $uploadedImage ?? '');
+        // override verified_image to use saved filename if present
+        if ($verifiedImageName) {
+            $stmt->bindValue(":verified_image", $verifiedImageName);
+        }
 
         try {
             if ($stmt->execute()) {
@@ -101,6 +131,25 @@ class RegisterCustomer {
                 $fetchStmt->bindParam(":id", $insertedId);
                 $fetchStmt->execute();
                 $customerData = $fetchStmt->fetch(PDO::FETCH_ASSOC);
+
+                // Provide full public URLs for images when filenames are stored
+                $baseUrl = "https://lodge.morelinks.com.ng/userImage/";
+                if (!empty($customerData['image'])) {
+                    $img = trim($customerData['image']);
+                    if (!preg_match('/^(https?:\\/\\/|data:|\\/)/i', $img)) {
+                        $customerData['image_url'] = $baseUrl . rawurlencode($img);
+                    } else {
+                        $customerData['image_url'] = $img;
+                    }
+                }
+                if (!empty($customerData['verified_image'])) {
+                    $vimg = trim($customerData['verified_image']);
+                    if (!preg_match('/^(https?:\\/\\/|data:|\\/)/i', $vimg)) {
+                        $customerData['verified_image_url'] = $baseUrl . rawurlencode($vimg);
+                    } else {
+                        $customerData['verified_image_url'] = $vimg;
+                    }
+                }
 
                 return [
                     "success" => true,

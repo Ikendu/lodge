@@ -12,6 +12,7 @@ import {
   socialSignIn,
   auth,
 } from "../firebaseConfig";
+import toast from "react-hot-toast";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -70,21 +71,36 @@ export default function LoginPage() {
   // When Firebase user changes (auto-login)
   useEffect(() => {
     if (user) {
-      console.log("Auto-login detected for user:", user.email, user.uid);
-      fetchUserProfile(user.uid, user.email);
-      // persist lightweight login info for other pages/components
-      try {
-        const userLogin = {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName || null,
-          photoURL: user.photoURL || null,
-        };
-        localStorage.setItem("userLogin", JSON.stringify(userLogin));
-      } catch (e) {
-        console.warn("Failed to persist userLogin", e);
-      }
-      navigate(fromTarget.path, { replace: true, state: fromTarget.state });
+      (async () => {
+        console.log("Auto-login detected for user:", user.email, user.uid);
+        await fetchUserProfile(user.uid, user.email);
+
+        // persist lightweight login info for other pages/components
+        try {
+          const userLogin = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || null,
+            photoURL: user.photoURL || null,
+          };
+          localStorage.setItem("userLogin", JSON.stringify(userLogin));
+        } catch (e) {
+          console.warn("Failed to persist userLogin", e);
+        }
+
+        // If there's no customerProfile, redirect to registration
+        const cp = localStorage.getItem("customerProfile");
+        if (!cp) {
+          toast("Complete your profile to continue", { icon: "ℹ️" });
+          navigate("/registeruser", {
+            replace: true,
+            state: { from: fromTarget.path },
+          });
+          return;
+        }
+
+        navigate(fromTarget.path, { replace: true, state: fromTarget.state });
+      })();
     }
   }, [user]);
 
@@ -134,7 +150,13 @@ export default function LoginPage() {
       }
       await fetchUserProfile(uid, userEmail);
 
-      navigate(fromTarget.path, { replace: true, state: fromTarget.state });
+      // If there's no customerProfile, send user to registration to complete profile
+      if (!localStorage.getItem("customerProfile")) {
+        toast("Complete your profile to continue", { icon: "ℹ️" });
+        navigate("/registeruser", { replace: true });
+      } else {
+        navigate(fromTarget.path, { replace: true, state: fromTarget.state });
+      }
     } catch (err) {
       console.error(err);
       const msg = err?.code
@@ -177,8 +199,14 @@ export default function LoginPage() {
         } catch (e) {
           console.warn("Failed to persist social userLogin", e);
         }
+        // After fetching profile, ensure customerProfile exists
+        if (!localStorage.getItem("customerProfile")) {
+          toast("Complete your profile to continue", { icon: "ℹ️" });
+          navigate("/registeruser", { replace: true });
+        } else {
+          navigate(fromTarget.path, { replace: true, state: fromTarget.state });
+        }
       }
-      navigate(fromTarget.path, { replace: true, state: fromTarget.state });
     } catch (error) {
       console.error("Social login failed:", error);
       setError("Login failed. Please try again.");

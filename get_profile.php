@@ -39,6 +39,26 @@ $result = $stmt->get_result();
 // Return result
 if ($result && $result->num_rows > 0) {
     $profile = $result->fetch_assoc();
+
+    // If images are stored as filenames, also provide full public URLs
+    $base = "https://lodge.morelinks.com.ng/userImage/";
+    if (!empty($profile['image'])) {
+        $img = trim($profile['image']);
+        if (!preg_match('/^(https?:\\/\\/|data:|\\/)/i', $img)) {
+            $profile['image_url'] = $base . rawurlencode($img);
+        } else {
+            $profile['image_url'] = $img;
+        }
+    }
+    if (!empty($profile['verified_image'])) {
+        $vimg = trim($profile['verified_image']);
+        if (!preg_match('/^(https?:\\/\\/|data:|\\/)/i', $vimg)) {
+            $profile['verified_image_url'] = $base . rawurlencode($vimg);
+        } else {
+            $profile['verified_image_url'] = $vimg;
+        }
+    }
+
     echo json_encode(["success" => true, "profile" => $profile]);
 } else {
     echo json_encode(["success" => false, "error" => "No profile found"]);

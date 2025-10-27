@@ -97,7 +97,6 @@ export default function RegisterCustomerDetails() {
       payload.append("birth_lga", verified.birth_lga || "");
       payload.append("birth_state", verified.birth_state || "");
       payload.append("gender", verified.gender || "");
-      payload.append("verified_image", verified.image || "");
       payload.append("verified_signature", verified.signature || "");
       payload.append("nin_email", verified.email || "");
       payload.append("address", form.address);
@@ -113,6 +112,34 @@ export default function RegisterCustomerDetails() {
       payload.append("nextOfKinRelation", form.nextOfKinRelation);
       payload.append("nextOfKinAddress", form.nextOfKinAddress);
 
+      // Attach verified_image as a file named {nin}_verified.jpg when possible
+      const baseName =
+        verified.id || verified.nin || verified?.nin_number || Date.now();
+      if (
+        verified.image &&
+        typeof verified.image === "string" &&
+        verified.image.startsWith("data:")
+      ) {
+        try {
+          const dataUrl = verified.image;
+          const arr = dataUrl.split(",");
+          const mime = arr[0].match(/:(.*?);/)[1];
+          const bstr = atob(arr[1]);
+          let n = bstr.length;
+          const u8arr = new Uint8Array(n);
+          while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+          }
+          const vf = new File([u8arr], `${baseName}_verified.jpg`, {
+            type: mime,
+          });
+          payload.append("verified_image", vf, vf.name);
+        } catch (err) {
+          console.warn("Failed to attach verified image as file", err);
+        }
+      }
+
+      // Attach given/uploaded image as {nin}_given.<ext>
       if (form.imageFile) {
         let fileToSend = form.imageFile;
         try {
@@ -122,7 +149,15 @@ export default function RegisterCustomerDetails() {
         } catch (err) {
           console.warn("Image compression failed, sending original", err);
         }
-        payload.append("image", fileToSend, fileToSend.name || "image.jpg");
+
+        // derive extension
+        const origName = fileToSend.name || "image.jpg";
+        const extMatch = origName.match(/\.([0-9a-zA-Z]+)$/);
+        const ext = extMatch ? extMatch[1] : "jpg";
+        const givenFile = new File([fileToSend], `${baseName}_given.${ext}`, {
+          type: fileToSend.type || "image/jpeg",
+        });
+        payload.append("image", givenFile, givenFile.name);
       }
 
       const res = await fetch("http://localhost/lodge/register.php", {

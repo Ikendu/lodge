@@ -6,6 +6,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
 import { signOut } from "firebase/auth";
 import { lodges } from "../lodgedata";
+import toast from "react-hot-toast";
 
 export default function Header() {
   const navigate = useNavigate();
@@ -240,7 +241,16 @@ export default function Header() {
                   <button
                     onClick={() => {
                       setAccountMenuOpen(false);
-                      navigate("/profile");
+                      // If no customerProfile stored, send user to registration
+                      const cp = localStorage.getItem("customerProfile");
+                      if (!cp) {
+                        toast("Complete your profile to continue", { icon: "ℹ️" });
+                        navigate("/registeruser", {
+                          state: { from: location.pathname },
+                        });
+                      } else {
+                        navigate("/profile");
+                      }
                     }}
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                   >
@@ -314,7 +324,15 @@ export default function Header() {
                   <button
                     onClick={() => {
                       setAccountMenuOpen(false);
-                      navigate("/profile");
+                      const cp = localStorage.getItem("customerProfile");
+                      if (!cp) {
+                        toast("Complete your profile to continue", { icon: "ℹ️" });
+                        navigate("/registeruser", {
+                          state: { from: location.pathname },
+                        });
+                      } else {
+                        navigate("/profile");
+                      }
                     }}
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                   >

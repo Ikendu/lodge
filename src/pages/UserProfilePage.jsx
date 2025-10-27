@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
-import questImgs from "./uploads/IMG_68fcacc55d41f.jpg";
 import { motion } from "framer-motion";
 
 export default function UserProfilePage() {
@@ -27,24 +26,10 @@ export default function UserProfilePage() {
       if (user?.email) params.append("email", user.email);
       if (user?.phoneNumber)
         params.append("phone", user.phoneNumber.replace(/^\+/, ""));
-      console.log("Fetching profile with params:", params.toString());
 
       if (!params.toString()) {
         setLoadingProfile(false);
         return;
-      }
-
-      try {
-        const res = await fetch(
-          `http://localhost/lodge/get_profile.php?${params}`
-        );
-        const j = await res.json();
-        const p = j?.profile || j?.data || (j?.success ? j : null);
-        if (p) setProfileData(p);
-      } catch (e) {
-        console.warn("Failed to fetch profile", e);
-      } finally {
-        setLoadingProfile(false);
       }
     };
 
@@ -75,14 +60,29 @@ export default function UserProfilePage() {
     if (val.startsWith("data:")) return val;
     if (/^[A-Za-z0-9+/=\s]+$/.test(val) && val.length > 100)
       return `data:image/jpeg;base64,${val}` || val;
+    // If the value looks like a filename (no slashes, contains a dot ext),
+    // prefix it with the public userImage URL so it resolves.
+    const trimmed = val.trim();
+    if (!trimmed.startsWith("http") && !trimmed.includes("/")) {
+      const base = "https://lodge.morelinks.com.ng/userImage/";
+      return base + encodeURIComponent(trimmed);
+    }
     return val;
   };
 
   const ninImage =
-    getImageSrc(display.verified_image) || getImageSrc(display.nin_image);
+    getImageSrc(display.verified_image) ||
+    getImageSrc(display.verified_image_url) ||
+    getImageSrc(display.nin_image);
 
-  const uploadedImage =
-    display.image || display.uploaded_image || display.givenPhoto || user.image;
+  const uploadedImageRaw =
+    display.image ||
+    display.image_url ||
+    display.uploaded_image ||
+    display.givenPhoto ||
+    user.photoURL ||
+    display.uploadedImage;
+  const uploadedImage = getImageSrc(uploadedImageRaw) || null;
 
   const profile = {
     givenPhoto: uploadedImage,
@@ -150,7 +150,7 @@ export default function UserProfilePage() {
               whileHover={imgHover}
             >
               <img
-                src={profile.ninPhoto || questImgs}
+                src={profile.ninPhoto}
                 alt="NIN"
                 className="w-full h-60 object-cover rounded-2xl group-hover:opacity-90 transition-all duration-300"
               />
@@ -166,7 +166,7 @@ export default function UserProfilePage() {
               whileHover={imgHover}
             >
               <img
-                src={questImgs}
+                src={profile.givenPhoto}
                 alt="Given"
                 className="w-full h-60 object-cover rounded-2xl group-hover:opacity-90 transition-all duration-300"
               />
