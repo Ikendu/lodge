@@ -59,10 +59,16 @@ export default function RegisterCustomer() {
       payload.append("lastName", form.lastName);
       payload.append("phone", form.phone);
 
-      const res = await fetch("http://localhost/lodge/verify_nin.php", {
-        method: "POST",
-        body: payload,
-      });
+      const res = await fetch(
+        [
+          "http://localhost/lodge/api/verify_nin.php",
+          "https://lodge.morelinks.com.ng/api/verify_nin.php",
+        ],
+        {
+          method: "POST",
+          body: payload,
+        }
+      );
 
       const text = await res.text();
       let data;

@@ -112,9 +112,11 @@ export default function RegisterCustomerDetails() {
       payload.append("nextOfKinRelation", form.nextOfKinRelation);
       payload.append("nextOfKinAddress", form.nextOfKinAddress);
 
-      // Attach verified_image as a file named {nin}_verified.jpg when possible
+      // Upload verified_image to production first (so images live on production).
+      // If upload fails, fall back to attaching the file so local register can save it.
       const baseName =
         verified.id || verified.nin || verified?.nin_number || Date.now();
+      let prodVerifiedFilename = null;
       if (
         verified.image &&
         typeof verified.image === "string" &&
@@ -133,13 +135,40 @@ export default function RegisterCustomerDetails() {
           const vf = new File([u8arr], `${baseName}_verified.jpg`, {
             type: mime,
           });
-          payload.append("verified_image", vf, vf.name);
+
+          // try uploading to production
+          try {
+            const up = new FormData();
+            up.append("file", vf, vf.name);
+            up.append("name", `${baseName}_verified`);
+            const r = await fetch(
+              "https://lodge.morelinks.com.ng/api/upload_image.php",
+              {
+                method: "POST",
+                body: up,
+              }
+            );
+            const jr = await r.json();
+            if (jr.success && jr.filename) {
+              prodVerifiedFilename = jr.filename;
+              payload.append("verified_image", prodVerifiedFilename);
+            } else {
+              // fallback to attaching file for local save
+              payload.append("verified_image", vf, vf.name);
+            }
+          } catch (err) {
+            console.warn(
+              "Production verified image upload failed, will attach locally",
+              err
+            );
+            payload.append("verified_image", vf, vf.name);
+          }
         } catch (err) {
           console.warn("Failed to attach verified image as file", err);
         }
       }
 
-      // Attach given/uploaded image as {nin}_given.<ext>
+      // Attach given/uploaded image as {nin}_given.<ext> - upload to production first
       if (form.imageFile) {
         let fileToSend = form.imageFile;
         try {
@@ -157,13 +186,45 @@ export default function RegisterCustomerDetails() {
         const givenFile = new File([fileToSend], `${baseName}_given.${ext}`, {
           type: fileToSend.type || "image/jpeg",
         });
-        payload.append("image", givenFile, givenFile.name);
+
+        let prodGivenFilename = null;
+        try {
+          const up = new FormData();
+          up.append("file", givenFile, givenFile.name);
+          up.append("name", `${baseName}_given`);
+          const r = await fetch(
+            "https://lodge.morelinks.com.ng/api/upload_image.php",
+            {
+              method: "POST",
+              body: up,
+            }
+          );
+          const jr = await r.json();
+          if (jr.success && jr.filename) {
+            prodGivenFilename = jr.filename;
+            payload.append("image", prodGivenFilename);
+          } else {
+            payload.append("image", givenFile, givenFile.name);
+          }
+        } catch (err) {
+          console.warn(
+            "Production given image upload failed, will attach locally",
+            err
+          );
+          payload.append("image", givenFile, givenFile.name);
+        }
       }
 
-      const res = await fetch("/register.php", {
-        method: "POST",
-        body: payload,
-      });
+      const res = await fetch(
+        [
+          "https://lodge.morelinks.com.ng/api/register.php",
+          "http://localhost/lodge/api/register.php",
+        ],
+        {
+          method: "POST",
+          body: payload,
+        }
+      );
 
       const data = await res.json();
       console.log("Registration response:", data);

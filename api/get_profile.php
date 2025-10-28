@@ -4,19 +4,9 @@ header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Methods: POST");
 header("Content-Type: application/json");
 
-// Database connection
-$servername = "localhost";
-$username = "root"; // Change if needed
-$password = ""; // Change if needed
-$dbname = "lodge"; // your database name
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check DB connection
-if ($conn->connect_error) {
-    echo json_encode(["success" => false, "error" => "Database connection failed"]);
-    exit;
-}
+require_once __DIR__ . "/config.php";
+$database = new Database();
+$pdo = $database->connect();
 
 // Get JSON data from frontend
 $input = json_decode(file_get_contents("php://input"), true);
@@ -30,15 +20,16 @@ if (empty($uid) && empty($email)) {
 }
 
 // Query the database
-$sql = "SELECT * FROM customers WHERE userUid = ? OR userLoginMail = ? LIMIT 1";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("ss", $uid, $email);
-$stmt->execute();
-$result = $stmt->get_result();
+try {
+    $sql = "SELECT * FROM customers WHERE userUid = :uid OR userLoginMail = :email LIMIT 1";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(':uid', $uid);
+    $stmt->bindValue(':email', $email);
+    $stmt->execute();
+    $profile = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Return result
-if ($result && $result->num_rows > 0) {
-    $profile = $result->fetch_assoc();
+    // Return result
+    if ($profile) {
 
     // If images are stored as filenames, also provide full public URLs
     $base = "https://lodge.morelinks.com.ng/userImage/";
@@ -59,11 +50,11 @@ if ($result && $result->num_rows > 0) {
         }
     }
 
-    echo json_encode(["success" => true, "profile" => $profile]);
-} else {
-    echo json_encode(["success" => false, "error" => "No profile found"]);
+        echo json_encode(["success" => true, "profile" => $profile]);
+    } else {
+        echo json_encode(["success" => false, "error" => "No profile found"]);
+    }
+} catch (PDOException $e) {
+    echo json_encode(["success" => false, "error" => "Database error: " . $e->getMessage()]);
 }
-
-$stmt->close();
-$conn->close();
 ?>
