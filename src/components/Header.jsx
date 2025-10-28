@@ -244,7 +244,9 @@ export default function Header() {
                       // If no customerProfile stored, send user to registration
                       const cp = localStorage.getItem("customerProfile");
                       if (!cp) {
-                        toast("Complete your profile to continue", { icon: "ℹ️" });
+                        toast("Complete your profile to continue", {
+                          icon: "ℹ️",
+                        });
                         navigate("/registeruser", {
                           state: { from: location.pathname },
                         });
@@ -326,7 +328,9 @@ export default function Header() {
                       setAccountMenuOpen(false);
                       const cp = localStorage.getItem("customerProfile");
                       if (!cp) {
-                        toast("Complete your profile to continue", { icon: "ℹ️" });
+                        toast("Complete your profile to continue", {
+                          icon: "ℹ️",
+                        });
                         navigate("/registeruser", {
                           state: { from: location.pathname },
                         });

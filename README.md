@@ -82,6 +82,11 @@ git reset HEAD~1
 - services@morelinks.com.ng
 - 9652Aa@!@!@!@
 
+## Database
+
+morelink_lodge
+9652Aa@!@!@!@
+
 ## Facebook Login
 
 <script>

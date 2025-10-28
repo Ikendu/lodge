@@ -56,7 +56,12 @@ class RegisterCustomer {
 
         // Prepare userImage directory
         $userImageDir = __DIR__ . DIRECTORY_SEPARATOR . 'userImage' . DIRECTORY_SEPARATOR;
-        if (!file_exists($userImageDir)) mkdir($userImageDir, 0777, true);
+        if (!file_exists($userImageDir)) {
+            if (!mkdir($userImageDir, 0777, true)) {
+                error_log("Failed to create userImage directory: $userImageDir\n", 3, __DIR__ . '/upload_debug.log');
+                return ["success" => false, "message" => "Server error: cannot create image directory"];
+            }
+        }
 
         // Helper to validate and save uploaded file to userImage with desired base name
         $saveFileWithBase = function ($fileArr, $baseName) use ($userImageDir) {
@@ -69,8 +74,11 @@ class RegisterCustomer {
             $targetName = $baseName . '.' . $ext;
             $targetPath = $userImageDir . $targetName;
             if (move_uploaded_file($fileArr['tmp_name'], $targetPath)) {
+                error_log("Saved uploaded file to: $targetPath\n", 3, __DIR__ . '/upload_debug.log');
                 return $targetName; // return filename only
             }
+            $err = error_get_last();
+            error_log("move_uploaded_file failed for: {$fileArr['name']} target: $targetPath; err=" . json_encode($err) . "\n", 3, __DIR__ . '/upload_debug.log');
             return null;
         };
 
@@ -96,7 +104,12 @@ class RegisterCustomer {
                     if ($ext === 'jpeg') $ext = 'jpg';
                     $bin = base64_decode($parts[1]);
                     $verifiedImageName = $nin . '_verified.' . $ext;
-                    file_put_contents($userImageDir . $verifiedImageName, $bin);
+                    $written = file_put_contents($userImageDir . $verifiedImageName, $bin);
+                    if ($written === false) {
+                        error_log("Failed to write decoded verified image to: " . $userImageDir . $verifiedImageName . "\n", 3, __DIR__ . '/upload_debug.log');
+                    } else {
+                        error_log("Wrote decoded verified image to: " . $userImageDir . $verifiedImageName . "\n", 3, __DIR__ . '/upload_debug.log');
+                    }
                 }
             }
         }
@@ -150,7 +163,8 @@ class RegisterCustomer {
                         $customerData['verified_image_url'] = $vimg;
                     }
                 }
-
+                // log final computed urls for debugging
+                error_log("Registration saved. image_url=" . ($customerData['image_url'] ?? '') . ", verified_image_url=" . ($customerData['verified_image_url'] ?? '') . "\n", 3, __DIR__ . '/upload_debug.log');
                 return [
                     "success" => true,
                     "message" => "Customer registered successfully!",

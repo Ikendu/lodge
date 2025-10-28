@@ -160,7 +160,7 @@ export default function RegisterCustomerDetails() {
         payload.append("image", givenFile, givenFile.name);
       }
 
-      const res = await fetch("http://localhost/lodge/register.php", {
+      const res = await fetch("/register.php", {
         method: "POST",
         body: payload,
       });

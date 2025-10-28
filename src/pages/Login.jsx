@@ -45,7 +45,7 @@ export default function LoginPage() {
   // Fetch profile from backend
   const fetchUserProfile = async (uid, emailAddr) => {
     try {
-      const res = await fetch("http://localhost/lodge/get_profile.php", {
+      const res = await fetch("/get_profile.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid, email: emailAddr }),
