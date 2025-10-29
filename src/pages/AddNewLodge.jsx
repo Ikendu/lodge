@@ -67,6 +67,7 @@ export default function AddNewLodge() {
   // ✅ Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return; // prevent double-submit
     if (images.length === 0) {
       alert("Please upload at least one image.");
       return;
@@ -148,7 +149,7 @@ export default function AddNewLodge() {
       } else {
         alert("Lodge created successfully.");
         // Navigate to homepage or lodge page; adjust as needed
-        navigate("/");
+        navigate("/profile");
       }
     } catch (err) {
       console.error("Error submitting lodge:", err);
@@ -376,10 +377,45 @@ export default function AddNewLodge() {
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 300 }}
             type="submit"
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl py-3 mt-4 shadow-2xl hover:shadow-2xl transition-all"
+            disabled={submitting}
+            aria-busy={submitting}
+            className={
+              "w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl py-3 mt-4 shadow-2xl transition-all " +
+              (submitting
+                ? "opacity-60 cursor-not-allowed"
+                : "hover:shadow-2xl")
+            }
           >
-            <Upload className="inline-block mr-2 w-5 h-5" />
-            Publish Lodge
+            {submitting ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  ></path>
+                </svg>
+                Publishing...
+              </>
+            ) : (
+              <>
+                <Upload className="inline-block mr-2 w-5 h-5" />
+                Publish Lodge
+              </>
+            )}
           </motion.button>
         </motion.div>
       </motion.form>

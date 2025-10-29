@@ -1,8 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { lodges } from "../lodgedata";
 import { useLocation } from "react-router-dom";
 
 export default function Apartments() {
@@ -17,6 +16,47 @@ export default function Apartments() {
   const loc = (params.get("location") || "").toLowerCase();
   const min = parseFloat(params.get("min")) || 0;
   const max = parseFloat(params.get("max")) || Number.POSITIVE_INFINITY;
+
+  const [lodges, setLodges] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetch("https://lodge.morelinks.com.ng/api/get_all_lodge.php")
+      .then((r) => r.json())
+      .then((j) => {
+        if (!mounted) return;
+        if (j && j.success && Array.isArray(j.data)) {
+          const mapped = j.data.map((row) => ({
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            location: row.location,
+            price: parseFloat(row.price) || 0,
+            rating: row.rating || 0,
+            images: [
+              row.image_first_url,
+              row.image_second_url,
+              row.image_third_url,
+            ].filter(Boolean),
+            raw: row,
+          }));
+          setLodges(mapped);
+        } else {
+          setError("Failed to load lodges");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        if (!mounted) return;
+        setError(String(err));
+      })
+      .finally(() => mounted && setLoading(false));
+
+    return () => (mounted = false);
+  }, []);
 
   const filtered = useMemo(() => {
     return lodges.filter((l) => {
@@ -38,7 +78,7 @@ export default function Apartments() {
       }
       return true;
     });
-  }, [q, loc, min, max]);
+  }, [lodges, q, loc, min, max]);
 
   const handleRoomClick = (lodge) => {
     navigate(`/lodge/${lodge.id}`, { state: { lodge } });
