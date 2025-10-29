@@ -60,41 +60,13 @@ try {
         'image3' => 'third',
     ];
 
-    foreach ($map as $key => $suffix) {
-        if (!empty($_FILES[$key]) && isset($_FILES[$key]['tmp_name']) && $_FILES[$key]['error'] === UPLOAD_ERR_OK) {
-            $tmp = $_FILES[$key]['tmp_name'];
-            $origName = $_FILES[$key]['name'] ?? 'upload';
-            $check = @getimagesize($tmp);
-            if ($check === false) {
-                error_log("Uploaded file $origName is not a valid image\n", 3, $respLog);
-                continue;
-            }
-            $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION)) ?: 'jpg';
-            if (!in_array($ext, $allowedExt)) {
-                error_log("Extension not allowed for $origName: $ext\n", 3, $respLog);
-                continue;
-            }
-            $targetName = $nin . '_' . $suffix . '.' . $ext;
-            $targetPath = $uploadDir . $targetName;
-            if (move_uploaded_file($tmp, $targetPath)) {
-                error_log("Saved lodge file to: $targetPath\n", 3, $respLog);
-                $savedKey = 'image_' . $suffix;
-                // store in saved array with DB column names image_first etc.
-                $saved['image_' . $suffix] = $targetName;
-            } else {
-                $err = error_get_last();
-                error_log("Failed to move_uploaded_file for $origName target $targetPath; err=" . json_encode($err) . "\n", 3, $respLog);
-            }
-        }
-    }
-
-    // Insert into DB (table: lodges). Ensure you have created this table with matching columns.
+    // First insert a record with empty image fields so we have an ID to reference
     $sql = "INSERT INTO lodges (
         userUid, userLoginMail, nin, title, location, price, type, description,
         amenities, capacity, bathroomType, image_first, image_second, image_third, created_at
     ) VALUES (
         :userUid, :userLoginMail, :nin, :title, :location, :price, :type, :description,
-        :amenities, :capacity, :bathroomType, :image_first, :image_second, :image_third, NOW()
+        :amenities, :capacity, :bathroomType, '', '', '', NOW()
     )";
 
     $stmt = $pdo->prepare($sql);
@@ -109,35 +81,70 @@ try {
     $stmt->bindValue(':amenities', $amenities);
     $stmt->bindValue(':capacity', $capacity);
     $stmt->bindValue(':bathroomType', $bathroomType);
-    $stmt->bindValue(':image_first', $saved['image_first'] ?? '');
-    $stmt->bindValue(':image_second', $saved['image_second'] ?? '');
-    $stmt->bindValue(':image_third', $saved['image_third'] ?? '');
 
-    if ($stmt->execute()) {
-        $id = $pdo->lastInsertId();
-        // Build public urls for saved images
-        $base = "https://lodge.morelinks.com.ng/api/lodgefiles/";
-        $data = [
-            'id' => $id,
-            'nin' => $nin,
-            'title' => $title,
-            'location' => $location,
-            'price' => $price,
-            'type' => $type,
-            'description' => $description,
-            'amenities' => $amenities,
-            'capacity' => $capacity,
-            'bathroomType' => $bathroomType,
-            'image_first' => $saved['image_first'] ? $base . rawurlencode($saved['image_first']) : null,
-            'image_second' => $saved['image_second'] ? $base . rawurlencode($saved['image_second']) : null,
-            'image_third' => $saved['image_third'] ? $base . rawurlencode($saved['image_third']) : null,
-        ];
-        echo json_encode(["success" => true, "message" => "Lodge created", "data" => $data]);
-        exit;
-    } else {
-        echo json_encode(["success" => false, "message" => "Failed to save lodge"]);
+    if (!$stmt->execute()) {
+        echo json_encode(["success" => false, "message" => "Failed to create lodge record"]);
         exit;
     }
+
+    $id = $pdo->lastInsertId();
+
+    // move uploaded files and name them using the new DB id to avoid overwrites
+    foreach ($map as $key => $suffix) {
+        if (!empty($_FILES[$key]) && isset($_FILES[$key]['tmp_name']) && $_FILES[$key]['error'] === UPLOAD_ERR_OK) {
+            $tmp = $_FILES[$key]['tmp_name'];
+            $origName = $_FILES[$key]['name'] ?? 'upload';
+            $check = @getimagesize($tmp);
+            if ($check === false) {
+                error_log("Uploaded file $origName is not a valid image\n", 3, $respLog);
+                continue;
+            }
+            $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION)) ?: 'jpg';
+            if (!in_array($ext, $allowedExt)) {
+                error_log("Extension not allowed for $origName: $ext\n", 3, $respLog);
+                continue;
+            }
+            // Use nin + id + suffix + timestamp to make filename unique per-lodge
+            $targetName = $nin . '_' . $id . '_' . $suffix . '_' . time() . '.' . $ext;
+            $targetPath = $uploadDir . $targetName;
+            if (move_uploaded_file($tmp, $targetPath)) {
+                error_log("Saved lodge file to: $targetPath\n", 3, $respLog);
+                $saved['image_' . $suffix] = $targetName;
+            } else {
+                $err = error_get_last();
+                error_log("Failed to move_uploaded_file for $origName target $targetPath; err=" . json_encode($err) . "\n", 3, $respLog);
+            }
+        }
+    }
+
+    // Update the lodge record with the saved filenames (if any)
+    $updateSql = "UPDATE lodges SET image_first = :image_first, image_second = :image_second, image_third = :image_third WHERE id = :id";
+    $uStmt = $pdo->prepare($updateSql);
+    $uStmt->bindValue(':image_first', $saved['image_first'] ?? '');
+    $uStmt->bindValue(':image_second', $saved['image_second'] ?? '');
+    $uStmt->bindValue(':image_third', $saved['image_third'] ?? '');
+    $uStmt->bindValue(':id', $id);
+    $uStmt->execute();
+
+    // Build public urls for saved images
+    $base = "https://lodge.morelinks.com.ng/api/lodgefiles/";
+    $data = [
+        'id' => $id,
+        'nin' => $nin,
+        'title' => $title,
+        'location' => $location,
+        'price' => $price,
+        'type' => $type,
+        'description' => $description,
+        'amenities' => $amenities,
+        'capacity' => $capacity,
+        'bathroomType' => $bathroomType,
+        'image_first' => $saved['image_first'] ? $base . rawurlencode($saved['image_first']) : null,
+        'image_second' => $saved['image_second'] ? $base . rawurlencode($saved['image_second']) : null,
+        'image_third' => $saved['image_third'] ? $base . rawurlencode($saved['image_third']) : null,
+    ];
+    echo json_encode(["success" => true, "message" => "Lodge created", "data" => $data]);
+    exit;
 
 } catch (Exception $e) {
     error_log("add_lodge error: " . $e->getMessage() . "\n", 3, $respLog);
