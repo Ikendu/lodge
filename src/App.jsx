@@ -46,7 +46,7 @@ export default function App() {
           <Route path="/lodge/:id" element={<LodgeDetails />} />
 
           <Route path="/apartments" element={<Apartments />} />
-          <Route path="/add-lodge" element={<AddNewLodge />} />
+          <Route path="/registerowner" element={<AddNewLodge />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />

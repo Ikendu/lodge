@@ -13,6 +13,7 @@ export default function UserProfilePage() {
   const [profileData, setProfileData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const savedData = JSON.parse(localStorage.getItem("customerProfile"));
+  console.log(savedData);
 
   useEffect(() => {
     if (!loading && !user) navigate("/login", { state: { from: location } });
@@ -64,7 +65,8 @@ export default function UserProfilePage() {
     // prefix it with the public userImage URL so it resolves.
     const trimmed = val.trim();
     if (!trimmed.startsWith("http") && !trimmed.includes("/")) {
-      const base = "https://lodge.morelinks.com.ng/userImage/";
+      // Production images are stored under /api/userImage/ on the server
+      const base = "https://lodge.morelinks.com.ng/api/userImage/";
       return base + encodeURIComponent(trimmed);
     }
     return val;
@@ -72,17 +74,18 @@ export default function UserProfilePage() {
 
   const ninImage =
     getImageSrc(display.verified_image) ||
-    getImageSrc(display.verified_image_url) ||
-    getImageSrc(display.nin_image);
+    getImageSrc(display.verified_image_url);
 
-  const uploadedImageRaw =
-    display.image ||
-    display.image_url ||
-    display.uploaded_image ||
-    display.givenPhoto ||
-    user.photoURL ||
-    display.uploadedImage;
+  const uploadedImageRaw = display.image || display.uploadedImage;
   const uploadedImage = getImageSrc(uploadedImageRaw) || null;
+
+  const signatureRaw =
+    display.verified_signature ||
+    display.signature ||
+    display.verified_signature_url ||
+    display.signature_url ||
+    display.signatureImage;
+  const signatureSrc = getImageSrc(signatureRaw) || null;
 
   const profile = {
     givenPhoto: uploadedImage,
@@ -170,6 +173,17 @@ export default function UserProfilePage() {
                 alt="Given"
                 className="w-full h-60 object-cover rounded-2xl group-hover:opacity-90 transition-all duration-300"
               />
+              {/* Signature displayed centered below the uploaded/given image */}
+              {signatureSrc && (
+                <div className="flex justify-center p-3 bg-transparent">
+                  <img
+                    src={signatureSrc}
+                    alt="Signature"
+                    className="w-1/2 object-contain rounded-md border border-white/20"
+                    style={{ height: "auto" }}
+                  />
+                </div>
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all flex items-end p-3 text-sm">
                 <span className="text-white/90 font-medium">Given Image</span>
               </div>

@@ -22,6 +22,17 @@ export default function RegisterCustomer() {
 
   // ✅ Wait for localStorage before deciding redirect
   useEffect(() => {
+    // If a completed customerProfile exists, don't allow access to the verify/register flow
+    try {
+      const cp = localStorage.getItem("customerProfile");
+      if (cp) {
+        console.log("Customer profile exists — redirecting to /profile");
+        navigate("/profile", { replace: true });
+        return;
+      }
+    } catch (e) {
+      // ignore
+    }
     // Allow access to this page if either we have a local storage flag
     // or Firebase reports a signed-in user. Otherwise redirect to login.
     const userData = localStorage.getItem("userLogin");
@@ -59,23 +70,39 @@ export default function RegisterCustomer() {
       payload.append("lastName", form.lastName);
       payload.append("phone", form.phone);
 
-      const res = await fetch(
-        [
-          "http://localhost/lodge/api/verify_nin.php",
-          "https://lodge.morelinks.com.ng/api/verify_nin.php",
-        ],
-        {
-          method: "POST",
-          body: payload,
-        }
-      );
+      // Try endpoints in order: production first, then  local dev
+      const endpoints = [
+        "https://lodge.morelinks.com.ng/api/verify_nin.php",
+        "http://localhost/lodge/api/verify_nin.php",
+      ];
 
-      const text = await res.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (err) {
-        console.error("Invalid JSON response:", text);
+      let data = null;
+      let lastErr = null;
+      for (const url of endpoints) {
+        try {
+          const res = await fetch(url, { method: "POST", body: payload });
+          const text = await res.text();
+          try {
+            const parsed = JSON.parse(text);
+            if (parsed && typeof parsed === "object") {
+              data = parsed;
+            } else {
+              // not an object — try next
+              lastErr = new Error("Invalid JSON from " + url);
+            }
+          } catch (err) {
+            // invalid json from this endpoint
+            lastErr = err;
+          }
+        } catch (err) {
+          // network error — try next endpoint
+          lastErr = err;
+        }
+        if (data) break;
+      }
+
+      if (!data) {
+        console.error("All verify endpoints failed", lastErr);
         throw new Error("Invalid JSON from server");
       }
 

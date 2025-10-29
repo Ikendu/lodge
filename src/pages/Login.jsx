@@ -33,6 +33,20 @@ export default function LoginPage() {
   const location = useLocation();
   const [user] = useAuthState(auth);
 
+  // If a canonical customerProfile exists, prevent access to login page
+  useEffect(() => {
+    try {
+      const cp = localStorage.getItem("customerProfile");
+      const storedLogin = localStorage.getItem("userLogin");
+      if (cp && (user || storedLogin)) {
+        // user already has profile — redirect to profile/home
+        navigate("/profile", { replace: true });
+      }
+    } catch (e) {
+      /* ignore storage errors */
+    }
+  }, [user, navigate]);
+
   const rawFrom = location.state?.from || "/";
   const buildTarget = (raw) => {
     if (!raw) return { path: "/", state: undefined };
@@ -44,27 +58,52 @@ export default function LoginPage() {
 
   // Fetch profile from backend
   const fetchUserProfile = async (uid, emailAddr) => {
-    try {
-      const res = await fetch("/get_profile.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid, email: emailAddr }),
-      });
+    const endpoints = [
+      "https://lodge.morelinks.com.ng/api/get_profile.php",
+      "http://localhost/lodge/api/get_profile.php",
+    ];
 
-      const data = await res.json();
+    let data = null;
+    let lastError = null;
 
-      console.log("Data", data);
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ uid, email: emailAddr }),
+        });
 
-      if (data.success && data.profile) {
-        localStorage.setItem("customerProfile", JSON.stringify(data.profile));
-        console.log("✅ Profile saved to localStorage:", data.profile);
-      } else {
-        localStorage.removeItem("customerProfile");
-        console.warn("⚠️ No profile found for this user.");
+        const text = await res.text();
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.warn(`Invalid JSON from ${url}:`, text);
+          data = null;
+        }
+
+        if (data) {
+          console.log(`Profile response from ${url}:`, data);
+          break;
+        }
+      } catch (err) {
+        lastError = err;
+        console.warn(`Request to ${url} failed:`, err);
       }
-    } catch (err) {
-      console.error("❌ Profile fetch failed:", err);
+    }
+
+    if (!data) {
+      console.error("❌ Profile fetch failed:", lastError);
       localStorage.removeItem("customerProfile");
+      return;
+    }
+
+    if (data.success && data.profile) {
+      localStorage.setItem("customerProfile", JSON.stringify(data.profile));
+      console.log("✅ Profile saved to localStorage:", data.profile);
+    } else {
+      localStorage.removeItem("customerProfile");
+      console.warn("⚠️ No profile found for this user.");
     }
   };
 

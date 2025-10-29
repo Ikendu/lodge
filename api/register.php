@@ -89,6 +89,14 @@ class RegisterCustomer {
         if (isset($files['image'])) {
             $uploadedImage = $saveFileWithBase($files['image'], $nin . '_given');
         }
+        // If frontend provided a filename (string) for image (uploaded to production), use it.
+        if (empty($uploadedImage) && !empty($data['image']) && is_string($data['image'])) {
+            $imgVal = trim($data['image']);
+            // If it's a URL or path, extract the basename to store only filename
+            $path = parse_url($imgVal, PHP_URL_PATH) ?: $imgVal;
+            $uploadedImage = basename($path);
+            error_log("Using provided image filename: $uploadedImage\n", 3, __DIR__ . '/upload_debug.log');
+        }
 
         // Save verified_image either from uploaded file or base64 in POST
         if (isset($files['verified_image']) && isset($files['verified_image']['tmp_name'])) {
@@ -112,6 +120,13 @@ class RegisterCustomer {
                     }
                 }
             }
+        }
+        // If frontend provided a filename (string) for verified_image (uploaded to production), use it.
+        if (empty($verifiedImageName) && !empty($data['verified_image']) && is_string($data['verified_image']) && strpos($data['verified_image'], 'data:') !== 0) {
+            $vimgVal = trim($data['verified_image']);
+            $vpath = parse_url($vimgVal, PHP_URL_PATH) ?: $vimgVal;
+            $verifiedImageName = basename($vpath);
+            error_log("Using provided verified_image filename: $verifiedImageName\n", 3, __DIR__ . '/upload_debug.log');
         }
 
         // Bind parameters safely
@@ -146,7 +161,8 @@ class RegisterCustomer {
                 $customerData = $fetchStmt->fetch(PDO::FETCH_ASSOC);
 
                 // Provide full public URLs for images when filenames are stored
-                $baseUrl = "https://lodge.morelinks.com.ng/userImage/";
+                // public base URL where images are served — images are stored under /api/userImage/
+                $baseUrl = "https://lodge.morelinks.com.ng/api/userImage/";
                 if (!empty($customerData['image'])) {
                     $img = trim($customerData['image']);
                     if (!preg_match('/^(https?:\\/\\/|data:|\\/)/i', $img)) {

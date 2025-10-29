@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -11,9 +11,22 @@ export default function RegisterCustomerDetails() {
 
   const userLogin = JSON.parse(localStorage.getItem("userLogin"));
   console.log("User Login Data:", userLogin);
+  console.log("Verified Data:", verified);
+
+  useEffect(() => {
+    try {
+      const cp = localStorage.getItem("customerProfile");
+      if (cp) {
+        console.log("Customer profile exists — redirecting to /profile");
+        navigate("/profile", { replace: true });
+        return;
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [navigate]);
 
   const [form, setForm] = useState({
-    email: "",
     dob: verified.date_of_birth || "",
     address: "",
     addressLga: "",
@@ -31,6 +44,19 @@ export default function RegisterCustomerDetails() {
   });
 
   const [submitting, setSubmitting] = useState(false);
+
+  // If the user already has a customerProfile saved, redirect away from this step
+  // to avoid re-registering once profile is complete.
+  useState(() => {
+    try {
+      const cp = localStorage.getItem("customerProfile");
+      if (cp) {
+        navigate("/profile", { replace: true });
+      }
+    } catch (e) {
+      // ignore
+    }
+  });
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -97,7 +123,8 @@ export default function RegisterCustomerDetails() {
       payload.append("birth_lga", verified.birth_lga || "");
       payload.append("birth_state", verified.birth_state || "");
       payload.append("gender", verified.gender || "");
-      payload.append("verified_signature", verified.signature || "");
+      // verified_signature and verified_image will be handled below (convert base64 to files
+      // and upload to production first). Do not append raw strings here.
       payload.append("nin_email", verified.email || "");
       payload.append("address", form.address);
       payload.append("addressLga", form.addressLga);
@@ -117,54 +144,155 @@ export default function RegisterCustomerDetails() {
       const baseName =
         verified.id || verified.nin || verified?.nin_number || Date.now();
       let prodVerifiedFilename = null;
-      if (
-        verified.image &&
-        typeof verified.image === "string" &&
-        verified.image.startsWith("data:")
-      ) {
+      if (verified.image && typeof verified.image === "string") {
         try {
-          const dataUrl = verified.image;
-          const arr = dataUrl.split(",");
-          const mime = arr[0].match(/:(.*?);/)[1];
-          const bstr = atob(arr[1]);
-          let n = bstr.length;
-          const u8arr = new Uint8Array(n);
-          while (n--) {
-            u8arr[n] = bstr.charCodeAt(n);
-          }
-          const vf = new File([u8arr], `${baseName}_verified.jpg`, {
-            type: mime,
-          });
+          const imgStr = verified.image;
+          let base64 = null;
+          let mime = "image/jpeg";
 
-          // try uploading to production
-          try {
-            const up = new FormData();
-            up.append("file", vf, vf.name);
-            up.append("name", `${baseName}_verified`);
-            const r = await fetch(
-              "https://lodge.morelinks.com.ng/api/upload_image.php",
-              {
-                method: "POST",
-                body: up,
+          if (imgStr.startsWith("data:")) {
+            const parts = imgStr.split(",");
+            mime = (parts[0].match(/:(.*?);/) || [null, mime])[1] || mime;
+            base64 = parts[1] || "";
+          } else if (
+            imgStr.startsWith("/9j") ||
+            /^[A-Za-z0-9+/=\r\n]+$/.test(imgStr)
+          ) {
+            base64 = imgStr.replace(/\s+/g, "");
+            mime = "image/jpeg";
+          }
+
+          if (base64) {
+            const bstr = atob(base64);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+              u8arr[n] = bstr.charCodeAt(n);
+            }
+            const vf = new File([u8arr], `${baseName}_verified.jpg`, {
+              type: mime,
+            });
+
+            // try uploading to production
+            try {
+              const up = new FormData();
+              up.append("file", vf, vf.name);
+              up.append("name", `${baseName}_verified`);
+              const r = await fetch(
+                "https://lodge.morelinks.com.ng/api/upload_image.php",
+                {
+                  method: "POST",
+                  body: up,
+                }
+              );
+              const text = await r.text();
+              let jr = null;
+              try {
+                jr = JSON.parse(text);
+              } catch (e) {
+                console.warn(
+                  "Invalid JSON from upload_image (verified):",
+                  text
+                );
+                jr = null;
               }
-            );
-            const jr = await r.json();
-            if (jr.success && jr.filename) {
-              prodVerifiedFilename = jr.filename;
-              payload.append("verified_image", prodVerifiedFilename);
-            } else {
-              // fallback to attaching file for local save
+              if (jr && jr.success && jr.filename) {
+                prodVerifiedFilename = jr.filename;
+                payload.append("verified_image", prodVerifiedFilename);
+              } else {
+                // fallback to attaching file for local save
+                payload.append("verified_image", vf, vf.name);
+              }
+            } catch (err) {
+              console.warn(
+                "Production verified image upload failed, will attach locally",
+                err
+              );
               payload.append("verified_image", vf, vf.name);
             }
-          } catch (err) {
-            console.warn(
-              "Production verified image upload failed, will attach locally",
-              err
-            );
-            payload.append("verified_image", vf, vf.name);
+          } else {
+            // Not recognizable as base64/data-url; treat as filename/URL and pass through
+            payload.append("verified_image", imgStr);
           }
         } catch (err) {
           console.warn("Failed to attach verified image as file", err);
+        }
+      }
+
+      // Handle verified signature (may be a data URL, raw base64 that starts with '/9j',
+      // or already a URL/filename). Convert base64 to File and try uploading to production.
+      if (verified.signature && typeof verified.signature === "string") {
+        try {
+          const sigStr = verified.signature;
+          let isDataUrl = sigStr.startsWith("data:");
+          let base64String = null;
+          let mime = "image/jpeg";
+
+          if (isDataUrl) {
+            const parts = sigStr.split(",");
+            mime = (parts[0].match(/:(.*?);/) || [null, mime])[1] || mime;
+            base64String = parts[1] || "";
+          } else if (
+            sigStr.startsWith("/9j") ||
+            /^[A-Za-z0-9+/=\r\n]+$/.test(sigStr)
+          ) {
+            // raw base64 (jpeg usually starts with /9j)
+            base64String = sigStr.replace(/\s+/g, "");
+            mime = "image/jpeg";
+          }
+
+          if (base64String) {
+            // convert base64 to File
+            const bstr = atob(base64String);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+              u8arr[n] = bstr.charCodeAt(n);
+            }
+            const sigFile = new File([u8arr], `${baseName}_signature.jpg`, {
+              type: mime,
+            });
+
+            // Try uploading to production
+            try {
+              const upSig = new FormData();
+              upSig.append("file", sigFile, sigFile.name);
+              upSig.append("name", `${baseName}_signature`);
+              const rSig = await fetch(
+                "https://lodge.morelinks.com.ng/api/upload_image.php",
+                { method: "POST", body: upSig }
+              );
+              const textSig = await rSig.text();
+              let jrSig = null;
+              try {
+                jrSig = JSON.parse(textSig);
+              } catch (e) {
+                console.warn(
+                  "Invalid JSON from upload_image (signature):",
+                  textSig
+                );
+                jrSig = null;
+              }
+
+              if (jrSig && jrSig.success && jrSig.filename) {
+                payload.append("verified_signature", jrSig.filename);
+              } else {
+                // fallback: append file so local register can save
+                payload.append("verified_signature", sigFile, sigFile.name);
+              }
+            } catch (err) {
+              console.warn(
+                "Production signature upload failed, will attach locally",
+                err
+              );
+              payload.append("verified_signature", sigFile, sigFile.name);
+            }
+          } else {
+            // Not base64/data URL — treat as already a filename or URL and send as-is
+            payload.append("verified_signature", sigStr);
+          }
+        } catch (err) {
+          console.warn("Failed to process verified signature", err);
         }
       }
 
@@ -199,8 +327,15 @@ export default function RegisterCustomerDetails() {
               body: up,
             }
           );
-          const jr = await r.json();
-          if (jr.success && jr.filename) {
+          const text = await r.text();
+          let jr = null;
+          try {
+            jr = JSON.parse(text);
+          } catch (e) {
+            console.warn("Invalid JSON from upload_image (given):", text);
+            jr = null;
+          }
+          if (jr && jr.success && jr.filename) {
             prodGivenFilename = jr.filename;
             payload.append("image", prodGivenFilename);
           } else {
@@ -215,19 +350,60 @@ export default function RegisterCustomerDetails() {
         }
       }
 
-      const res = await fetch(
-        [
-          "https://lodge.morelinks.com.ng/api/register.php",
-          "http://localhost/lodge/api/register.php",
-        ],
-        {
-          method: "POST",
-          body: payload,
+      // Debug: dump FormData entries so we can confirm what is being sent
+      try {
+        console.group("Registration FormData");
+        for (const [k, v] of payload.entries()) {
+          if (
+            v &&
+            typeof v === "object" &&
+            v.constructor &&
+            v.constructor.name === "File"
+          ) {
+            console.log(k, "(File)", v.name, v.type, v.size);
+          } else {
+            console.log(k, v);
+          }
         }
-      );
+        console.groupEnd();
+      } catch (e) {
+        console.warn("Could not dump FormData:", e);
+      }
 
-      const data = await res.json();
-      console.log("Registration response:", data);
+      // Try production first, then fall back to localhost
+      const endpoints = [
+        "https://lodge.morelinks.com.ng/api/register.php",
+        "http://localhost/lodge/api/register.php",
+      ];
+
+      let data = null;
+      let lastError = null;
+      for (const url of endpoints) {
+        try {
+          const res = await fetch(url, { method: "POST", body: payload });
+          const text = await res.text();
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            console.warn(`Invalid JSON from ${url}:`, text);
+            data = null;
+          }
+          if (data) {
+            console.log(`Registration response from ${url}:`, data);
+            break;
+          }
+        } catch (err) {
+          lastError = err;
+          console.warn(`Request to ${url} failed:`, err);
+        }
+      }
+
+      if (!data) {
+        console.error("Registration failed, no valid response:", lastError);
+        alert("Registration request failed. Please try again later.");
+        setSubmitting(false);
+        return;
+      }
 
       if (!data.success) {
         alert(data.message || "Registration failed");
@@ -243,7 +419,17 @@ export default function RegisterCustomerDetails() {
       localStorage.setItem("customerProfile", JSON.stringify(profile));
 
       alert(data.message || "Registration successful!");
-      // navigate("/profile", { state: { profile, from } });
+      // Redirect back to the page the user came from (if provided). This handles
+      // the flow where the user was directed to login/register from a protected page
+      // (for example a lodge details page) so they return there to continue booking.
+      try {
+        const returnTo = from || (location.state && location.state.from) || "/";
+        navigate(returnTo, { replace: true });
+        return;
+      } catch (e) {
+        // fallback to profile
+        navigate("/profile", { replace: true });
+      }
     } catch (err) {
       console.error("Error during registration:", err);
       alert("Registration request failed.");

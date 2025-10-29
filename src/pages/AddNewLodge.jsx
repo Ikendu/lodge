@@ -14,7 +14,10 @@ export default function AddNewLodge() {
     type: "",
     description: "",
     amenities: "",
+    capacity: "",
+    bathroomType: "",
   });
+  const [submitting, setSubmitting] = useState(false);
 
   // ✅ Auth + Profile validation
   useEffect(() => {
@@ -53,12 +56,36 @@ export default function AddNewLodge() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // small handler for number inputs to ensure numeric value
+  const handleNumberChange = (e) => {
+    const v = e.target.value;
+    if (v === "") return setForm({ ...form, [e.target.name]: "" });
+    const n = parseInt(v, 10);
+    if (!isNaN(n)) setForm({ ...form, [e.target.name]: n });
+  };
+
   // ✅ Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (images.length === 0) {
       alert("Please upload at least one image.");
       return;
+    }
+
+    // gather user info from localStorage if available
+    let userLogin = null;
+    let customerProfile = null;
+    try {
+      userLogin = JSON.parse(localStorage.getItem("userLogin") || "null");
+    } catch (err) {
+      console.warn("Could not parse userLogin from localStorage", err);
+    }
+    try {
+      customerProfile = JSON.parse(
+        localStorage.getItem("customerProfile") || "null"
+      );
+    } catch (err) {
+      console.warn("Could not parse customerProfile from localStorage", err);
     }
 
     const formData = new FormData();
@@ -68,13 +95,67 @@ export default function AddNewLodge() {
     formData.append("type", form.type);
     formData.append("description", form.description);
     formData.append("amenities", form.amenities);
+    formData.append("capacity", form.capacity || "");
+    formData.append("bathroomType", form.bathroomType || "");
+
+    // include user identifiers if available
+    if (userLogin && userLogin.uid) formData.append("userUid", userLogin.uid);
+    if (userLogin && userLogin.email)
+      formData.append("userLoginMail", userLogin.email);
+    if (customerProfile && customerProfile.nin)
+      formData.append("nin", customerProfile.nin);
+
     images.forEach((img, i) => formData.append(`image${i + 1}`, img.file));
 
-    console.log(
-      "Lodge data submitted:",
-      Object.fromEntries(formData.entries())
-    );
-    alert("Lodge added successfully!");
+    // Debug dump of FormData entries (works in modern browsers)
+    try {
+      console.group("AddNewLodge FormData");
+      for (const pair of formData.entries()) {
+        // For File entries print filename
+        if (pair[1] instanceof File)
+          console.log(pair[0], pair[1].name, pair[1].type, pair[1].size);
+        else console.log(pair[0], pair[1]);
+      }
+      console.groupEnd();
+    } catch (err) {
+      console.log("Could not enumerate FormData", err);
+    }
+
+    setSubmitting(true);
+
+    try {
+      const res = await fetch(
+        "https://lodge.morelinks.com.ng/api/add_lodge.php",
+        {
+          method: "POST",
+          mode: "cors",
+          body: formData,
+        }
+      );
+
+      const text = await res.text();
+      let json;
+      try {
+        json = JSON.parse(text);
+      } catch (err) {
+        throw new Error("Invalid JSON response from server: " + text);
+      }
+
+      if (!json || !json.success) {
+        const message = (json && json.message) || "Unknown server error";
+        alert("Failed to create lodge: " + message);
+        console.error("add_lodge failed", json);
+      } else {
+        alert("Lodge created successfully.");
+        // Navigate to homepage or lodge page; adjust as needed
+        navigate("/");
+      }
+    } catch (err) {
+      console.error("Error submitting lodge:", err);
+      alert("Network or server error: " + (err.message || err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // ✅ Image preview grid with "+" button logic
@@ -142,13 +223,19 @@ export default function AddNewLodge() {
                 multiple
                 className="hidden"
                 onChange={handleImageChange}
+                required
               />
             </motion.label>
           )}
         </div>
 
         {/* Lodge Details Form */}
-        <div className="space-y-4">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="space-y-10"
+        >
           <div>
             <label className="block font-semibold text-gray-700 mb-1">
               Lodge Title
@@ -193,6 +280,46 @@ export default function AddNewLodge() {
                 className="w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="e.g. 15000"
               />
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">
+                How many people can stay here?
+              </label>
+              <input
+                type="number"
+                name="capacity"
+                value={form.capacity}
+                onChange={handleNumberChange}
+                min={1}
+                required
+                className="w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="e.g. 4"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">
+                Kind of bathrooms available to guests?
+              </label>
+              <select
+                name="bathroomType"
+                value={form.bathroomType}
+                onChange={handleChange}
+                required
+                className="w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">Select bathroom type</option>
+                <option value="Private and attached">
+                  Private and attached
+                </option>
+                <option value="Dedicated but separate">
+                  Dedicated but separate
+                </option>
+                <option value="Shared">Shared</option>
+              </select>
             </div>
           </div>
 
@@ -244,15 +371,17 @@ export default function AddNewLodge() {
           </div>
 
           <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+            initial={{ scale: 1 }}
+            whileHover={{ scale: 1.04, y: -3 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 300 }}
             type="submit"
-            className="w-full bg-blue-600 text-white font-semibold rounded-xl py-3 mt-4 shadow-lg hover:bg-blue-700 transition"
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl py-3 mt-4 shadow-2xl hover:shadow-2xl transition-all"
           >
             <Upload className="inline-block mr-2 w-5 h-5" />
             Publish Lodge
           </motion.button>
-        </div>
+        </motion.div>
       </motion.form>
     </div>
   );
