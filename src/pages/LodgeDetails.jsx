@@ -18,6 +18,7 @@ export default function LodgeDetails() {
   const location = useLocation();
   const navigate = useNavigate();
   const lodge = location.state?.lodge;
+  console.log("Lodge details page - lodge:", lodge);
 
   // Use Firebase auth state to determine whether the user is signed in
   const [user] = useAuthState(auth);
@@ -34,6 +35,63 @@ export default function LodgeDetails() {
   const [viewerSources, setViewerSources] = useState([]);
   // track whether viewer is showing lodge images or owner images
   const [viewerKind, setViewerKind] = useState("lodge");
+  // Owner profile state (fetched from backend using lodge nin + user email)
+  const [ownerProfile, setOwnerProfile] = useState(null);
+  const [ownerLoading, setOwnerLoading] = useState(false);
+  const [ownerError, setOwnerError] = useState(null);
+
+  // helper to resolve owner image fields which may be:
+  // - a full URL (http/https)
+  // - a data URI
+  // - a filename (e.g. "abc.jpg")
+  // - a leading-slash path ("/userImage/abc.jpg")
+  // - an array or JSON-stringified array
+  // Backend is inconsistent between "/userImage/" and "/api/userImage/" so prefer the public base used by get_profile.php
+  const ownerImageBase = "https://lodge.morelinks.com.ng/userImage/";
+  const resolveOwnerImage = (val) => {
+    if (!val) return null;
+
+    // unwrap arrays
+    if (Array.isArray(val)) {
+      val = val[0];
+      if (!val) return null;
+    }
+
+    // handle objects
+    if (typeof val === "object") {
+      if (val.url) val = val.url;
+      else val = String(val);
+    }
+
+    // attempt to parse JSON strings (some APIs return JSON-encoded arrays)
+    if (typeof val === "string") {
+      const s = val.trim();
+      try {
+        const parsed = JSON.parse(s);
+        if (Array.isArray(parsed)) return resolveOwnerImage(parsed[0]);
+        if (parsed && typeof parsed === "object" && parsed.url)
+          return resolveOwnerImage(parsed.url);
+      } catch (e) {
+        // not JSON — continue
+      }
+
+      // full URLs and data URIs are used as-is
+      if (s.startsWith("http") || s.startsWith("data:")) return s;
+
+      // if it's already a path containing userImage, return as-is (might be absolute or relative path)
+      if (s.includes("/userImage/")) {
+        // ensure it is absolute
+        if (s.startsWith("/"))
+          return `${window.location.protocol}//${window.location.host}${s}`;
+        return s;
+      }
+
+      // otherwise assume it's a filename and prefix the public base
+      return ownerImageBase + encodeURIComponent(s);
+    }
+
+    return null;
+  };
 
   const handleBookNow = () => {
     // Booking flow logic now shows a modal instead of immediate redirects
@@ -112,8 +170,14 @@ export default function LodgeDetails() {
     }
     if (kind === "owner") {
       const ownerImgs = [
-        lodge.owner?.photo || ownerImg,
-        lodge.owner?.photo2 || ownerImg2,
+        // prefer verified_image_url, then image_url, then fallbacks
+        resolveOwnerImage(ownerProfile?.verified_image_url) ||
+          resolveOwnerImage(ownerProfile?.image_url) ||
+          resolveOwnerImage(lodge.owner?.photo) ||
+          ownerImg,
+        resolveOwnerImage(ownerProfile?.image_url) ||
+          resolveOwnerImage(lodge.owner?.photo2) ||
+          ownerImg2,
       ];
       setViewerSources(ownerImgs);
       setCurrentIndex(index);
@@ -136,6 +200,56 @@ export default function LodgeDetails() {
   useEffect(() => {
     if (!viewerOpen) setViewerKind("lodge");
   }, [viewerOpen]);
+
+  // Fetch owner profile when lodge is available
+  useEffect(() => {
+    if (!lodge) return;
+    const nin = lodge.raw?.nin;
+    const email = lodge.raw?.userLoginMail;
+    if (!nin && !email) return; // nothing to query
+
+    let mounted = true;
+    setOwnerLoading(true);
+    setOwnerError(null);
+    setOwnerProfile(null);
+
+    fetch("https://lodge.morelinks.com.ng/api/get_profile.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nin: nin, email: email }),
+    })
+      .then((r) => r.text())
+      .then((text) => {
+        if (!mounted) return;
+        let json = null;
+        try {
+          json = JSON.parse(text);
+
+          // handle parsed JSON below
+        } catch (e) {
+          console.warn("Invalid JSON from get_profile.php:", text);
+          setOwnerError("Invalid server response");
+          return;
+        }
+        if (json && json.success && json.profile) {
+          setOwnerProfile(json.profile);
+        } else {
+          setOwnerError(
+            json && json.message ? json.message : "Profile not found"
+          );
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch owner profile:", err);
+        if (!mounted) return;
+        setOwnerError(String(err));
+      })
+      .finally(() => mounted && setOwnerLoading(false));
+
+    return () => {
+      mounted = false;
+    };
+  }, [lodge]);
 
   // Play a short click/beep using WebAudio for slide feedback
   const playSlideSound = () => {
@@ -185,12 +299,19 @@ export default function LodgeDetails() {
   const ownerThumbLeft =
     viewerOpen && viewerKind === "owner"
       ? viewerSources[currentIndex]
-      : lodge.owner?.photo || ownerImg;
+      : resolveOwnerImage(ownerProfile?.verified_image_url) ||
+        resolveOwnerImage(ownerProfile?.image_url) ||
+        resolveOwnerImage(ownerProfile?.photo) ||
+        resolveOwnerImage(lodge.owner?.photo) ||
+        ownerImg;
 
   const ownerThumbRight =
     viewerOpen && viewerKind === "owner"
       ? viewerSources[(currentIndex + 1) % (viewerSources.length || 1)]
-      : lodge.owner?.photo2 || ownerImg2;
+      : resolveOwnerImage(ownerProfile?.image_url) ||
+        resolveOwnerImage(ownerProfile?.photo2) ||
+        resolveOwnerImage(lodge.owner?.photo2) ||
+        ownerImg2;
 
   const imageVariants = {
     enter: (dir) => ({ x: 300 * dir, opacity: 0 }),
@@ -382,6 +503,29 @@ export default function LodgeDetails() {
               </div>
 
               <p className="text-gray-700 mb-4">{lodge.description}</p>
+              <div>
+                <span className="text-blue-400 font-bold">
+                  Available Amenities:
+                </span>
+                <p className="text-gray-700 mb-4">{lodge.raw.amenities}</p>
+              </div>
+              <div>
+                <span className="text-blue-400 font-bold">Bathroom Type: </span>
+                <span className="text-gray-700 mb-4">
+                  {lodge.raw.bathroomType}
+                </span>
+              </div>
+              <div>
+                <span className="text-blue-400 font-bold">Capacity:</span>
+                <span className="text-gray-700 mb-4">
+                  {" "}
+                  {lodge.raw.capacity}
+                </span>
+              </div>
+              <div>
+                <span className="text-blue-400 font-bold">Lodge Type:</span>
+                <span className="text-gray-700 mb-4"> {lodge.raw.type}</span>
+              </div>
 
               {/* Inline date range picker */}
               <div className="mb-4">
@@ -455,8 +599,11 @@ export default function LodgeDetails() {
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div className="relative">
                   <img
-                    src={ownerThumbLeft}
-                    alt={lodge.owner?.fullName || "Owner"}
+                    src={
+                      resolveOwnerImage(ownerProfile?.verified_image_url) ||
+                      ownerThumbLeft
+                    }
+                    alt={ownerProfile?.firstName || "Owner"}
                     className="w-full h-40 md:h-48 lg:h-56 object-cover rounded-md border cursor-pointer"
                     onClick={() => {
                       if (viewerOpen && viewerKind === "owner") {
@@ -468,7 +615,7 @@ export default function LodgeDetails() {
                     }}
                   />
                   <div className="absolute left-2 top-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                    NIN
+                    Verified
                   </div>
                 </div>
 
@@ -492,53 +639,74 @@ export default function LodgeDetails() {
                 </div>
               </div>
 
-              <div className="mb-3">
-                <div className="text-gray-800 font-semibold">
-                  {lodge.owner?.fullName || "Not provided"}
+              {ownerLoading ? (
+                <div className="py-6 text-center text-gray-600">
+                  Loading owner details…
                 </div>
-                <div className="text-sm text-gray-500">
-                  {lodge.owner?.address || "Address not provided"}
-                </div>
-              </div>
+              ) : ownerError ? (
+                <div className="py-4 text-sm text-red-600">{ownerError}</div>
+              ) : (
+                <>
+                  <div className="mb-3">
+                    <div className="text-gray-800 font-semibold">
+                      {`${ownerProfile?.firstName} ${ownerProfile?.middleName} ${ownerProfile?.lastName}` ||
+                        "Not provided"}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {ownerProfile?.address || "Address not provided"}
+                    </div>
+                  </div>
 
-              <div className="text-sm text-gray-600 space-y-2">
-                <div>
-                  <strong className="text-gray-700">LGA of Origin:</strong>{" "}
-                  {lodge.owner?.lga || "Not provided"}
-                </div>
-                <div>
-                  <strong className="text-gray-700">State of Origin:</strong>{" "}
-                  {lodge.owner?.state || "Not provided"}
-                </div>
-                <div>
-                  <strong className="text-gray-700">Town:</strong>{" "}
-                  {lodge.owner?.town || "Not provided"}
-                </div>
-                <div>
-                  <strong className="text-gray-700">Village:</strong>{" "}
-                  {lodge.owner?.village || "Not provided"}
-                </div>
-              </div>
+                  <div className="text-sm text-gray-600 space-y-2">
+                    <div>
+                      <strong className="text-gray-700">Email:</strong>{" "}
+                      {ownerProfile?.userLoginMail || "Not provided"}
+                    </div>
+                    <div>
+                      <strong className="text-gray-700">Phone:</strong>{" "}
+                      {ownerProfile?.phone || "Not provided"}
+                    </div>
+                    <div>
+                      <strong className="text-gray-700">LGA of Origin:</strong>{" "}
+                      {ownerProfile?.lga || lodge.owner?.lga || "Not provided"}
+                    </div>
+                    <div>
+                      <strong className="text-gray-700">
+                        State of Origin:
+                      </strong>{" "}
+                      {ownerProfile?.state ||
+                        lodge.owner?.state ||
+                        "Not provided"}
+                    </div>
+                  </div>
 
-              <div className="mt-4 border-t pt-3">
-                <h4 className="text-sm font-semibold text-gray-800 mb-2">
-                  Next of Kin
-                </h4>
-                <div className="text-sm text-gray-600">
-                  <div>
-                    <strong className="text-gray-700">Name:</strong>{" "}
-                    {lodge.owner?.nextOfKin?.name || "Not provided"}
-                  </div>
-                  <div>
-                    <strong className="text-gray-700">Relation:</strong>{" "}
-                    {lodge.owner?.nextOfKin?.relation || "Not provided"}
-                  </div>
-                  <div>
-                    <strong className="text-gray-700">Phone:</strong>{" "}
-                    {lodge.owner?.nextOfKin?.phone || "Not provided"}
-                  </div>
-                </div>
-              </div>
+                  {/* <div className="mt-4 border-t pt-3">
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2">
+                      Next of Kin
+                    </h4>
+                    <div className="text-sm text-gray-600">
+                      <div>
+                        <strong className="text-gray-700">Name:</strong>{" "}
+                        {ownerProfile?.nextOfKin?.name ||
+                          lodge.owner?.nextOfKin?.name ||
+                          "Not provided"}
+                      </div>
+                      <div>
+                        <strong className="text-gray-700">Relation:</strong>{" "}
+                        {ownerProfile?.nextOfKin?.relation ||
+                          lodge.owner?.nextOfKin?.relation ||
+                          "Not provided"}
+                      </div>
+                      <div>
+                        <strong className="text-gray-700">Phone:</strong>{" "}
+                        {ownerProfile?.nextOfKin?.phone ||
+                          lodge.owner?.nextOfKin?.phone ||
+                          "Not provided"}
+                      </div>
+                    </div>
+                  </div> */}
+                </>
+              )}
             </motion.aside>
           </motion.div>
         </div>

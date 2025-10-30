@@ -90,37 +90,70 @@ export default function Apartments() {
         Explore Available Lodges & Apartments
       </h2>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {(filtered.length ? filtered : lodges).map((lodge, index) => (
-          <motion.div
-            key={lodge.id}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1, duration: 0.4 }}
-            whileHover={{ scale: 1.03 }}
-            className="rounded-2xl shadow-md hover:shadow-xl transition duration-300 bg-white overflow-hidden cursor-pointer"
-            onClick={() => handleRoomClick(lodge)}
-          >
-            <img
-              src={lodge.images?.[0] ?? ""}
-              alt={lodge.title}
-              className="h-56 w-full object-cover"
-            />
-            <div className="p-4">
-              <h3 className="font-semibold text-lg">{lodge.title}</h3>
-              <p className="text-gray-500 text-sm">{lodge.location}</p>
-              <div className="flex justify-between items-center mt-3">
-                <span className="font-bold text-blue-600">
-                  ₦{lodge.price.toLocaleString()}/night
-                </span>
-                <div className="flex items-center text-yellow-500">
-                  <Star size={16} className="fill-yellow-500" />
-                  <span className="ml-1 text-sm">{lodge.rating}</span>
+      <div className="">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <svg
+              className="animate-spin h-20 w-20 text-gray-700"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              ></path>
+            </svg>
+            <p className="mt-4 text-lg text-gray-700">Loading lodges…</p>
+          </div>
+        ) : error ? (
+          <div className="py-16 text-center text-red-600">
+            Failed to load lodges: {error}
+          </div>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {(filtered.length ? filtered : lodges).map((lodge, index) => (
+              <motion.div
+                key={lodge.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.4 }}
+                whileHover={{ scale: 1.03 }}
+                className="rounded-2xl shadow-md hover:shadow-xl transition duration-300 bg-white overflow-hidden cursor-pointer"
+                onClick={() => handleRoomClick(lodge)}
+              >
+                <img
+                  src={lodge.images?.[0] ?? ""}
+                  alt={lodge.title}
+                  className="h-56 w-full object-cover"
+                />
+                <div className="p-4">
+                  <h3 className="font-semibold text-lg">{lodge.title}</h3>
+                  <p className="text-gray-500 text-sm">{lodge.location}</p>
+                  <div className="flex justify-between items-center mt-3">
+                    <span className="font-bold text-blue-600">
+                      ₦{lodge.price.toLocaleString()}/night
+                    </span>
+                    <div className="flex items-center text-yellow-500">
+                      <Star size={16} className="fill-yellow-500" />
+                      <span className="ml-1 text-sm">{lodge.rating}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
