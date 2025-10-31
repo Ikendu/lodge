@@ -171,13 +171,12 @@ export default function LodgeDetails() {
     if (kind === "owner") {
       const ownerImgs = [
         // prefer verified_image_url, then image_url, then fallbacks
-        resolveOwnerImage(ownerProfile?.verified_image_url) ||
-          resolveOwnerImage(ownerProfile?.image_url) ||
-          resolveOwnerImage(lodge.owner?.photo) ||
-          ownerImg,
-        resolveOwnerImage(ownerProfile?.image_url) ||
-          resolveOwnerImage(lodge.owner?.photo2) ||
-          ownerImg2,
+        resolveOwnerImage(
+          `https://lodge.morelinks.com.ng/api/userImage/${ownerProfile?.verified_image}`
+        ) || ownerImg,
+        resolveOwnerImage(
+          `https://lodge.morelinks.com.ng/api/userImage/${ownerProfile?.image}`
+        ) || ownerImg2,
       ];
       setViewerSources(ownerImgs);
       setCurrentIndex(index);
@@ -299,19 +298,16 @@ export default function LodgeDetails() {
   const ownerThumbLeft =
     viewerOpen && viewerKind === "owner"
       ? viewerSources[currentIndex]
-      : resolveOwnerImage(ownerProfile?.verified_image_url) ||
-        resolveOwnerImage(ownerProfile?.image_url) ||
-        resolveOwnerImage(ownerProfile?.photo) ||
-        resolveOwnerImage(lodge.owner?.photo) ||
-        ownerImg;
+      : resolveOwnerImage(
+          `https://lodge.morelinks.com.ng/api/userImage/${ownerProfile?.verified_image}`
+        ) || ownerImg;
 
   const ownerThumbRight =
     viewerOpen && viewerKind === "owner"
       ? viewerSources[(currentIndex + 1) % (viewerSources.length || 1)]
-      : resolveOwnerImage(ownerProfile?.image_url) ||
-        resolveOwnerImage(ownerProfile?.photo2) ||
-        resolveOwnerImage(lodge.owner?.photo2) ||
-        ownerImg2;
+      : resolveOwnerImage(
+          `https://lodge.morelinks.com.ng/api/userImage/${ownerProfile?.image}`
+        ) || ownerImg2;
 
   const imageVariants = {
     enter: (dir) => ({ x: 300 * dir, opacity: 0 }),
@@ -338,6 +334,8 @@ export default function LodgeDetails() {
     hidden: { opacity: 0, x: 20 },
     show: { opacity: 1, x: 0, transition: { duration: 0.7, ease: "easeOut" } },
   };
+
+  console.log("Profile info", ownerProfile);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex justify-center items-center p-6">
@@ -425,6 +423,7 @@ export default function LodgeDetails() {
                         className="w-12 h-12 object-cover rounded"
                       />
                     </button>
+                    {/* Overlay hint: tap to view fullscreen */}
 
                     <button
                       onClick={nextImage}
@@ -599,10 +598,7 @@ export default function LodgeDetails() {
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div className="relative">
                   <img
-                    src={
-                      resolveOwnerImage(ownerProfile?.verified_image_url) ||
-                      ownerThumbLeft
-                    }
+                    src={ownerThumbLeft}
                     alt={ownerProfile?.firstName || "Owner"}
                     className="w-full h-40 md:h-48 lg:h-56 object-cover rounded-md border cursor-pointer"
                     onClick={() => {
@@ -614,6 +610,9 @@ export default function LodgeDetails() {
                       }
                     }}
                   />
+                  <div className="absolute left-1 bottom-0 bg-black/60 text-white/80 text-[10px] px-1 py0.5 italic rounded">
+                    tap to view fullscreen image
+                  </div>
                   <div className="absolute left-2 top-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
                     Verified
                   </div>
@@ -633,6 +632,11 @@ export default function LodgeDetails() {
                       }
                     }}
                   />
+                  {/* Overlay hint: tap to view fullscreen */}
+
+                  <div className="absolute left-1 bottom-0 bg-black/60 text-white/80 text-[10px] px-1 py0.5 italic rounded">
+                    tap to view fullscreen image
+                  </div>
                   <div className="absolute left-2 top-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
                     Given
                   </div>
