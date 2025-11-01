@@ -239,6 +239,13 @@ export default function Header() {
               {accountMenuOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-white text-gray-800 rounded shadow-lg py-2 z-50">
                   <button
+                    onClick={() => setAccountMenuOpen(false)}
+                    className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
+                    aria-label="Close menu"
+                  >
+                    <X size={16} />
+                  </button>
+                  <button
                     onClick={() => {
                       setAccountMenuOpen(false);
                       // If no customerProfile stored, send user to registration
@@ -262,8 +269,6 @@ export default function Header() {
                     onClick={async () => {
                       await signOut(auth);
                       setAccountMenuOpen(false);
-                      // after logout, redirect to home
-
                       localStorage.removeItem("customerProfile");
                       localStorage.removeItem("userLogin");
                       alert("Logged out successfully!");
@@ -323,6 +328,13 @@ export default function Header() {
 
               {accountMenuOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-white text-gray-800 rounded shadow-lg py-2 z-50">
+                  <button
+                    onClick={() => setAccountMenuOpen(false)}
+                    className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
+                    aria-label="Close menu"
+                  >
+                    <X size={16} />
+                  </button>
                   <button
                     onClick={() => {
                       setAccountMenuOpen(false);

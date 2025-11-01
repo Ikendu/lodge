@@ -1,13 +1,13 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
-// Vite environment variables (add these to your .env file as VITE_PAYSTACK_KEY and VITE_FLUTTERWAVE_KEY)
-const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_KEY || "";
+const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_KEY;
 const FLUTTERWAVE_KEY = import.meta.env.VITE_FLUTTERWAVE_KEY || "";
 
 export default function Payment() {
   const location = useLocation();
   const navigate = useNavigate();
+
   const lodge = location.state?.lodge;
   const profile =
     location.state?.profile ||
@@ -15,9 +15,15 @@ export default function Payment() {
 
   const [method, setMethod] = useState("paystack");
   const [processing, setProcessing] = useState(false);
+  const [refAccess, setRefAccess] = useState(null);
+  const [verifyPaystack, setVerifyPaystack] = useState(null);
+
+  // ✅ move this before useEffect
+  const amount = 100; // or lodge?.price || 0
+  // profile?.userLoginMail = "davidaniedexp@gmail.com";
 
   useEffect(() => {
-    // Load Paystack and Flutterwave scripts dynamically so the page can use inline SDKs
+    // load Paystack script
     if (!window.PaystackPop && PAYSTACK_KEY) {
       const s = document.createElement("script");
       s.src = "https://js.paystack.co/v1/inline.js";
@@ -25,71 +31,108 @@ export default function Payment() {
       document.body.appendChild(s);
     }
 
+    const payload = JSON.stringify({
+      email: profile?.userLoginMail,
+      amount: Number(amount) * 50, // in kobo
+    });
+
+    async function fetchData() {
+      try {
+        const res = await fetch(
+          "https://lodge.morelinks.com.ng/api/paymentinit.php",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: payload,
+          }
+        );
+
+        const text = await res.text();
+        try {
+          const parsed = JSON.parse(text);
+          console.log("Init response:", parsed);
+          setRefAccess(parsed);
+        } catch (err) {
+          console.error("Invalid JSON from backend:", text);
+        }
+      } catch (err) {
+        console.error("Error initializing payment:", err);
+      }
+    }
+
+    fetchData();
+
+    // load Flutterwave script
     if (!window.getpaidSetup && FLUTTERWAVE_KEY) {
       const s2 = document.createElement("script");
       s2.src = "https://checkout.flutterwave.com/v3.js";
       s2.async = true;
       document.body.appendChild(s2);
     }
-  }, []);
-
-  if (!lodge) return <p className="p-6">No lodge selected for payment.</p>;
-  if (!profile)
-    return (
-      <p className="p-6">
-        Please complete your profile before proceeding to payment.
-      </p>
-    );
-
-  const amount = lodge.price || 0;
+  }, [profile?.userLoginMail, amount]);
 
   const startPaystack = async () => {
-    setProcessing(true);
-
-    // Recommended: create a transaction on your backend which returns a reference
-    // and/or verify payment server-side after callback. For demo, we'll open
-    // Paystack inline and generate a client-side ref.
-    const reference = `PSK_${Date.now()}`;
-
-    if (!window.PaystackPop) {
-      alert(
-        "Paystack SDK not loaded. Add VITE_PAYSTACK_KEY and ensure internet access."
-      );
-      setProcessing(false);
+    if (!refAccess?.data?.reference) {
+      alert("Could not initialize payment. Try again.");
       return;
     }
 
+    if (!window.PaystackPop) {
+      alert("Paystack script not loaded.");
+      return;
+    }
+
+    setProcessing(true);
+    const reference = refAccess.data.reference;
+
     const handler = window.PaystackPop.setup({
       key: PAYSTACK_KEY,
-      email: profile.email,
-      amount: Number(amount) * 100, // in kobo
+      email: profile.userLoginMail,
+      amount: Number(amount) * 100,
       ref: reference,
       metadata: {
         custom_fields: [
           {
-            display_name: "Customer NIN",
-            variable_name: "nin",
-            value: profile.nin,
+            display_name: profile.firstName + " " + profile.lastName,
+            variable_name: "NIN",
+            value: profile.mobile,
           },
         ],
       },
-      onClose: function () {
+      onClose: () => {
         setProcessing(false);
-        // user closed the modal
       },
       callback: function (response) {
-        // response.reference - verify with your backend
-        // Example: POST /api/paystack/verify { reference }
-        // For demo we'll assume success and navigate to payment-success
-        setProcessing(false);
-        navigate("/payment-success", {
-          state: {
-            lodge,
-            profile,
-            provider: "paystack",
-            reference: response.reference,
-          },
-        });
+        (async () => {
+          try {
+            const res = await fetch(
+              `https://lodge.morelinks.com.ng/api/verifyPaystack.php?reference=${response.reference}`
+            );
+
+            const text = await res.text();
+            const parsed = JSON.parse(text);
+            console.log("Verification result:", parsed);
+            setVerifyPaystack(parsed);
+
+            if (parsed.status && parsed.data?.status === "success") {
+              navigate("/payment-success", {
+                state: {
+                  lodge,
+                  profile,
+                  provider: "paystack",
+                  reference: response.reference,
+                  verifyPaystack: parsed,
+                },
+              });
+            } else {
+              alert("Payment verification failed. Try again.");
+            }
+          } catch (error) {
+            console.error("Error verifying payment:", error);
+          } finally {
+            setProcessing(false);
+          }
+        })();
       },
     });
 
@@ -98,11 +141,8 @@ export default function Payment() {
 
   const startFlutterwave = async () => {
     setProcessing(true);
-
     if (!window.getpaidSetup) {
-      alert(
-        "Flutterwave SDK not loaded. Add VITE_FLUTTERWAVE_KEY and ensure internet access."
-      );
+      alert("Flutterwave SDK not loaded.");
       setProcessing(false);
       return;
     }
@@ -115,11 +155,8 @@ export default function Payment() {
       amount: Number(amount),
       currency: "NGN",
       txref: tx_ref,
-      onclose: function () {
-        setProcessing(false);
-      },
-      callback: function () {
-        // verify with your backend in production
+      onclose: () => setProcessing(false),
+      callback: () => {
         setProcessing(false);
         navigate("/payment-success", {
           state: { lodge, profile, provider: "flutterwave", reference: tx_ref },
@@ -127,6 +164,14 @@ export default function Payment() {
       },
     });
   };
+
+  if (!lodge) return <p className="p-6">No lodge selected for payment.</p>;
+  if (!profile)
+    return (
+      <p className="p-6">
+        Please complete your profile before proceeding to payment.
+      </p>
+    );
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
@@ -172,25 +217,6 @@ export default function Payment() {
           >
             Cancel
           </button>
-        </div>
-
-        <div className="mt-6 text-sm text-gray-500">
-          <strong>Note:</strong> This page includes inline integrations for
-          Paystack and Flutterwave. For production you must:
-          <ul className="list-disc ml-6 mt-2">
-            <li>
-              Set VITE_PAYSTACK_KEY and VITE_FLUTTERWAVE_KEY in your .env
-              (public keys).
-            </li>
-            <li>
-              Create server-side endpoints to initialize transactions and verify
-              receipts securely.
-            </li>
-            <li>
-              Verify the payment on the server using secret keys before granting
-              booking confirmation.
-            </li>
-          </ul>
         </div>
       </div>
     </div>

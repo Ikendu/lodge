@@ -581,6 +581,13 @@ export default function RegisterCustomerDetails() {
           <div></div>
 
           {/* Next of Kin */}
+          <div className="col-span-2 flex flex-col">
+            <h4 className="text-xl font-bold">Next of Kin Details</h4>
+            <p className=" italic text-white/70">
+              For security purpose your next-of-kin should not be the same
+              person traveling with
+            </p>
+          </div>
           <div className="flex flex-col">
             <label className="text-white mb-2 font-medium">
               Next of Kin Name

@@ -1,4 +1,11 @@
 <?php
+require_once __DIR__ . '/load_env.php';
+
+
+// Load environment variables
+loadEnv(__DIR__ . '/.env');
+
+$paystackSecret = $_ENV['PAYSTACK_SECRET_KEY'];
 
 
 class Database {
