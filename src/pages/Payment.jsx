@@ -4,18 +4,6 @@ import { useState, useEffect } from "react";
 const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_KEY;
 const FLUTTERWAVE_KEY = import.meta.env.VITE_FLUTTERWAVE_KEY;
 
-if (!PAYSTACK_KEY) {
-  console.error(
-    "Paystack public key is missing. Please set VITE_PAYSTACK_KEY in your environment."
-  );
-}
-
-if (!FLUTTERWAVE_KEY) {
-  console.error(
-    "Flutterwave public key is missing. Please set VITE_FLUTTERWAVE_KEY in your environment."
-  );
-}
-
 export default function Payment() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -25,7 +13,7 @@ export default function Payment() {
     location.state?.profile ||
     JSON.parse(localStorage.getItem("customerProfile") || "null");
 
-  const [method, setMethod] = useState("paystack");
+  const [method, setMethod] = useState("flutterwave");
   const [processing, setProcessing] = useState(false);
   const [refAccess, setRefAccess] = useState(null);
   const [verifyPaystack, setVerifyPaystack] = useState(null);
@@ -98,7 +86,7 @@ export default function Payment() {
 
   const startFlutterwave = () => {
     window.FlutterwaveCheckout({
-      public_key: import.meta.env.VITE_FLUTTERWAVE_KEY, // from .env
+      public_key: FLUTTERWAVE_KEY, // from .env
       tx_ref: Date.now(),
       amount: 50,
       currency: "NGN",
@@ -175,8 +163,8 @@ export default function Payment() {
             onChange={(e) => setMethod(e.target.value)}
             className="w-full p-2 border rounded"
           >
-            <option value="paystack">Paystack</option>
             <option value="flutterwave">Flutterwave</option>
+            <option value="paystack">Paystack</option>
           </select>
         </div>
 
