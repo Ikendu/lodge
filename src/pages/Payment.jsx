@@ -4,6 +4,18 @@ import { useState, useEffect } from "react";
 const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_KEY;
 const FLUTTERWAVE_KEY = import.meta.env.VITE_FLUTTERWAVE_KEY || "";
 
+if (!PAYSTACK_KEY) {
+  console.error(
+    "Paystack public key is missing. Please set VITE_PAYSTACK_KEY in your environment."
+  );
+}
+
+if (!FLUTTERWAVE_KEY) {
+  console.error(
+    "Flutterwave public key is missing. Please set VITE_FLUTTERWAVE_KEY in your environment."
+  );
+}
+
 export default function Payment() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -17,23 +29,26 @@ export default function Payment() {
   const [processing, setProcessing] = useState(false);
   const [refAccess, setRefAccess] = useState(null);
   const [verifyPaystack, setVerifyPaystack] = useState(null);
+  const [flutterwaveLoaded, setFlutterwaveLoaded] = useState(false);
 
-  // ✅ move this before useEffect
-  const amount = 100; // or lodge?.price || 0
-  // profile?.userLoginMail = "davidaniedexp@gmail.com";
+  const amount = lodge?.price || 0;
 
   useEffect(() => {
-    // load Paystack script
-    if (!window.PaystackPop && PAYSTACK_KEY) {
+    if (!PAYSTACK_KEY) return;
+
+    // Load Paystack script
+    if (!window.PaystackPop) {
       const s = document.createElement("script");
       s.src = "https://js.paystack.co/v1/inline.js";
       s.async = true;
+      s.onload = () => console.log("Paystack script loaded successfully.");
+      s.onerror = () => console.error("Failed to load Paystack script.");
       document.body.appendChild(s);
     }
 
     const payload = JSON.stringify({
       email: profile?.userLoginMail,
-      amount: Number(amount) * 50, // in kobo
+      amount: Number(amount) * 100, // in kobo
     });
 
     async function fetchData() {
@@ -46,6 +61,10 @@ export default function Payment() {
             body: payload,
           }
         );
+
+        if (!res.ok) {
+          throw new Error(`Failed to initialize payment: ${res.statusText}`);
+        }
 
         const text = await res.text();
         try {
@@ -61,14 +80,6 @@ export default function Payment() {
     }
 
     fetchData();
-
-    // load Flutterwave script
-    if (!window.getpaidSetup && FLUTTERWAVE_KEY) {
-      const s2 = document.createElement("script");
-      s2.src = "https://checkout.flutterwave.com/v3.js";
-      s2.async = true;
-      document.body.appendChild(s2);
-    }
   }, [profile?.userLoginMail, amount]);
 
   const startPaystack = async () => {
@@ -95,7 +106,7 @@ export default function Payment() {
           {
             display_name: profile.firstName + " " + profile.lastName,
             variable_name: "NIN",
-            value: profile.mobile,
+            value: profile.mobile || "N/A",
           },
         ],
       },
@@ -108,6 +119,10 @@ export default function Payment() {
             const res = await fetch(
               `https://lodge.morelinks.com.ng/api/verifyPaystack.php?reference=${response.reference}`
             );
+
+            if (!res.ok) {
+              throw new Error(`Failed to verify payment: ${res.statusText}`);
+            }
 
             const text = await res.text();
             const parsed = JSON.parse(text);
@@ -139,28 +154,53 @@ export default function Payment() {
     handler.openIframe();
   };
 
-  const startFlutterwave = async () => {
-    setProcessing(true);
-    if (!window.getpaidSetup) {
-      alert("Flutterwave SDK not loaded.");
-      setProcessing(false);
-      return;
-    }
-
-    const tx_ref = `FLW_${Date.now()}`;
-
-    window.getpaidSetup({
-      PBFPubKey: FLUTTERWAVE_KEY,
-      customer_email: profile.email,
-      amount: Number(amount),
+  const startFlutterwave = () => {
+    window.FlutterwaveCheckout({
+      public_key: import.meta.env.VITE_FLUTTERWAVE_KEY, // from .env
+      tx_ref: Date.now(),
+      amount: 50,
       currency: "NGN",
-      txref: tx_ref,
-      onclose: () => setProcessing(false),
-      callback: () => {
-        setProcessing(false);
-        navigate("/payment-success", {
-          state: { lodge, profile, provider: "flutterwave", reference: tx_ref },
-        });
+      payment_options: "card, banktransfer, ussd",
+      customer: {
+        email: "davidaniedexp@gmail.com",
+        phone_number: "08061632276",
+        name: "David Aniede",
+      },
+      customizations: {
+        title: "MoreLinks Lodge Payment",
+        description: "Payment for lodge booking",
+        logo: "https://lodge.morelinks.com.ng/logos.png",
+      },
+      callback: function (response) {
+        // send to backend for verification
+        fetch("https://lodge.morelinks.com.ng/api/verify_flut_payment.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transaction_id: response.transaction_id }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            console.log("Flutterwave verification response:", data);
+
+            if (
+              data.status === "success" &&
+              data.data?.status === "successful"
+            ) {
+              navigate("/payment-success", {
+                state: {
+                  lodge,
+                  profile,
+                  provider: "flutterwave",
+                  flutterwave: data,
+                },
+              });
+            } else {
+              console.log("Payment verification failed. Try again.");
+            }
+          });
+      },
+      onclose: function () {
+        console.log("Payment modal closed");
       },
     });
   };
