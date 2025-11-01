@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import logo from "../assets/logos/logo.png";
 
 export default function Apartments() {
   const navigate = useNavigate();
@@ -118,7 +119,10 @@ export default function Apartments() {
           </div>
         ) : error ? (
           <div className="py-16 text-center text-red-600">
-            Failed to load lodges: {error}
+            <h3>
+              Failed to load lodges, Please check your nextwork and reload the
+              page
+            </h3>
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

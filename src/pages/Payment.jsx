@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_KEY;
-const FLUTTERWAVE_KEY = import.meta.env.VITE_FLUTTERWAVE_KEY || "";
+const FLUTTERWAVE_KEY = import.meta.env.VITE_FLUTTERWAVE_KEY;
 
 if (!PAYSTACK_KEY) {
   console.error(
@@ -29,84 +29,26 @@ export default function Payment() {
   const [processing, setProcessing] = useState(false);
   const [refAccess, setRefAccess] = useState(null);
   const [verifyPaystack, setVerifyPaystack] = useState(null);
-  const [flutterwaveLoaded, setFlutterwaveLoaded] = useState(false);
 
-  const amount = lodge?.price || 0;
-
-  useEffect(() => {
-    if (!PAYSTACK_KEY) return;
-
-    // Load Paystack script
-    if (!window.PaystackPop) {
-      const s = document.createElement("script");
-      s.src = "https://js.paystack.co/v1/inline.js";
-      s.async = true;
-      s.onload = () => console.log("Paystack script loaded successfully.");
-      s.onerror = () => console.error("Failed to load Paystack script.");
-      document.body.appendChild(s);
-    }
-
-    const payload = JSON.stringify({
-      email: profile?.userLoginMail,
-      amount: Number(amount) * 100, // in kobo
-    });
-
-    async function fetchData() {
-      try {
-        const res = await fetch(
-          "https://lodge.morelinks.com.ng/api/paymentinit.php",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: payload,
-          }
-        );
-
-        if (!res.ok) {
-          throw new Error(`Failed to initialize payment: ${res.statusText}`);
-        }
-
-        const text = await res.text();
-        try {
-          const parsed = JSON.parse(text);
-          console.log("Init response:", parsed);
-          setRefAccess(parsed);
-        } catch (err) {
-          console.error("Invalid JSON from backend:", text);
-        }
-      } catch (err) {
-        console.error("Error initializing payment:", err);
-      }
-    }
-
-    fetchData();
-  }, [profile?.userLoginMail, amount]);
+  // const amount = lodge?.price || 0;
+  const amount = 100;
+  const fullname = `${profile?.firstName || ""} ${profile?.lastName || ""}`;
 
   const startPaystack = async () => {
-    if (!refAccess?.data?.reference) {
-      alert("Could not initialize payment. Try again.");
-      return;
-    }
-
-    if (!window.PaystackPop) {
-      alert("Paystack script not loaded.");
-      return;
-    }
-
     setProcessing(true);
-    const reference = refAccess.data.reference;
 
     const handler = window.PaystackPop.setup({
       key: PAYSTACK_KEY,
       email: profile.userLoginMail,
       amount: Number(amount) * 100,
-      ref: reference,
+      currency: "NGN",
+      ref: "REF_" + Date.now(),
       metadata: {
         custom_fields: [
           {
             display_name: profile.firstName + " " + profile.lastName,
             variable_name: "NIN",
-            value: profile.mobile || "N/A",
+            value: profile.mobile,
           },
         ],
       },
@@ -136,7 +78,7 @@ export default function Payment() {
                   profile,
                   provider: "paystack",
                   reference: response.reference,
-                  verifyPaystack: parsed,
+                  paystackdata: parsed,
                 },
               });
             } else {
@@ -162,9 +104,9 @@ export default function Payment() {
       currency: "NGN",
       payment_options: "card, banktransfer, ussd",
       customer: {
-        email: "davidaniedexp@gmail.com",
-        phone_number: "08061632276",
-        name: "David Aniede",
+        email: profile.userLoginMail,
+        phone_number: profile.mobile,
+        name: fullname,
       },
       customizations: {
         title: "MoreLinks Lodge Payment",
