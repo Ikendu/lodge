@@ -34,7 +34,7 @@ export default function PaymentSuccess() {
   const date =
     formatDate(paystackdata?.paid_at) || formatDate(flutterdata?.created_at);
   const fullName = `${profile?.firstName || ""} ${profile?.lastName || ""}`;
-  const owner = localStorage.getItem("ownerProfile");
+  const owner = JSON.parse(localStorage.getItem("ownerProfile"));
   console.log("Owner data:", owner);
   useEffect(() => {
     if (hasSaved.current) return;
@@ -178,7 +178,7 @@ export default function PaymentSuccess() {
               }
               className="px-4 py-2 border  bg-blue-600 text-white rounded mr-2"
             >
-              Paid Lodge
+              Lodge Details
             </button>
             <button
               onClick={() => navigate("/profile")}

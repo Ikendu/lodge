@@ -81,11 +81,6 @@ export default function LoginPage() {
           console.warn(`Invalid JSON from ${url}:`, text);
           data = null;
         }
-
-        if (data) {
-          console.log(`Profile response from ${url}:`, data);
-          break;
-        }
       } catch (err) {
         lastError = err;
         console.warn(`Request to ${url} failed:`, err);

@@ -12,6 +12,10 @@ export default function UserProfilePage() {
 
   const [profileData, setProfileData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState(null);
 
   const savedData = useMemo(() => {
     try {
@@ -20,6 +24,22 @@ export default function UserProfilePage() {
       return null;
     }
   }, []);
+  const display = profileData || savedData || {};
+
+  // populate form when display changes
+  useEffect(() => {
+    setForm({
+      contactAddress: display.address || "",
+      permanentAddress: display.permanentAddress || "",
+      mobile: display.mobile || display.phone || "",
+      nextOfKinName: display.nextOfKinName || "",
+      nextOfKinPhone: display.nextOfKinPhone || "",
+      nextOfKinAddress: display.nextOfKinAddress || "",
+      nextOfKinRelation: display.nextOfKinRelation || "",
+      email: display.userLoginMail || display.email || "",
+      nin: display.nin || display.id || "",
+    });
+  }, [display]);
 
   // Lodges are handled in the LodgeList component below
 
@@ -37,10 +57,6 @@ export default function UserProfilePage() {
     }
     return val;
   };
-
-  const display = profileData || savedData || {};
-
-  console.log("Display data:", display);
 
   const ninImage =
     getImageSrc(display.verified_image) ||
@@ -90,6 +106,8 @@ export default function UserProfilePage() {
     nextOfKinAddress: display.nextOfKinAddress || "Not provided",
     nextOkinRelation: display.nextOfKinRelation || "Not provided",
   };
+
+  if (loading) return null;
 
   return (
     <motion.div
@@ -156,6 +174,100 @@ export default function UserProfilePage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
+            {/* Edit controls */}
+            <div className="flex items-center justify-end gap-2 mb-2">
+              {editing ? (
+                <>
+                  <button
+                    onClick={() => setEditing(false)}
+                    className="px-3 py-1 text-sm border rounded bg-white/5"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      // save
+                      setSaving(true);
+                      setSaveMessage(null);
+                      try {
+                        const payload = {
+                          email: form.email,
+                          nin: form.nin,
+                          contact_address: form.contactAddress,
+                          permanent_address: form.permanentAddress,
+                          mobile: form.mobile,
+                          nextOfKinName: form.nextOfKinName,
+                          nextOfKinPhone: form.nextOfKinPhone,
+                          nextOfKinAddress: form.nextOfKinAddress,
+                          nextOfKinRelation: form.nextOfKinRelation,
+                        };
+
+                        // const url = `${window.location.protocol}//${window.location.host}/api/update_profile.php`;
+                        const url =
+                          "https://lodge.morelinks.com.ng/api/update_profile.php";
+                        const res = await fetch(url, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(payload),
+                        });
+                        const text = await res.text();
+                        let json = null;
+                        try {
+                          json = JSON.parse(text);
+                        } catch (e) {
+                          throw new Error("Invalid server response: " + text);
+                        }
+
+                        if (!res.ok)
+                          throw new Error(json.message || "Save failed");
+                        if (json.success) {
+                          setSaveMessage("Saved successfully");
+                          // update local storage + state
+                          const newProfile = {
+                            ...(display || {}),
+                            ...{
+                              address: form.contactAddress,
+                              permanentAddress: form.permanentAddress,
+                              mobile: form.mobile,
+                              nextOfKinName: form.nextOfKinName,
+                              nextOfKinPhone: form.nextOfKinPhone,
+                              nextOfKinAddress: form.nextOfKinAddress,
+                              nextOfKinRelation: form.nextOfKinRelation,
+                            },
+                          };
+                          try {
+                            localStorage.setItem(
+                              "customerProfile",
+                              JSON.stringify(newProfile)
+                            );
+                          } catch (e) {}
+                          setProfileData(newProfile);
+                          setEditing(false);
+                        } else {
+                          throw new Error(json.message || "Save failed");
+                        }
+                      } catch (err) {
+                        console.error(err);
+                        setSaveMessage(err.message || "Save failed");
+                      } finally {
+                        setSaving(false);
+                      }
+                    }}
+                    disabled={saving}
+                    className="px-3 py-1 text-sm bg-green-600 rounded text-white"
+                  >
+                    {saving ? "Saving..." : "Save changes"}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="px-3 py-1 text-sm bg-blue-600 rounded text-white"
+                >
+                  Edit contact & NOK
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-4">
               {[
                 ["Full Name", profile.fullName],
@@ -171,7 +283,20 @@ export default function UserProfilePage() {
                   whileHover={{ scale: 1.02 }}
                 >
                   <div className="text-xs text-gray-300 uppercase">{label}</div>
-                  <div className="font-semibold">{value}</div>
+                  {/* if editing and this is editable field, show input */}
+                  <div className="font-semibold">
+                    {editing && label === "Mobile" ? (
+                      <input
+                        value={form.mobile || ""}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, mobile: e.target.value }))
+                        }
+                        className="w-full p-2 rounded text-black text-sm"
+                      />
+                    ) : (
+                      value
+                    )}
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -183,7 +308,20 @@ export default function UserProfilePage() {
               <div className="text-xs text-gray-300 uppercase">
                 Contact Address
               </div>
-              <div className="font-semibold">{profile.address}</div>
+              <div className="font-semibold">
+                {editing ? (
+                  <textarea
+                    value={form.contactAddress || ""}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, contactAddress: e.target.value }))
+                    }
+                    className="w-full p-2 rounded text-black text-sm"
+                    rows={3}
+                  />
+                ) : (
+                  profile.address
+                )}
+              </div>
             </motion.div>
             <motion.div
               className="bg-white/5 p-3 rounded-lg hover:bg-white/10 transition-all"
@@ -192,7 +330,23 @@ export default function UserProfilePage() {
               <div className="text-xs text-gray-300 uppercase">
                 Permanent Address
               </div>
-              <div className="font-semibold">{profile.permanentAddress}</div>
+              <div className="font-semibold">
+                {editing ? (
+                  <textarea
+                    value={form.permanentAddress || ""}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        permanentAddress: e.target.value,
+                      }))
+                    }
+                    className="w-full p-2 rounded text-black text-sm"
+                    rows={3}
+                  />
+                ) : (
+                  profile.permanentAddress
+                )}
+              </div>
             </motion.div>
 
             <motion.div
@@ -208,9 +362,9 @@ export default function UserProfilePage() {
             <div className="grid grid-cols-2 gap-4">
               {[
                 ["Full Name", profile.nextOfKinName],
-                ["Date of Birth", profile.nextOfKinPhone],
-                ["Email", profile.nextOfKinAddress],
-                ["Phone", profile.nextOkinRelation],
+                ["Phone", profile.nextOfKinPhone],
+                ["Address", profile.nextOfKinAddress],
+                ["Relation", profile.nextOkinRelation],
               ].map(([label, value], i) => (
                 <motion.div
                   key={i}
@@ -218,10 +372,64 @@ export default function UserProfilePage() {
                   whileHover={{ scale: 1.02 }}
                 >
                   <div className="text-xs text-gray-300 uppercase">{label}</div>
-                  <div className="font-semibold">{value}</div>
+                  <div className="font-semibold">
+                    {editing ? (
+                      // map label to form field
+                      label === "Full Name" ? (
+                        <input
+                          value={form.nextOfKinName || ""}
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              nextOfKinName: e.target.value,
+                            }))
+                          }
+                          className="w-full p-2 rounded text-black text-sm"
+                        />
+                      ) : label === "Phone" ? (
+                        <input
+                          value={form.nextOfKinPhone || ""}
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              nextOfKinPhone: e.target.value,
+                            }))
+                          }
+                          className="w-full p-2 rounded text-black text-sm"
+                        />
+                      ) : label === "Address" ? (
+                        <input
+                          value={form.nextOfKinAddress || ""}
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              nextOfKinAddress: e.target.value,
+                            }))
+                          }
+                          className="w-full p-2 rounded text-black text-sm"
+                        />
+                      ) : (
+                        <input
+                          value={form.nextOfKinRelation || ""}
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              nextOfKinRelation: e.target.value,
+                            }))
+                          }
+                          className="w-full p-2 rounded text-black text-sm"
+                        />
+                      )
+                    ) : (
+                      value
+                    )}
+                  </div>
                 </motion.div>
               ))}
             </div>
+            {saveMessage && (
+              <div className="mt-3 text-sm text-yellow-200">{saveMessage}</div>
+            )}
           </motion.div>
         </div>
       </motion.div>

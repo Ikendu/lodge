@@ -693,6 +693,16 @@ export default function LodgeDetails() {
                             )}
                           </div>
                           <div>
+                            <strong className="text-gray-700">Mobile:</strong>{" "}
+                            {paid ? (
+                              ownerProfile?.mobile || "Not provided"
+                            ) : (
+                              <span className="italic text-gray-500">
+                                Hidden until payment
+                              </span>
+                            )}
+                          </div>
+                          <div>
                             <strong className="text-gray-700">Phone:</strong>{" "}
                             {paid ? (
                               ownerProfile?.phone || "Not provided"

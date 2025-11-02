@@ -70,8 +70,6 @@ export const socialSignIn = async (provider) => {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    // You can store user info in localStorage or your backend
-    console.log("✅ Login Successful:", user);
     alert(`Welcome ${user.displayName || "User"}!`);
     return user;
   } catch (error) {
