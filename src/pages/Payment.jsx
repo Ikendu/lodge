@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_KEY;
+const TEST_PAYSTACK_KEY = import.meta.env.VITE_TEST_PAYSTACK_KEY;
 const FLUTTERWAVE_KEY = import.meta.env.VITE_FLUTTERWAVE_KEY;
 
 export default function Payment() {
@@ -18,15 +19,15 @@ export default function Payment() {
   const [refAccess, setRefAccess] = useState(null);
   const [verifyPaystack, setVerifyPaystack] = useState(null);
 
-  // const amount = lodge?.price || 0;
-  const amount = 100;
+  const amount = lodge?.price;
+  // const amount = 100;
   const fullname = `${profile?.firstName || ""} ${profile?.lastName || ""}`;
 
   const startPaystack = async () => {
     setProcessing(true);
 
     const handler = window.PaystackPop.setup({
-      key: PAYSTACK_KEY,
+      key: TEST_PAYSTACK_KEY,
       email: profile.userLoginMail,
       amount: Number(amount) * 100,
       currency: "NGN",
@@ -176,9 +177,7 @@ export default function Payment() {
             }
             className="px-4 py-2 bg-blue-600 text-white rounded"
           >
-            {processing
-              ? "Processing..."
-              : `Pay ₦${Number(amount).toLocaleString()}`}
+            {processing ? "Processing..." : `Pay ₦${Number(amount)}`}
           </button>
 
           <button

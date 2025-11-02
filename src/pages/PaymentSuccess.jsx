@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import logo from "../assets/logos/logo.png";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function PaymentSuccess() {
   const location = useLocation();
@@ -9,40 +9,15 @@ export default function PaymentSuccess() {
   const lodge = location.state?.lodge || {};
   const profile = location.state?.profile || {};
   const provider = location.state?.provider || "unknown";
+
   const flutterdata = location.state?.flutterwave?.data;
-  console.log(flutterdata);
 
   const paystackdata = location.state?.paystackdata?.data;
 
-  const reference =
-    flutterdata?.flw_ref ||
-    location.state?.verifyPaystack?.data?.reference ||
-    "-";
+  console.log("Paystack data:", paystackdata);
+  console.log("Lodge data:", lodge);
+  console.log("Profile data:", profile);
 
-  const paymentReference =
-    flutterdata?.tx_ref ||
-    location.state?.verifyPaystack?.data?.reference ||
-    "-";
-
-  const paymentType = flutterdata?.payment_type || provider || "-";
-
-  const verifyPaystack = location.state?.verifyPaystack;
-  const verifyFlutterwave =
-    location.state?.verifyFlutterwave || location.state?.verifyFlutter;
-
-  // Helper: format date from various possible keys
-  const extractDate = (verify) => {
-    if (!verify || !verify.data) return null;
-    const d = verify;
-    return (
-      d.created_at ||
-      d.transaction_date ||
-      d.paid_at ||
-      d.createdAt ||
-      d.updated_at ||
-      null
-    );
-  };
   const formatDate = (raw) => {
     if (!raw) return "-";
     const parsed = new Date(raw);
@@ -50,34 +25,91 @@ export default function PaymentSuccess() {
     return parsed.toLocaleString();
   };
 
-  const extractAmount = (verify, providerName) => {
-    if (!verify || !verify.data) return lodge?.price || 0;
-    const d = verify.data;
-    // Paystack returns amount in kobo
-    if (providerName === "paystack") {
-      const amt = d.amount != null ? Number(d.amount) / 100 : lodge?.price || 0;
-      return amt;
+  const reference = flutterdata?.flw_ref || paystackdata?.reference || "-";
+
+  const paymentReference = flutterdata?.tx_ref || paystackdata.order_id || "-";
+
+  const paymentType = flutterdata?.payment_type || paystackdata?.channel || "-";
+
+  const [saveStatus, setSaveStatus] = useState(null);
+
+  const amount =
+    Number(flutterdata?.ammout) || Number(paystackdata?.amount / 100) || "-";
+
+  const date =
+    formatDate(paystackdata?.paid_at) || formatDate(flutterdata?.created_at);
+
+  const fullName = `${profile?.firstName || ""} ${profile?.lastName || ""}`;
+
+  useEffect(() => {
+    // Build payload - normalize fields to what the backend expects
+    const payload = {
+      fullname: fullName, // string
+      email: profile?.userLoginMail || null,
+      nin: profile?.nin || null,
+      mobile: profile?.mobile || null,
+      gender: profile?.gender || null,
+      amount,
+      reference: reference || null,
+      paid_at: date || new Date().toISOString(),
+      channel: paymentType || "unknown",
+      lodge_title: lodge?.title || null,
+      lodge_location: lodge?.location || lodge?.address || null,
+      order_id: paymentReference || null,
+    };
+    // Avoid duplicate saves: guard with localStorage key or saveStatus
+    const key = `payment_saved_${reference}`;
+    if (!payload.reference) {
+      console.warn("No payment reference available, skipping DB save.");
+      return;
     }
-    // Flutterwave usually in Naira
-    if (providerName === "flutterwave") {
-      return d.amount != null ? Number(d.amount) : lodge?.price || 0;
+    if (localStorage.getItem(key)) {
+      console.log("Payment already saved, skipping.");
+      return;
     }
-    return lodge?.price || 0;
-  };
 
-  const paystackDate = extractDate(verifyPaystack);
-  const flutterDate = extractDate(flutterdata);
+    async function save() {
+      try {
+        const res = await fetch(
+          "https://lodge.morelinks.com.ng//api/save_payment.php",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
 
-  const amountPaid =
-    provider === "paystack"
-      ? extractAmount(verifyPaystack, "paystack")
-      : extractAmount(verifyFlutterwave, "flutterwave");
+        const text = await res.text();
+        let json;
+        try {
+          json = JSON.parse(text);
+        } catch (e) {
+          throw new Error("Invalid JSON response from save endpoint: " + text);
+        }
 
-  const fullName =
-    `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() ||
-    profile?.name ||
-    profile?.fullname ||
-    "Customer";
+        if (!res.ok) {
+          throw new Error(json.message || `Save failed: HTTP ${res.status}`);
+        }
+
+        if (json.success) {
+          setSaveStatus("saved");
+          localStorage.setItem(key, "1"); // mark as saved to avoid duplicates
+          console.log("Payment saved:", json);
+        } else {
+          setSaveStatus("error");
+          console.error("Save failed:", json);
+        }
+      } catch (err) {
+        setSaveStatus("error");
+        console.error("Error saving payment:", err);
+      }
+    }
+
+    save();
+    // we only want to run once on mount, so omit dependencies that would cause re-run:
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // empty deps: runs once on mount
+  // Helper: format date from various possible keys
 
   const handlePrint = () => {
     window.print();
@@ -192,20 +224,18 @@ export default function PaymentSuccess() {
             </div>
             <div className="flex justify-between text-sm text-gray-700">
               <div>Amount Paid</div>
-              <div className="font-medium">
-                ₦{Number(amountPaid).toLocaleString()}
-              </div>
+              <div className="font-medium">₦{amount.toLocaleString()}</div>
             </div>
             <div className="flex justify-between text-sm text-gray-700">
               <div>Transaction Date</div>
               <div className="font-medium">
                 {provider === "paystack"
-                  ? formatDate(paystackDate)
+                  ? formatDate(paystackdata?.created_at)
                   : formatDate(flutterdata?.created_at)}
               </div>
             </div>
             <div className="flex justify-between text-sm text-gray-700">
-              <div>Transaction Reference</div>
+              <div>Transaction ID</div>
               <div className="font-medium">{paymentReference}</div>
             </div>
             <div className="flex justify-between text-sm text-gray-700">
