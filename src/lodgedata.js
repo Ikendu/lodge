@@ -59,8 +59,8 @@ export const lodges = [
   },
   {
     id: 6,
-    title: "Downtown Apartment",
-    location: "Port Harcourt, Nigeria",
+    title: "Ikeja Downtown Apartment",
+    location: "Ikeja, Nigeria",
     price: 9000,
     rating: 4.4,
     description:

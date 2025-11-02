@@ -20,6 +20,15 @@ export default function LodgeDetails() {
   const lodge = location.state?.lodge;
   console.log("Lodge details page - lodge:", lodge);
 
+  // compute a stable key for this lodge to track payment in localStorage
+  const lodgeKey =
+    lodge?.id ||
+    lodge?._id ||
+    lodge?.raw?.id ||
+    lodge?.raw?.nid ||
+    lodge?.title ||
+    "unknown_lodge";
+
   // Use Firebase auth state to determine whether the user is signed in
   const [user] = useAuthState(auth);
 
@@ -232,6 +241,7 @@ export default function LodgeDetails() {
         }
         if (json && json.success && json.profile) {
           setOwnerProfile(json.profile);
+          localStorage.setItem("ownerProfile", JSON.stringify(json.profile));
         } else {
           setOwnerError(
             json && json.message ? json.message : "Profile not found"
@@ -662,14 +672,39 @@ export default function LodgeDetails() {
                   </div>
 
                   <div className="text-sm text-gray-600 space-y-2">
-                    <div>
-                      <strong className="text-gray-700">Email:</strong>{" "}
-                      {ownerProfile?.userLoginMail || "Not provided"}
-                    </div>
-                    <div>
-                      <strong className="text-gray-700">Phone:</strong>{" "}
-                      {ownerProfile?.phone || "Not provided"}
-                    </div>
+                    {/* hide sensitive owner contact until customer has completed payment for this lodge */}
+                    {(() => {
+                      const paid = Boolean(
+                        typeof window !== "undefined" &&
+                          localStorage.getItem(
+                            `paid_lodge_${encodeURIComponent(lodgeKey)}`
+                          )
+                      );
+                      return (
+                        <>
+                          <div>
+                            <strong className="text-gray-700">Email:</strong>{" "}
+                            {paid ? (
+                              ownerProfile?.userLoginMail || "Not provided"
+                            ) : (
+                              <span className="italic text-gray-500">
+                                Hidden until payment
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <strong className="text-gray-700">Phone:</strong>{" "}
+                            {paid ? (
+                              ownerProfile?.phone || "Not provided"
+                            ) : (
+                              <span className="italic text-gray-500">
+                                Hidden until payment
+                              </span>
+                            )}
+                          </div>
+                        </>
+                      );
+                    })()}
                     <div>
                       <strong className="text-gray-700">LGA of Origin:</strong>{" "}
                       {ownerProfile?.lga || lodge.owner?.lga || "Not provided"}

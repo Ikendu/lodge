@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import logo from "../assets/logos/logo.png";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export default function PaymentSuccess() {
   const location = useLocation();
@@ -9,14 +9,11 @@ export default function PaymentSuccess() {
   const lodge = location.state?.lodge || {};
   const profile = location.state?.profile || {};
   const provider = location.state?.provider || "unknown";
-
   const flutterdata = location.state?.flutterwave?.data;
-
   const paystackdata = location.state?.paystackdata?.data;
 
-  console.log("Paystack data:", paystackdata);
+  console.log("Payment data:", { flutterdata, paystackdata });
   console.log("Lodge data:", lodge);
-  console.log("Profile data:", profile);
 
   const formatDate = (raw) => {
     if (!raw) return "-";
@@ -26,25 +23,25 @@ export default function PaymentSuccess() {
   };
 
   const reference = flutterdata?.flw_ref || paystackdata?.reference || "-";
-
-  const paymentReference = flutterdata?.tx_ref || paystackdata.order_id || "-";
-
+  const paymentReference = flutterdata?.tx_ref || paystackdata?.id || "-";
   const paymentType = flutterdata?.payment_type || paystackdata?.channel || "-";
 
   const [saveStatus, setSaveStatus] = useState(null);
+  const hasSaved = useRef(false); // prevent double execution
 
   const amount =
-    Number(flutterdata?.ammout) || Number(paystackdata?.amount / 100) || "-";
-
+    Number(flutterdata?.amount) || Number(paystackdata?.amount / 100) || "-";
   const date =
     formatDate(paystackdata?.paid_at) || formatDate(flutterdata?.created_at);
-
   const fullName = `${profile?.firstName || ""} ${profile?.lastName || ""}`;
-
+  const owner = localStorage.getItem("ownerProfile");
+  console.log("Owner data:", owner);
   useEffect(() => {
-    // Build payload - normalize fields to what the backend expects
+    if (hasSaved.current) return;
+    hasSaved.current = true;
+
     const payload = {
-      fullname: fullName, // string
+      fullname: fullName,
       email: profile?.userLoginMail || null,
       nin: profile?.nin || null,
       mobile: profile?.mobile || null,
@@ -57,21 +54,27 @@ export default function PaymentSuccess() {
       lodge_location: lodge?.location || lodge?.address || null,
       order_id: paymentReference || null,
     };
-    // Avoid duplicate saves: guard with localStorage key or saveStatus
+
     const key = `payment_saved_${reference}`;
+    const lodgeKey =
+      lodge?.id ||
+      lodge?._id ||
+      lodge?.raw?.id ||
+      lodge?.title ||
+      "unknown_lodge";
     if (!payload.reference) {
       console.warn("No payment reference available, skipping DB save.");
       return;
     }
     if (localStorage.getItem(key)) {
-      console.log("Payment already saved, skipping.");
+      console.log("Payment already saved locally, skipping DB save.");
       return;
     }
 
     async function save() {
       try {
         const res = await fetch(
-          "https://lodge.morelinks.com.ng//api/save_payment.php",
+          "https://lodge.morelinks.com.ng/api/save_payment.php",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -80,20 +83,23 @@ export default function PaymentSuccess() {
         );
 
         const text = await res.text();
-        let json;
-        try {
-          json = JSON.parse(text);
-        } catch (e) {
-          throw new Error("Invalid JSON response from save endpoint: " + text);
-        }
+        const json = JSON.parse(text);
 
-        if (!res.ok) {
+        if (!res.ok)
           throw new Error(json.message || `Save failed: HTTP ${res.status}`);
-        }
 
         if (json.success) {
           setSaveStatus("saved");
-          localStorage.setItem(key, "1"); // mark as saved to avoid duplicates
+          localStorage.setItem(key, "1");
+          // mark this lodge as paid so other pages can reveal protected contact info
+          try {
+            localStorage.setItem(
+              `paid_lodge_${encodeURIComponent(lodgeKey)}`,
+              "1"
+            );
+          } catch (e) {
+            // ignore storage errors
+          }
           console.log("Payment saved:", json);
         } else {
           setSaveStatus("error");
@@ -106,29 +112,21 @@ export default function PaymentSuccess() {
     }
 
     save();
-    // we only want to run once on mount, so omit dependencies that would cause re-run:
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // empty deps: runs once on mount
-  // Helper: format date from various possible keys
+  }, []);
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => window.print();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
       <style>
         {`
   @media print {
-    /* Hide everything except the receipt */
     body * {
       visibility: hidden;
     }
-
     .receipt-card, .receipt-card * {
       visibility: visible;
     }
-
     .receipt-card {
       position: absolute;
       left: 0;
@@ -137,19 +135,14 @@ export default function PaymentSuccess() {
       box-shadow: none !important;
       background: white !important;
     }
-
     .no-print {
       display: none !important;
     }
-
-    /* Force background colors to print */
-    @page {
-      margin: 20mm;
-    }
+    @page { margin: 20mm; }
     body {
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
-      background: #f9fafb !important; /* your gray-50 background */
+      background: #f9fafb !important;
     }
   }
 `}
@@ -159,7 +152,7 @@ export default function PaymentSuccess() {
         <div className="flex justify-center m-4">
           <img
             src={logo}
-            alt=""
+            alt="Logo"
             className="bg-blue-600 px-4 rounded-xl max-w-52"
           />
         </div>
@@ -180,7 +173,15 @@ export default function PaymentSuccess() {
               Print
             </button>
             <button
-              onClick={() => navigate(-1)}
+              onClick={() =>
+                navigate(`/lodge/${lodge.id}`, { state: { lodge } })
+              }
+              className="px-4 py-2 border  bg-blue-600 text-white rounded mr-2"
+            >
+              Paid Lodge
+            </button>
+            <button
+              onClick={() => navigate("/profile")}
               className="px-4 py-2 border rounded"
             >
               Done
@@ -240,7 +241,9 @@ export default function PaymentSuccess() {
             </div>
             <div className="flex justify-between text-sm text-gray-700">
               <div>Payment Method</div>
-              <div className="font-medium">{paymentType?.toUpperCase()}</div>
+              <div className="font-medium">
+                {paymentType?.toUpperCase() || "-"}
+              </div>
             </div>
           </div>
         </div>
@@ -248,6 +251,42 @@ export default function PaymentSuccess() {
         <p className="text-xs text-gray-500 mt-6">
           This is an electronic receipt. No signature is required.
         </p>
+
+        {/* Owner contact (shown here since this is the payment success page) */}
+        <div className="mt-6 border-t pt-4">
+          <h3 className="text-sm text-gray-500 uppercase mb-2">
+            Owner Contact
+          </h3>
+          {owner ? (
+            <div className="text-sm text-gray-700 space-y-1">
+              <div>
+                <strong className="text-gray-700">Email:</strong>{" "}
+                {owner?.userLoginMail ||
+                  owner?.email ||
+                  owner?.ownerEmail ||
+                  "Not provided"}
+              </div>
+              <div>
+                <strong className="text-gray-700">Mobile:</strong>{" "}
+                {owner?.mobile ||
+                  owner?.phone ||
+                  owner?.ownerMobile ||
+                  "Not provided"}
+              </div>
+              <div>
+                <strong className="text-gray-700">Phone:</strong>{" "}
+                {owner?.phone ||
+                  owner?.telephone ||
+                  owner?.contact ||
+                  "Not provided"}
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-gray-600">
+              Owner contact not available.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

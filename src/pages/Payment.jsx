@@ -3,7 +3,9 @@ import { useState, useEffect } from "react";
 
 const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_KEY;
 const TEST_PAYSTACK_KEY = import.meta.env.VITE_TEST_PAYSTACK_KEY;
+
 const FLUTTERWAVE_KEY = import.meta.env.VITE_FLUTTERWAVE_KEY;
+const TEST_FLUTTERWAVE_KEY = import.meta.env.VITE_TEST_FLUTTERWAVE_KEY;
 
 export default function Payment() {
   const location = useLocation();
@@ -16,7 +18,6 @@ export default function Payment() {
 
   const [method, setMethod] = useState("flutterwave");
   const [processing, setProcessing] = useState(false);
-  const [refAccess, setRefAccess] = useState(null);
   const [verifyPaystack, setVerifyPaystack] = useState(null);
 
   const amount = lodge?.price;
@@ -87,7 +88,7 @@ export default function Payment() {
 
   const startFlutterwave = () => {
     window.FlutterwaveCheckout({
-      public_key: FLUTTERWAVE_KEY, // from .env
+      public_key: TEST_FLUTTERWAVE_KEY, // from .env
       tx_ref: Date.now(),
       amount: 50,
       currency: "NGN",
