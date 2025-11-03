@@ -138,6 +138,7 @@ export default function UserProfilePage() {
           let json = null;
           try {
             json = JSON.parse(text);
+            console.log("User Payments fetch response:", json);
           } catch (e) {
             continue;
           }

@@ -12,12 +12,12 @@ What type of place will guests have?
 Where's your place located?
 Confirm your address
 How many people can stay here?
-How many people can stay here?
 What kind of bathrooms are available to guests?
-Private and attached
-Dedicated
-Shared
+Private and attached,
+Dedicated,
+Shared,
 Who else might be there?
 Guests need to know whether they’ll encounter other people during their stay.
-
-Tell guests what your place has to offer
+Tell guests what your place has to offer _
+Now, let's give your apartment a title _
+Next, let's describe your apartment

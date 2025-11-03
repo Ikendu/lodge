@@ -12,16 +12,21 @@ export default function Payment() {
   const navigate = useNavigate();
   const booking = location.state;
   console.log("Booking info:", booking);
-  const lodge = location.state?.lodge;
+  const lodge = booking?.lodge;
   const profile =
-    location.state?.profile ||
+    booking?.profile ||
     JSON.parse(localStorage.getItem("customerProfile") || "null");
+  console.log("Lodge for payment:", lodge);
+  console.log("Profile for payment:", profile);
+
+  const { startDate, endDate, nights, total } = booking || {};
+  console.log("Booked dates:", startDate, endDate, nights);
 
   const [method, setMethod] = useState("flutterwave");
   const [processing, setProcessing] = useState(false);
   const [verifyPaystack, setVerifyPaystack] = useState(null);
 
-  const amount = lodge?.price;
+  const amount = total;
   // const amount = 100;
   const fullname = `${profile?.firstName || ""} ${profile?.lastName || ""}`;
 
@@ -31,7 +36,7 @@ export default function Payment() {
     const handler = window.PaystackPop.setup({
       key: TEST_PAYSTACK_KEY,
       email: profile.userLoginMail,
-      amount: Number(amount) * 100,
+      amount: Number(total) * 100,
       currency: "NGN",
       ref: "REF_" + Date.now(),
       metadata: {
@@ -69,7 +74,13 @@ export default function Payment() {
                   profile,
                   provider: "paystack",
                   reference: response.reference,
-                  paystackdata: parsed,
+                  paystackdata: {
+                    ...parsed,
+                    startDate,
+                    endDate,
+                    nights,
+                    total,
+                  },
                 },
               });
             } else {
@@ -91,7 +102,7 @@ export default function Payment() {
     window.FlutterwaveCheckout({
       public_key: TEST_FLUTTERWAVE_KEY, // from .env
       tx_ref: Date.now(),
-      amount: 50,
+      amount: Number(total),
       currency: "NGN",
       payment_options: "card, banktransfer, ussd",
       customer: {
@@ -114,6 +125,7 @@ export default function Payment() {
           .then((res) => res.json())
           .then((data) => {
             console.log("Flutterwave verification response:", data);
+            const parsed = data?.data;
 
             if (
               data.status === "success" &&
@@ -124,7 +136,13 @@ export default function Payment() {
                   lodge,
                   profile,
                   provider: "flutterwave",
-                  flutterwave: data,
+                  flutterwave: {
+                    ...parsed,
+                    startDate,
+                    endDate,
+                    nights,
+                    total,
+                  },
                 },
               });
             } else {
@@ -153,7 +171,7 @@ export default function Payment() {
         <div className="mb-4">
           <div className="text-gray-700">Lodge: {lodge.title}</div>
           <div className="text-gray-700">
-            Amount: ₦{Number(amount).toLocaleString()}
+            Amount: ₦{Number(total).toLocaleString()}
           </div>
         </div>
 
@@ -179,7 +197,9 @@ export default function Payment() {
             }
             className="px-4 py-2 bg-blue-600 text-white rounded"
           >
-            {processing ? "Processing..." : `Pay ₦${Number(amount)}`}
+            {processing
+              ? "Processing..."
+              : `Pay ₦${Number(total).toLocaleString()}`}
           </button>
 
           <button

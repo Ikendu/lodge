@@ -9,8 +9,8 @@ export default function PaymentSuccess() {
   const lodge = location.state?.lodge || {};
   const profile = location.state?.profile || {};
   const provider = location.state?.provider || "unknown";
-  const flutterdata = location.state?.flutterwave?.data;
-  const paystackdata = location.state?.paystackdata?.data;
+  const flutterdata = location.state?.flutterwave;
+  const paystackdata = location.state?.paystackdata;
 
   console.log("Payment data:", { flutterdata, paystackdata });
   console.log("Lodge data:", lodge);
@@ -22,17 +22,25 @@ export default function PaymentSuccess() {
     return parsed.toLocaleString();
   };
 
-  const reference = flutterdata?.flw_ref || paystackdata?.reference || "-";
-  const paymentReference = flutterdata?.tx_ref || paystackdata?.id || "-";
-  const paymentType = flutterdata?.payment_type || paystackdata?.channel || "-";
+  const reference =
+    flutterdata?.flw_ref || paystackdata?.data?.reference || "-";
+  const paymentReference = flutterdata?.tx_ref || paystackdata?.data?.id || "-";
+  const paymentType =
+    flutterdata?.payment_type || paystackdata?.data?.channel || "-";
+  const startDate = flutterdata?.startDate || paystackdata?.startDate || null;
+  const endDate = flutterdata?.endDate || paystackdata?.endDate || null;
+  const nights = flutterdata?.nights || paystackdata?.nights || null;
 
   const [saveStatus, setSaveStatus] = useState(null);
   const hasSaved = useRef(false); // prevent double execution
 
   const amount =
-    Number(flutterdata?.amount) || Number(paystackdata?.amount / 100) || "-";
+    Number(flutterdata?.amount) ||
+    Number(paystackdata?.data?.amount / 100) ||
+    "-";
   const date =
-    formatDate(paystackdata?.paid_at) || formatDate(flutterdata?.created_at);
+    formatDate(paystackdata?.data?.paid_at) ||
+    formatDate(flutterdata?.created_at);
   const fullName = `${profile?.firstName || ""} ${profile?.lastName || ""}`;
   const owner = JSON.parse(localStorage.getItem("ownerProfile"));
   console.log("Owner data:", owner);
@@ -52,15 +60,21 @@ export default function PaymentSuccess() {
       channel: paymentType || "unknown",
       lodge_title: lodge?.title || null,
       lodge_location: lodge?.location || lodge?.address || null,
-      amenities: lodge?.amenities || null,
-      bathroomType: lodge?.bathroomType || null,
-      capacity: lodge?.capacity || null,
+      amenities: lodge?.raw?.amenities || null,
+      bathroomType: lodge?.raw?.bathroomType || null,
+      capacity: lodge?.raw?.capacity || null,
       description: lodge?.description || null,
-      lodge_email: profile?.userLoginMail || null,
-      type: lodge?.type || null,
-      lodge_nin: lodge?.nin || null,
+      lodge_email: lodge?.raw?.userLoginMail || null,
+      type: lodge?.raw?.type || null,
+      lodge_nin: lodge?.raw?.nin || null,
+      startDate: startDate || null,
+      endDate: endDate || null,
+      nights: nights || null,
 
-      images: lodge?.images || null,
+      image_first_url: lodge?.raw?.image_first_url || null,
+      image_second_url: lodge?.raw?.image_second_url || null,
+      image_third_url: lodge?.raw?.image_third_url || null,
+
       order_id: paymentReference || null,
     };
 
@@ -240,7 +254,7 @@ export default function PaymentSuccess() {
               <div>Transaction Date</div>
               <div className="font-medium">
                 {provider === "paystack"
-                  ? formatDate(paystackdata?.created_at)
+                  ? formatDate(paystackdata?.data?.created_at)
                   : formatDate(flutterdata?.created_at)}
               </div>
             </div>
@@ -253,6 +267,18 @@ export default function PaymentSuccess() {
               <div className="font-medium">
                 {paymentType?.toUpperCase() || "-"}
               </div>
+            </div>
+            <div className="flex justify-between text-sm text-gray-700">
+              <div>Start Date</div>
+              <div className="font-medium">{startDate || "-"}</div>
+            </div>
+            <div className="flex justify-between text-sm text-gray-700">
+              <div>End Date</div>
+              <div className="font-medium">{endDate || "-"}</div>
+            </div>
+            <div className="flex justify-between text-sm text-gray-700">
+              <div>Number of Night(s)</div>
+              <div className="font-medium">{nights || "-"}</div>
             </div>
           </div>
         </div>
