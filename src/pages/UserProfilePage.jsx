@@ -26,6 +26,10 @@ export default function UserProfilePage() {
   }, []);
   const display = profileData || savedData || {};
 
+  // Paid bookings / payments
+  const [paidBookings, setPaidBookings] = useState([]);
+  const [loadingPaid, setLoadingPaid] = useState(false);
+
   // populate form when display changes
   useEffect(() => {
     setForm({
@@ -71,8 +75,6 @@ export default function UserProfilePage() {
     display.signatureImage;
   const signatureSrc = getImageSrc(signatureRaw) || null;
 
-  if (loading) return null;
-
   const pageVariants = {
     hidden: { opacity: 0, y: 12 },
     show: { opacity: 1, y: 0, transition: { staggerChildren: 0.06 } },
@@ -107,6 +109,118 @@ export default function UserProfilePage() {
     nextOkinRelation: display.nextOfKinRelation || "Not provided",
   };
 
+  // fetch paid bookings for this user (email or nin)
+  useEffect(() => {
+    async function fetchPaid() {
+      const email =
+        savedData?.userLoginMail ||
+        savedData?.email ||
+        display?.userLoginMail ||
+        display?.email ||
+        "";
+      const nin = savedData?.nin || display?.nin || "";
+      if (!email && !nin) return;
+      setLoadingPaid(true);
+
+      const endpoints = [
+        "https://lodge.morelinks.com.ng/api/get_user_payments.php",
+        "http://localhost/lodge/api/get_user_payments.php",
+      ];
+      for (const url of endpoints) {
+        try {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, nin }),
+          });
+          if (!res.ok) continue;
+          const text = await res.text();
+          let json = null;
+          try {
+            json = JSON.parse(text);
+          } catch (e) {
+            continue;
+          }
+          if (json && json.success && Array.isArray(json.payments)) {
+            setPaidBookings(json.payments);
+            break;
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+      setLoadingPaid(false);
+    }
+    fetchPaid();
+  }, [savedData, display]);
+
+  const requestRefund = async (payment) => {
+    const ok = window.confirm(
+      "Are you sure you want to request a refund for this booking?"
+    );
+    if (!ok) return;
+    const reason = window.prompt(
+      "Optional: enter a short reason for the refund request",
+      ""
+    );
+    const endpoints = [
+      "https://lodge.morelinks.com.ng/api/request_refund.php",
+      "http://localhost/lodge/api/request_refund.php",
+    ];
+    const payload = {
+      payment_id: payment.id || 0,
+      reference:
+        payment.reference ||
+        payment.payment_reference ||
+        payment.order_id ||
+        "",
+      email:
+        savedData?.userLoginMail ||
+        savedData?.email ||
+        display?.userLoginMail ||
+        display?.email ||
+        "",
+      reason: reason || "",
+    };
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const text = await res.text();
+        let json = null;
+        try {
+          json = JSON.parse(text);
+        } catch (e) {
+          alert("Invalid response from server");
+          return;
+        }
+        if (!res.ok) {
+          alert(json.message || "Request failed");
+          continue;
+        }
+        if (json.success) {
+          alert("Refund request submitted. Support will contact you shortly.");
+          // update local status
+          setPaidBookings((prev) =>
+            prev.map((p) =>
+              p.id === payment.id ? { ...p, refund_status: "requested" } : p
+            )
+          );
+          return;
+        } else {
+          alert(json.message || "Request failed");
+          continue;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+    alert("Failed to submit refund request. Please try again later.");
+  };
+
   if (loading) return null;
 
   return (
@@ -116,6 +230,65 @@ export default function UserProfilePage() {
       initial="hidden"
       animate="show"
     >
+      <div className="w-full max-w-5xl mb-6">
+        <h2 className="text-xl text-white font-semibold mb-3">
+          Your Bookings (Paid)
+        </h2>
+        <div className="bg-white/5 p-4 rounded-lg text-white">
+          {loadingPaid ? (
+            <div>Loading your paid bookings…</div>
+          ) : paidBookings.length === 0 ? (
+            <div className="text-sm text-gray-300">No paid bookings found.</div>
+          ) : (
+            <div className="space-y-3">
+              {paidBookings.map((b) => (
+                <div
+                  key={b.id || b.reference}
+                  className="bg-white/6 p-3 rounded-md flex items-center justify-between"
+                >
+                  <div>
+                    <div className="font-semibold text-white">
+                      {b.lodge_title || b.lodge || "Untitled lodge"}
+                    </div>
+                    <div className="text-sm text-gray-300">
+                      {b.lodge_location || b.lodge_location}
+                    </div>
+                    <div className="text-sm text-gray-300">
+                      Amount: ₦{Number(b.amount || 0).toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      Ref: {b.reference || b.payment_reference || b.order_id}
+                    </div>
+                    {b.refund_status && (
+                      <div className="text-xs text-yellow-200">
+                        Status: {b.refund_status}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() =>
+                        navigate(`/lodge/${b.lodge_id || b.lodge || ""}`, {
+                          state: { lodge: b },
+                        })
+                      }
+                      className="px-3 py-1 bg-blue-600 rounded text-white text-sm"
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={() => requestRefund(b)}
+                      className="px-3 py-1 bg-yellow-600 rounded text-white text-sm"
+                    >
+                      Request Refund
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
       <motion.div
         className="max-w-5xl w-full bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8 text-white"
         variants={cardVariants}

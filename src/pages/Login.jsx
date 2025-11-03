@@ -58,13 +58,11 @@ export default function LoginPage() {
 
   // Fetch profile from backend
   const fetchUserProfile = async (uid, emailAddr) => {
+    // Try the primary production endpoint first, then fallback to localhost (dev).
     const endpoints = [
       "https://lodge.morelinks.com.ng/api/get_profile.php",
       "http://localhost/lodge/api/get_profile.php",
     ];
-
-    let data = null;
-    let lastError = null;
 
     for (const url of endpoints) {
       try {
@@ -74,32 +72,50 @@ export default function LoginPage() {
           body: JSON.stringify({ uid, email: emailAddr }),
         });
 
+        if (!res.ok) {
+          console.warn(`Profile fetch returned HTTP ${res.status} from ${url}`);
+          continue;
+        }
+
         const text = await res.text();
+        let json = null;
         try {
-          data = JSON.parse(text);
+          json = JSON.parse(text);
         } catch (e) {
           console.warn(`Invalid JSON from ${url}:`, text);
-          data = null;
+          continue;
+        }
+
+        if (json && json.success && json.profile) {
+          try {
+            localStorage.setItem(
+              "customerProfile",
+              JSON.stringify(json.profile)
+            );
+            console.log(
+              "✅ Profile saved to localStorage from",
+              url,
+              json.profile
+            );
+          } catch (e) {
+            console.warn("Failed to save customerProfile to localStorage", e);
+          }
+          return true;
+        } else {
+          // server responded but indicated no profile; continue to next endpoint
+          console.warn(`No profile found at ${url}`);
+          continue;
         }
       } catch (err) {
-        lastError = err;
         console.warn(`Request to ${url} failed:`, err);
+        continue;
       }
     }
 
-    if (!data) {
-      console.error("❌ Profile fetch failed:", lastError);
-      localStorage.removeItem("customerProfile");
-      return;
-    }
-
-    if (data.success && data.profile) {
-      localStorage.setItem("customerProfile", JSON.stringify(data.profile));
-      console.log("✅ Profile saved to localStorage:", data.profile);
-    } else {
-      localStorage.removeItem("customerProfile");
-      console.warn("⚠️ No profile found for this user.");
-    }
+    // If we get here, no endpoint returned a valid profile
+    localStorage.removeItem("customerProfile");
+    console.error("❌ Profile fetch failed for all endpoints");
+    return false;
   };
 
   // When Firebase user changes (auto-login)

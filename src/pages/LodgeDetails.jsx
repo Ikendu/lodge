@@ -495,9 +495,9 @@ export default function LodgeDetails() {
             {/* Left: Lodge Info (60%) */}
             <motion.div className="md:w-3/5" variants={leftVariants}>
               <h2 className="text-3xl font-bold text-gray-800 mb-2">
-                {lodge.title}
+                {lodge?.title}
               </h2>
-              <p className="text-gray-500 mb-4">{lodge.location}</p>
+              <p className="text-gray-500 mb-4">{lodge?.location}</p>
 
               <div className="flex justify-between items-center mb-4">
                 <span className="text-blue-600 font-semibold text-xl">
@@ -506,34 +506,34 @@ export default function LodgeDetails() {
                 <div className="flex items-center text-yellow-500">
                   <Star size={18} className="fill-yellow-500" />
                   <span className="ml-1 text-sm font-medium">
-                    {lodge.rating}
+                    {lodge?.rating}
                   </span>
                 </div>
               </div>
 
-              <p className="text-gray-700 mb-4">{lodge.description}</p>
+              <p className="text-gray-700 mb-4">{lodge?.description}</p>
               <div>
                 <span className="text-blue-400 font-bold">
                   Available Amenities:
                 </span>
-                <p className="text-gray-700 mb-4">{lodge.raw.amenities}</p>
+                <p className="text-gray-700 mb-4">{lodge?.raw?.amenities}</p>
               </div>
               <div>
                 <span className="text-blue-400 font-bold">Bathroom Type: </span>
                 <span className="text-gray-700 mb-4">
-                  {lodge.raw.bathroomType}
+                  {lodge?.raw?.bathroomType}
                 </span>
               </div>
               <div>
                 <span className="text-blue-400 font-bold">Capacity:</span>
                 <span className="text-gray-700 mb-4">
                   {" "}
-                  {lodge.raw.capacity}
+                  {lodge?.raw?.capacity}
                 </span>
               </div>
               <div>
                 <span className="text-blue-400 font-bold">Lodge Type:</span>
-                <span className="text-gray-700 mb-4"> {lodge.raw.type}</span>
+                <span className="text-gray-700 mb-4"> {lodge?.raw?.type}</span>
               </div>
 
               {/* Inline date range picker */}
@@ -728,32 +728,6 @@ export default function LodgeDetails() {
                         "Not provided"}
                     </div>
                   </div>
-
-                  {/* <div className="mt-4 border-t pt-3">
-                    <h4 className="text-sm font-semibold text-gray-800 mb-2">
-                      Next of Kin
-                    </h4>
-                    <div className="text-sm text-gray-600">
-                      <div>
-                        <strong className="text-gray-700">Name:</strong>{" "}
-                        {ownerProfile?.nextOfKin?.name ||
-                          lodge.owner?.nextOfKin?.name ||
-                          "Not provided"}
-                      </div>
-                      <div>
-                        <strong className="text-gray-700">Relation:</strong>{" "}
-                        {ownerProfile?.nextOfKin?.relation ||
-                          lodge.owner?.nextOfKin?.relation ||
-                          "Not provided"}
-                      </div>
-                      <div>
-                        <strong className="text-gray-700">Phone:</strong>{" "}
-                        {ownerProfile?.nextOfKin?.phone ||
-                          lodge.owner?.nextOfKin?.phone ||
-                          "Not provided"}
-                      </div>
-                    </div>
-                  </div> */}
                 </>
               )}
             </motion.aside>
