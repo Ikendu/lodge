@@ -10,7 +10,8 @@ const TEST_FLUTTERWAVE_KEY = import.meta.env.VITE_TEST_FLUTTERWAVE_KEY;
 export default function Payment() {
   const location = useLocation();
   const navigate = useNavigate();
-
+  const booking = location.state;
+  console.log("Booking info:", booking);
   const lodge = location.state?.lodge;
   const profile =
     location.state?.profile ||

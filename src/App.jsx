@@ -44,6 +44,7 @@ export default function App() {
 
           <Route path="/register-success" element={<RegisterSuccess />} />
           <Route path="/lodge/:id" element={<LodgeDetails />} />
+          <Route path="/lodge/" element={<LodgeDetails />} />
 
           <Route path="/apartments" element={<Apartments />} />
           <Route path="/registerowner" element={<AddNewLodge />} />

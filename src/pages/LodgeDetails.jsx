@@ -1,5 +1,5 @@
 // LodgeDetails.jsx
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Star } from "lucide-react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
@@ -17,8 +17,11 @@ import "react-date-range/dist/theme/default.css";
 export default function LodgeDetails() {
   const location = useLocation();
   const navigate = useNavigate();
-  const lodge = location.state?.lodge;
-  console.log("Lodge details page - lodge:", lodge);
+  const params = useParams();
+  const stateLodge = location.state?.lodge;
+  const [fetchedLodge, setFetchedLodge] = useState(null);
+  const lodge = stateLodge || fetchedLodge;
+  console.log("Lodge details page - lodge:", lodge, "; params:", params);
 
   // compute a stable key for this lodge to track payment in localStorage
   const lodgeKey =
@@ -161,6 +164,53 @@ export default function LodgeDetails() {
 
   // If lodge is not provided in location state, show a friendly message.
   // This check is placed after hooks/state to avoid violating the rules of hooks.
+  // If lodge wasn't supplied via location.state, try to fetch by route param id
+  useEffect(() => {
+    let mounted = true;
+    async function fetchById() {
+      if (stateLodge) return;
+      const id = params.id;
+      if (!id) return;
+      try {
+        // if id looks numeric, request by id, otherwise try title lookup
+        const isNumeric = /^[0-9]+$/.test(id);
+        const url = isNumeric
+          ? `https://lodge.morelinks.com.ng/api/get_lodge.php?id=${encodeURIComponent(
+              id
+            )}`
+          : `https://lodge.morelinks.com.ng/api/get_lodge.php?title=${encodeURIComponent(
+              id
+            )}`;
+        const res = await fetch(url, { method: "GET" });
+        const text = await res.text();
+        let json = null;
+        try {
+          json = JSON.parse(text);
+        } catch (e) {
+          console.warn("Invalid JSON from get_lodge.php", text);
+          return;
+        }
+        if (json && json.success && json.data) {
+          if (!mounted) return;
+          // normalize image fields to `images` array expected below
+          const row = json.data;
+          row.images = [
+            row.image_first_url || null,
+            row.image_second_url || null,
+            row.image_third_url || null,
+          ];
+          // put raw back if needed
+          row.raw = row.raw || {};
+          setFetchedLodge(row);
+        }
+      } catch (e) {
+        console.error("Failed to fetch lodge by id", e);
+      }
+    }
+    fetchById();
+    return () => (mounted = false);
+  }, [params.id, stateLodge]);
+
   if (!lodge)
     return <p className="text-center mt-10 text-gray-600">Lodge not found</p>;
 
@@ -212,8 +262,8 @@ export default function LodgeDetails() {
   // Fetch owner profile when lodge is available
   useEffect(() => {
     if (!lodge) return;
-    const nin = lodge.raw?.nin;
-    const email = lodge.raw?.userLoginMail;
+    const nin = lodge.raw?.nin || lodge?.nin;
+    const email = lodge.raw?.userLoginMail || lodge?.userLoginMail;
     if (!nin && !email) return; // nothing to query
 
     let mounted = true;
@@ -495,13 +545,18 @@ export default function LodgeDetails() {
             {/* Left: Lodge Info (60%) */}
             <motion.div className="md:w-3/5" variants={leftVariants}>
               <h2 className="text-3xl font-bold text-gray-800 mb-2">
-                {lodge?.title}
+                {lodge?.title || lodge?.lodge_title}
               </h2>
-              <p className="text-gray-500 mb-4">{lodge?.location}</p>
+              <p className="text-gray-500 mb-4">
+                {lodge?.location || lodge?.lodge_location}
+              </p>
 
               <div className="flex justify-between items-center mb-4">
                 <span className="text-blue-600 font-semibold text-xl">
-                  ₦{lodge.price.toLocaleString()}/night
+                  ₦
+                  {lodge?.price?.toLocaleString() ||
+                    lodge?.amount.toLocaleString()}
+                  /night
                 </span>
                 <div className="flex items-center text-yellow-500">
                   <Star size={18} className="fill-yellow-500" />
@@ -561,6 +616,14 @@ export default function LodgeDetails() {
               <div className="mb-4 text-sm text-gray-700">
                 {nights > 0 ? (
                   <>
+                    <div>
+                      <strong>From:</strong>{" "}
+                      {selectionRange.startDate.toLocaleDateString("en-GB")}
+                    </div>
+                    <div>
+                      <strong>To:</strong>{" "}
+                      {selectionRange.endDate.toLocaleDateString("en-GB")}
+                    </div>
                     <div>
                       <strong>{nights}</strong> night{nights > 1 ? "s" : ""}
                     </div>

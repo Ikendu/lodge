@@ -52,6 +52,15 @@ export default function PaymentSuccess() {
       channel: paymentType || "unknown",
       lodge_title: lodge?.title || null,
       lodge_location: lodge?.location || lodge?.address || null,
+      amenities: lodge?.amenities || null,
+      bathroomType: lodge?.bathroomType || null,
+      capacity: lodge?.capacity || null,
+      description: lodge?.description || null,
+      lodge_email: profile?.userLoginMail || null,
+      type: lodge?.type || null,
+      lodge_nin: lodge?.nin || null,
+
+      images: lodge?.images || null,
       order_id: paymentReference || null,
     };
 

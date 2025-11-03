@@ -268,9 +268,14 @@ export default function UserProfilePage() {
                   <div className="flex gap-2">
                     <button
                       onClick={() =>
-                        navigate(`/lodge/${b.lodge_id || b.lodge || ""}`, {
-                          state: { lodge: b },
-                        })
+                        navigate(
+                          `/lodge/${encodeURIComponent(
+                            b.lodge_id || b.lodge || ""
+                          )}`,
+                          {
+                            state: { lodge: b },
+                          }
+                        )
                       }
                       className="px-3 py-1 bg-blue-600 rounded text-white text-sm"
                     >
