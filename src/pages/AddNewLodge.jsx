@@ -340,6 +340,7 @@ export default function AddNewLodge() {
               <option value="Shared Apartment">Shared Apartment</option>
               <option value="Entire Lodge">Entire Lodge</option>
               <option value="Guest House">Guest House</option>
+              <option value="Guest House">Hotel Room</option>
             </select>
           </div>
 

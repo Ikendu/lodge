@@ -1,10 +1,18 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
-export default function LodgeList({ userUid, nin }) {
+export default function LodgeList({
+  userUid,
+  nin,
+  onDelete,
+  onEdit,
+  refreshKey,
+}) {
   const [lodges, setLodges] = useState([]);
   const [loading, setLoading] = useState(true);
   const inFlight = useRef(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchLodges = async () => {
@@ -45,7 +53,7 @@ export default function LodgeList({ userUid, nin }) {
     };
 
     fetchLodges();
-  }, [userUid, nin]);
+  }, [userUid, nin, refreshKey]);
 
   if (loading)
     return <div className="text-sm text-white/70">Loading lodges…</div>;
@@ -101,6 +109,42 @@ export default function LodgeList({ userUid, nin }) {
               </div>
               <div className="text-xs text-white/60">
                 {new Date(lodge.created_at).toLocaleDateString()}
+              </div>
+
+              <div className="mt-3 flex flex-col justify-end gap-2">
+                <button
+                  onClick={() =>
+                    navigate(`/lodges/${encodeURIComponent(lodge.id)}`, {
+                      state: { lodge },
+                    })
+                  }
+                  className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
+                >
+                  View
+                </button>
+                {onEdit && (
+                  <button
+                    onClick={() => onEdit(lodge)}
+                    className="px-3 py-1 bg-yellow-500 text-white rounded text-sm"
+                  >
+                    Edit
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    onClick={() => {
+                      if (
+                        confirm(
+                          "Delete this lodge? This action cannot be undone."
+                        )
+                      )
+                        onDelete(lodge.id);
+                    }}
+                    className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           </div>

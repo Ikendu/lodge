@@ -4,6 +4,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
 import { motion } from "framer-motion";
 import LodgeList from "../components/LodgeList";
+import RequestAccountDeleteModal from "../components/RequestAccountDeleteModal";
 
 export default function UserProfilePage() {
   const [user, loading] = useAuthState(auth);
@@ -21,7 +22,7 @@ export default function UserProfilePage() {
     try {
       return JSON.parse(localStorage.getItem("customerProfile"));
     } catch (e) {
-      return null;
+      return <div>Getting your profile ready, please wait...</div>;
     }
   }, []);
   const display = profileData || savedData || {};
@@ -48,6 +49,8 @@ export default function UserProfilePage() {
   }, [display]);
 
   // Lodges are handled in the LodgeList component below
+  const [lodgesRefreshKey, setLodgesRefreshKey] = useState(0);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // helper to resolve image value
   const getImageSrc = (val) => {
@@ -235,6 +238,99 @@ export default function UserProfilePage() {
     alert("Failed to submit refund request. Please try again later.");
   };
 
+  const handleDeleteLodge = async (lodgeId) => {
+    if (!lodgeId) return;
+    const ok = window.confirm(
+      "Are you sure you want to delete this lodge? This cannot be undone."
+    );
+    if (!ok) return;
+
+    const payload = {
+      id: lodgeId,
+      userUid: savedData?.userUid || display?.userUid || user?.uid || "",
+      nin: savedData?.nin || display?.nin || "",
+    };
+
+    const endpoints = [
+      "https://lodge.morelinks.com.ng/api/delete_lodge.php",
+      "http://localhost/lodge/api/delete_lodge.php",
+    ];
+
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const text = await res.text();
+        let json = null;
+        try {
+          json = JSON.parse(text);
+        } catch (e) {
+          alert("Invalid response from server");
+          return;
+        }
+        if (!res.ok) {
+          alert(json.message || "Failed to delete lodge");
+          continue;
+        }
+        if (json.success) {
+          alert("Lodge deleted");
+          setLodgesRefreshKey((k) => k + 1);
+          return;
+        } else {
+          alert(json.message || "Failed to delete lodge");
+          continue;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+    alert("Failed to delete lodge. Please try again later.");
+  };
+
+  const handleAccountDeleteSubmit = async (payload) => {
+    // try submitting to backend endpoints (prod then local)
+    const endpoints = [
+      "https://lodge.morelinks.com.ng/api/request_account_delete.php",
+      "http://localhost/lodge/api/request_account_delete.php",
+    ];
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const text = await res.text();
+        let json = null;
+        try {
+          json = JSON.parse(text);
+        } catch (e) {
+          throw new Error("Invalid response from server");
+        }
+        if (!res.ok) {
+          throw new Error(json.message || "Request failed");
+        }
+        if (json.success) {
+          alert(
+            "Account deletion request submitted. Support will contact you."
+          );
+          return;
+        } else {
+          throw new Error(json.message || "Request failed");
+        }
+      } catch (e) {
+        // try next
+        continue;
+      }
+    }
+    throw new Error(
+      "Failed to submit account deletion request. Please try again later."
+    );
+  };
+
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -278,13 +374,9 @@ export default function UserProfilePage() {
                     <div className="text-xs text-gray-400">
                       Ref: {b.reference || b.payment_reference || b.order_id}
                     </div>
-                    {b.refund_requested == 1 ? (
+                    {b.refund_requested == 1 && (
                       <div className="text-xs text-yellow-200">
-                        Status: Refund requested
-                      </div>
-                    ) : (
-                      <div className="text-xs text-yellow-200">
-                        Status: Paid
+                        Refund requested
                       </div>
                     )}
                   </div>
@@ -477,15 +569,21 @@ export default function UserProfilePage() {
                   Edit contact & NOK
                 </button>
               )}
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="px-3 py-1 text-sm bg-red-600 rounded text-white ml-2"
+              >
+                Request account delete
+              </button>
             </div>
             <div className="grid grid-cols-2 gap-4">
               {[
-                ["Full Name", profile.fullName],
-                ["Date of Birth", profile.dob],
-                ["Email", profile.email],
-                ["Phone", profile.nin_phone],
-                ["Mobile", profile.mobile],
-                ["NIN", profile.nin],
+                ["Full Name", profile?.fullName],
+                ["Date of Birth", profile?.dob],
+                ["Email", profile?.email],
+                ["Phone", profile?.nin_phone],
+                ["Mobile", profile?.mobile],
+                ["NIN", profile?.nin],
               ].map(([label, value], i) => (
                 <motion.div
                   key={i}
@@ -571,10 +669,10 @@ export default function UserProfilePage() {
             <hr />
             <div className="grid grid-cols-2 gap-4">
               {[
-                ["Full Name", profile.nextOfKinName],
-                ["Phone", profile.nextOfKinPhone],
-                ["Address", profile.nextOfKinAddress],
-                ["Relation", profile.nextOkinRelation],
+                ["Full Name", profile?.nextOfKinName],
+                ["Phone", profile?.nextOfKinPhone],
+                ["Address", profile?.nextOfKinAddress],
+                ["Relation", profile?.nextOkinRelation],
               ].map(([label, value], i) => (
                 <motion.div
                   key={i}
@@ -643,11 +741,27 @@ export default function UserProfilePage() {
           </motion.div>
         </div>
       </motion.div>
+      <RequestAccountDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        defaultValues={{
+          fullname: profile.fullName,
+          email: profile.email,
+          phone: profile.nin_phone,
+          mobile: profile.mobile,
+        }}
+        onSubmit={handleAccountDeleteSubmit}
+      />
       <div className="max-w-5xl mt-8">
         <h2 className="text-2xl text-white font-bold mb-3">
           Your listed Lodges
         </h2>
-        <LodgeList userUid={user?.uid} nin={savedData?.nin} />
+        <LodgeList
+          userUid={user?.uid}
+          nin={savedData?.nin}
+          onDelete={handleDeleteLodge}
+          refreshKey={lodgesRefreshKey}
+        />
       </div>
     </motion.div>
   );

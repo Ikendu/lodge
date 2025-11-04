@@ -92,7 +92,7 @@ export default function Footer() {
                 whileHover={{ x: 5, scale: 1.05 }}
                 transition={{ duration: 0.2 }}
                 className="cursor-pointer hover:text-yellow-300"
-                onClick={() => navigate("/registerowner")}
+                onClick={() => navigate("/list_new_lodge")}
               >
                 List Your Lodge
               </motion.span>

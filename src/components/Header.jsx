@@ -74,7 +74,7 @@ export default function Header() {
 
   const links = [
     { name: "Find Lodge", path: "/apartments" },
-    { name: "List Your Property", path: "/registerowner" },
+    { name: "List Your Property", path: "/list_new_lodge" },
     { name: "About Us", path: "/about" },
     { name: "Contact", path: "/contact" },
     { name: "FAQs", path: "/faqs" },
@@ -193,9 +193,9 @@ export default function Header() {
             <button
               key={i}
               onClick={() => {
-                if (link.path === "/registerowner" && !user) {
+                if (link.path === "/list_new_lodge" && !user) {
                   navigate("/login", {
-                    state: { from: { pathname: "/registerowner" } },
+                    state: { from: { pathname: "/list_new_lodge" } },
                   });
                 } else {
                   navigate(link.path);
@@ -464,9 +464,9 @@ export default function Header() {
             <button
               key={i}
               onClick={() => {
-                if (link.path === "/registerowner" && !user) {
+                if (link.path === "/list_new_lodge" && !user) {
                   navigate("/login", {
-                    state: { from: { pathname: "/registerowner" } },
+                    state: { from: { pathname: "/list_new_lodge" } },
                   });
                 } else {
                   navigate(link.path);
