@@ -33,14 +33,28 @@ export default function LoginPage() {
   const location = useLocation();
   const [user, authLoading] = useAuthState(auth);
 
+  // Debugging: log auth state and cached keys to help diagnose login issues
+  useEffect(() => {
+    console.debug("Login page auth state:", { user, authLoading });
+    try {
+      console.debug("localStorage keys:", {
+        customerProfile: localStorage.getItem("customerProfile"),
+        userLogin: localStorage.getItem("userLogin"),
+      });
+    } catch (e) {
+      console.debug("localStorage read error", e);
+    }
+  }, [user, authLoading]);
+
   // If a canonical customerProfile exists, prevent access to login page
   useEffect(() => {
     // Wait for Firebase auth state to resolve before deciding to redirect.
     if (authLoading) return;
     try {
       const cp = localStorage.getItem("customerProfile");
-      const storedLogin = localStorage.getItem("userLogin");
-      if (cp && (user || storedLogin)) {
+      // Only redirect when we have a canonical profile AND a currently
+      // authenticated Firebase user. Avoid relying on stale `userLogin`.
+      if (cp && user) {
         // user already has profile — redirect to profile/home
         navigate("/profile", { replace: true });
       }
@@ -183,6 +197,45 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
+    // Quick connectivity check to common Google endpoint to fail fast when
+    // the network or blockers prevent Firebase requests. This surfaces a
+    // clearer error to the user instead of the generic Firebase network error.
+    const testConnectivity = (timeout = 3000) => {
+      return new Promise((resolve, reject) => {
+        const controller = new AbortController();
+        const id = setTimeout(() => {
+          controller.abort();
+          reject(new Error("timeout"));
+        }, timeout);
+
+        // generate_204 is a tiny Google endpoint used for connectivity checks
+        fetch("https://www.gstatic.com/generate_204", {
+          method: "GET",
+          signal: controller.signal,
+          mode: "no-cors",
+        })
+          .then(() => {
+            clearTimeout(id);
+            resolve(true);
+          })
+          .catch((err) => {
+            clearTimeout(id);
+            reject(err);
+          });
+      });
+    };
+
+    try {
+      await testConnectivity(3000);
+    } catch (err) {
+      console.warn("Connectivity test failed before auth:", err);
+      setError(
+        "Network connectivity to Firebase appears to be blocked or slow. Disable extensions (adblock/privacy), check firewall/proxy, or try another network."
+      );
+      setLoading(false);
+      return;
+    }
+
     try {
       let userCredential;
       if (isRegister) {
@@ -225,11 +278,19 @@ export default function LoginPage() {
         navigate(fromTarget.path, { replace: true, state: fromTarget.state });
       }
     } catch (err) {
-      console.error(err);
-      const msg = err?.code
-        ? err.code.replace("auth/", "").replace(/-/g, " ")
-        : "Authentication failed.";
-      setError(msg);
+      console.error("Authentication error:", err);
+      if (err && err.code === "auth/network-request-failed") {
+        setError(
+          "Network error while contacting authentication server. Check your internet connection and disable blockers (adblock/privacy)."
+        );
+      } else {
+        const msg =
+          err?.message ||
+          (err?.code
+            ? err.code.replace("auth/", "").replace(/-/g, " ")
+            : "Authentication failed.");
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -305,13 +366,6 @@ export default function LoginPage() {
         <h2 className="text-3xl font-bold text-center mb-6 text-indigo-700">
           Welcome Back 👋
         </h2>
-
-        {error && (
-          <div className="bg-red-100 text-red-600 text-sm p-2 mb-4 rounded">
-            {error}
-          </div>
-        )}
-
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="flex items-center justify-between">
@@ -387,13 +441,11 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
-
         {/* Divider */}
         <div className="my-6 text-center text-gray-500 relative">
           <span className="px-3 bg-white relative z-10">or continue with</span>
           <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-full h-px bg-gray-300"></div>
         </div>
-
         {/* Social Logins */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
@@ -413,7 +465,6 @@ export default function LoginPage() {
             </motion.button>
           ))}
         </div>
-
         {/* Logout (for testing) */}
         {user && (
           <button
