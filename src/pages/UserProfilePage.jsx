@@ -43,6 +43,8 @@ export default function UserProfilePage() {
       email: display.userLoginMail || display.email || "",
       nin: display.nin || display.id || "",
     });
+    // mark profile as loaded once we populate the form from storage/profile
+    setLoadingProfile(false);
   }, [display]);
 
   // Lodges are handled in the LodgeList component below
@@ -122,23 +124,34 @@ export default function UserProfilePage() {
       if (!email && !nin) return;
       setLoadingPaid(true);
 
+      const fetchWithTimeout = (url, options = {}, timeout = 4000) => {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        return fetch(url, { ...options, signal: controller.signal }).finally(
+          () => clearTimeout(id)
+        );
+      };
+
       const endpoints = [
         "https://lodge.morelinks.com.ng/api/get_user_payments.php",
         "http://localhost/lodge/api/get_user_payments.php",
       ];
       for (const url of endpoints) {
         try {
-          const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, nin }),
-          });
-          if (!res.ok) continue;
+          const res = await fetchWithTimeout(
+            url,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, nin }),
+            },
+            4000
+          );
+          if (!res || !res.ok) continue;
           const text = await res.text();
           let json = null;
           try {
             json = JSON.parse(text);
-            console.log("User Payments fetch response:", json);
           } catch (e) {
             continue;
           }
@@ -222,7 +235,12 @@ export default function UserProfilePage() {
     alert("Failed to submit refund request. Please try again later.");
   };
 
-  if (loading) return null;
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-white">Loading authentication state…</div>
+      </div>
+    );
 
   return (
     <motion.div
@@ -260,9 +278,13 @@ export default function UserProfilePage() {
                     <div className="text-xs text-gray-400">
                       Ref: {b.reference || b.payment_reference || b.order_id}
                     </div>
-                    {b.refund_status && (
+                    {b.refund_requested == 1 ? (
                       <div className="text-xs text-yellow-200">
-                        Status: {b.refund_status}
+                        Status: Refund requested
+                      </div>
+                    ) : (
+                      <div className="text-xs text-yellow-200">
+                        Status: Paid
                       </div>
                     )}
                   </div>
@@ -300,9 +322,18 @@ export default function UserProfilePage() {
         variants={cardVariants}
       >
         <div className="flex items-center justify-between mb-8 border-b border-white/20 pb-4">
-          <h1 className="text-3xl font-bold tracking-wide text-white drop-shadow">
-            User Profile
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-wide text-white drop-shadow">
+              User Profile
+            </h1>
+            {loadingProfile && (
+              <div
+                className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"
+                role="status"
+                aria-label="Loading profile"
+              />
+            )}
+          </div>
           <motion.button
             onClick={() => navigate(-1)}
             className="text-sm text-gray-200 hover:text-white transition"

@@ -67,6 +67,7 @@ export default function PaymentSuccess() {
       lodge_email: lodge?.raw?.userLoginMail || null,
       type: lodge?.raw?.type || null,
       lodge_nin: lodge?.raw?.nin || null,
+      price: lodge?.price || null,
       startDate: startDate || null,
       endDate: endDate || null,
       nights: nights || null,

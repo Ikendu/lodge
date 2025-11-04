@@ -59,7 +59,7 @@ export default function LodgeDetails() {
   // - a leading-slash path ("/userImage/abc.jpg")
   // - an array or JSON-stringified array
   // Backend is inconsistent between "/userImage/" and "/api/userImage/" so prefer the public base used by get_profile.php
-  const ownerImageBase = "https://lodge.morelinks.com.ng/userImage/";
+  const ownerImageBase = "https://lodge.morelinks.com.ng/api/userImage/";
   const resolveOwnerImage = (val) => {
     if (!val) return null;
 
@@ -274,7 +274,10 @@ export default function LodgeDetails() {
     fetch("https://lodge.morelinks.com.ng/api/get_profile.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nin: nin, email: email }),
+      body: JSON.stringify({
+        nin: nin || lodge?.lodge_nin,
+        email: email || lodge?.lodge_email,
+      }),
     })
       .then((r) => r.text())
       .then((text) => {
@@ -408,20 +411,20 @@ export default function LodgeDetails() {
         {/* Image Gallery Section */}
         <div className="w-full">
           <img
-            src={images[0]}
+            src={images[0] || lodge.image_first_url || ""}
             alt={lodge.title}
             className="w-full h-72 object-cover cursor-pointer"
             onClick={() => openViewer(0, "lodge")}
           />
           <div className="flex flex-wrap">
             <img
-              src={images[1]}
+              src={images[1] || lodge.image_second_url || ""}
               alt={`${lodge.title} view 2`}
               className="w-1/2 h-48 object-cover cursor-pointer"
               onClick={() => openViewer(1, "lodge")}
             />
             <img
-              src={images[2]}
+              src={images[2] || lodge.image_third_url || ""}
               alt={`${lodge.title} view 3`}
               className="w-1/2 h-48 object-cover cursor-pointer"
               onClick={() => openViewer(2, "lodge")}
@@ -550,12 +553,11 @@ export default function LodgeDetails() {
               <p className="text-gray-500 mb-4">
                 {lodge?.location || lodge?.lodge_location}
               </p>
-
               <div className="flex justify-between items-center mb-4">
                 <span className="text-blue-600 font-semibold text-xl">
                   ₦
                   {lodge?.price?.toLocaleString() ||
-                    lodge?.amount.toLocaleString()}
+                    lodge?.amount?.toLocaleString()}
                   /night
                 </span>
                 <div className="flex items-center text-yellow-500">
@@ -565,97 +567,115 @@ export default function LodgeDetails() {
                   </span>
                 </div>
               </div>
-
               <p className="text-gray-700 mb-4">{lodge?.description}</p>
               <div>
                 <span className="text-blue-400 font-bold">
                   Available Amenities:
                 </span>
-                <p className="text-gray-700 mb-4">{lodge?.raw?.amenities}</p>
+                <p className="text-gray-700 mb-4">
+                  {lodge?.raw?.amenities || lodge?.amenities}
+                </p>
               </div>
               <div>
                 <span className="text-blue-400 font-bold">Bathroom Type: </span>
                 <span className="text-gray-700 mb-4">
-                  {lodge?.raw?.bathroomType}
+                  {lodge?.raw?.bathroomType || lodge?.bathroomType}
                 </span>
               </div>
               <div>
                 <span className="text-blue-400 font-bold">Capacity:</span>
                 <span className="text-gray-700 mb-4">
                   {" "}
-                  {lodge?.raw?.capacity}
+                  {lodge?.raw?.capacity || lodge?.capacity} persons
                 </span>
               </div>
               <div>
                 <span className="text-blue-400 font-bold">Lodge Type:</span>
-                <span className="text-gray-700 mb-4"> {lodge?.raw?.type}</span>
+                <span className="text-gray-700 mb-4">
+                  {" "}
+                  {lodge?.raw?.type || lodge?.type}
+                </span>
               </div>
-
               {/* Inline date range picker */}
-              <div className="mb-4">
-                <DateRange
-                  ranges={[selectionRange]}
-                  onChange={(ranges) => {
-                    const sel = ranges.selection;
-                    let end = sel.endDate;
-                    if (differenceInCalendarDays(end, sel.startDate) <= 0) {
-                      end = addDays(sel.startDate, 1);
-                    }
-                    setSelectionRange({
-                      startDate: sel.startDate,
-                      endDate: end,
-                      key: "selection",
-                    });
-                  }}
-                  minDate={new Date()}
-                  moveRangeOnFirstSelection={false}
-                  rangeColors={["#f6e05e"]}
-                />
-              </div>
-
+              {!lodge?.reference && (
+                <div className="mb-4">
+                  <DateRange
+                    ranges={[selectionRange]}
+                    onChange={(ranges) => {
+                      const sel = ranges.selection;
+                      let end = sel.endDate;
+                      if (differenceInCalendarDays(end, sel.startDate) <= 0) {
+                        end = addDays(sel.startDate, 1);
+                      }
+                      setSelectionRange({
+                        startDate: sel.startDate,
+                        endDate: end,
+                        key: "selection",
+                      });
+                    }}
+                    minDate={new Date()}
+                    moveRangeOnFirstSelection={false}
+                    rangeColors={["#f6e05e"]}
+                  />
+                </div>
+              )}
               <div className="mb-4 text-sm text-gray-700">
+                {lodge?.reference ? (
+                  <div className="my-3">
+                    <hr />
+                  </div>
+                ) : null}
                 {nights > 0 ? (
-                  <>
+                  <div className="flex flex-col gap-2">
                     <div>
                       <strong>From:</strong>{" "}
-                      {selectionRange.startDate.toLocaleDateString("en-GB")}
+                      {lodge?.startDate ||
+                        selectionRange.startDate.toLocaleDateString("en-GB")}
                     </div>
                     <div>
                       <strong>To:</strong>{" "}
-                      {selectionRange.endDate.toLocaleDateString("en-GB")}
+                      {lodge?.endDate ||
+                        selectionRange.endDate.toLocaleDateString("en-GB")}
                     </div>
                     <div>
-                      <strong>{nights}</strong> night{nights > 1 ? "s" : ""}
+                      <strong>{lodge?.nights || nights}</strong> night
+                      {nights > 1 ? "s" : ""}
                     </div>
                     <div>
-                      Total: <strong>₦{total.toLocaleString()}</strong>
+                      Total:{" "}
+                      <strong>
+                        ₦
+                        {lodge?.amount?.toLocaleString() ||
+                          total?.toLocaleString()}
+                      </strong>
                     </div>
-                  </>
+                  </div>
                 ) : (
                   <div className="text-gray-500">Select dates</div>
                 )}
               </div>
-
-              <motion.button
-                onClick={() => {
-                  if (
-                    differenceInCalendarDays(
-                      selectionRange.endDate,
-                      selectionRange.startDate
-                    ) <= 0
-                  ) {
-                    return alert(
-                      "Please select an end date after the start date"
-                    );
-                  }
-                  handleBookNow();
-                }}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 px-8 rounded-full shadow-md transition-all"
-              >
-                Book Now
-              </motion.button>
+              {!lodge?.reference && (
+                <motion.button
+                  onClick={() => {
+                    if (
+                      differenceInCalendarDays(
+                        selectionRange.endDate,
+                        selectionRange.startDate
+                      ) <= 0
+                    ) {
+                      return alert(
+                        "Please select an end date after the start date"
+                      );
+                    }
+                    handleBookNow();
+                  }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 px-8 rounded-full shadow-md transition-all"
+                >
+                  Book Now
+                </motion.button>
+              )}
             </motion.div>
 
             {/* Right: Owner Info (40%) */}
@@ -747,7 +767,7 @@ export default function LodgeDetails() {
                         <>
                           <div>
                             <strong className="text-gray-700">Email:</strong>{" "}
-                            {paid ? (
+                            {paid || lodge?.reference ? (
                               ownerProfile?.userLoginMail || "Not provided"
                             ) : (
                               <span className="italic text-gray-500">
@@ -757,7 +777,7 @@ export default function LodgeDetails() {
                           </div>
                           <div>
                             <strong className="text-gray-700">Mobile:</strong>{" "}
-                            {paid ? (
+                            {paid || lodge?.reference ? (
                               ownerProfile?.mobile || "Not provided"
                             ) : (
                               <span className="italic text-gray-500">
@@ -767,7 +787,7 @@ export default function LodgeDetails() {
                           </div>
                           <div>
                             <strong className="text-gray-700">Phone:</strong>{" "}
-                            {paid ? (
+                            {paid || lodge?.reference ? (
                               ownerProfile?.phone || "Not provided"
                             ) : (
                               <span className="italic text-gray-500">

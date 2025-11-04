@@ -31,10 +31,12 @@ export default function LoginPage() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const [user] = useAuthState(auth);
+  const [user, authLoading] = useAuthState(auth);
 
   // If a canonical customerProfile exists, prevent access to login page
   useEffect(() => {
+    // Wait for Firebase auth state to resolve before deciding to redirect.
+    if (authLoading) return;
     try {
       const cp = localStorage.getItem("customerProfile");
       const storedLogin = localStorage.getItem("userLogin");
@@ -45,7 +47,7 @@ export default function LoginPage() {
     } catch (e) {
       /* ignore storage errors */
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   const rawFrom = location.state?.from || "/";
   const buildTarget = (raw) => {
@@ -64,16 +66,30 @@ export default function LoginPage() {
       "http://localhost/lodge/api/get_profile.php",
     ];
 
+    const fetchWithTimeout = (url, options = {}, timeout = 4000) => {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeout);
+      return fetch(url, { ...options, signal: controller.signal }).finally(() =>
+        clearTimeout(id)
+      );
+    };
+
     for (const url of endpoints) {
       try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uid, email: emailAddr }),
-        });
+        const res = await fetchWithTimeout(
+          url,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ uid, email: emailAddr }),
+          },
+          4000
+        );
 
-        if (!res.ok) {
-          console.warn(`Profile fetch returned HTTP ${res.status} from ${url}`);
+        if (!res || !res.ok) {
+          console.warn(
+            `Profile fetch returned HTTP ${res?.status} from ${url}`
+          );
           continue;
         }
 
@@ -102,18 +118,19 @@ export default function LoginPage() {
           }
           return true;
         } else {
-          // server responded but indicated no profile; continue to next endpoint
           console.warn(`No profile found at ${url}`);
           continue;
         }
       } catch (err) {
-        console.warn(`Request to ${url} failed:`, err);
+        console.warn(`Request to ${url} failed or timed out:`, err);
         continue;
       }
     }
 
-    // If we get here, no endpoint returned a valid profile
-    localStorage.removeItem("customerProfile");
+    // If we get here, no endpoint returned a valid profile.
+    // IMPORTANT: do not remove any existing local customerProfile here —
+    // transient network failures during login should not clear a previously
+    // saved profile. Just return false and let the caller decide how to proceed.
     console.error("❌ Profile fetch failed for all endpoints");
     return false;
   };
