@@ -1,53 +1,89 @@
 import React from "react";
-import { NavLink, Outlet } from "react-router-dom";
+
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 
 export default function AdminLayout() {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-6 gap-6">
-        <aside className="md:col-span-1 bg-white rounded-lg shadow p-4">
-          <h3 className="text-lg font-semibold mb-4">Admin</h3>
-          <nav className="space-y-2 text-sm">
-            <NavLink
-              to="/admin"
-              end
-              className={({ isActive }) =>
-                isActive ? "block text-blue-600" : "block text-gray-700"
-              }
-            >
-              Dashboard
-            </NavLink>
-            <NavLink
-              to="/admin/users"
-              className={({ isActive }) =>
-                isActive ? "block text-blue-600" : "block text-gray-700"
-              }
-            >
-              Users
-            </NavLink>
-            <NavLink
-              to="/admin/listings"
-              className={({ isActive }) =>
-                isActive ? "block text-blue-600" : "block text-gray-700"
-              }
-            >
-              Listings
-            </NavLink>
-            <NavLink
-              to="/admin/bookings"
-              className={({ isActive }) =>
-                isActive ? "block text-blue-600" : "block text-gray-700"
-              }
-            >
-              Bookings
-            </NavLink>
-          </nav>
-        </aside>
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    const token = localStorage.getItem("adminToken");
+    localStorage.removeItem("adminToken");
+    // attempt server logout if token exists
+    if (token) {
+      fetch("https://lodge.morelinks.com.ng/api/admin/logout.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      }).finally(() => {
+        navigate("/admin/login");
+      });
+    } else {
+      navigate("/admin/login");
+    }
+  };
 
-        <main className="md:col-span-5">
-          <Outlet />
-        </main>
-      </div>
+  return (
+    <div className="min-h-screen flex bg-gray-100">
+      <aside className="w-64 bg-white border-r p-4">
+        <div className="mb-6">
+          <h3 className="text-xl font-bold">Admin</h3>
+        </div>
+        <nav className="space-y-2">
+          <Link
+            to="/admin"
+            className="block py-2 px-3 rounded hover:bg-gray-50"
+          >
+            Dashboard
+          </Link>
+          <Link
+            to="/admin/users"
+            className="block py-2 px-3 rounded hover:bg-gray-50"
+          >
+            Users
+          </Link>
+          <Link
+            to="/admin/lodges"
+            className="block py-2 px-3 rounded hover:bg-gray-50"
+          >
+            Lodges
+          </Link>
+          <Link
+            to="/admin/payments"
+            className="block py-2 px-3 rounded hover:bg-gray-50"
+          >
+            Payments
+          </Link>
+          <Link
+            to="/admin/refunds"
+            className="block py-2 px-3 rounded hover:bg-gray-50"
+          >
+            Refund Requests
+          </Link>
+          <Link
+            to="/admin/account-deletions"
+            className="block py-2 px-3 rounded hover:bg-gray-50"
+          >
+            Account Delete Requests
+          </Link>
+          <Link
+            to="/admin/complaints"
+            className="block py-2 px-3 rounded hover:bg-gray-50"
+          >
+            Complaints
+          </Link>
+        </nav>
+        <div className="mt-6">
+          <button
+            onClick={handleLogout}
+            className="w-full text-left py-2 px-3 bg-red-600 text-white rounded"
+          >
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      <main className="flex-1 p-6">
+        <Outlet />
+      </main>
     </div>
   );
 }

@@ -23,6 +23,16 @@ import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import RegisterCustomerDetails from "./pages/RegisterCustomerDetails";
 import AddNewLodge from "./pages/AddNewLodge.jsx";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminProtectedRoute from "./components/AdminProtectedRoute";
+import AdminLogin from "./pages/admin/AdminLogin";
+import Users from "./pages/admin/Users";
+import Lodges from "./pages/admin/Lodges";
+import Payments from "./pages/admin/Payments";
+import RefundRequests from "./pages/admin/RefundRequests";
+import AccountDeletions from "./pages/admin/AccountDeletions";
+import Complaints from "./pages/admin/Complaints";
+import Dashboard from "./pages/admin/Dashboard";
 
 // (links array removed; not used in this file)
 
@@ -57,6 +67,25 @@ export default function App() {
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/safety" element={<SafetyTips />} />
+        </Route>
+
+        {/* admin routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin"
+          element={
+            <AdminProtectedRoute>
+              <AdminLayout />
+            </AdminProtectedRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="users" element={<Users />} />
+          <Route path="lodges" element={<Lodges />} />
+          <Route path="payments" element={<Payments />} />
+          <Route path="refunds" element={<RefundRequests />} />
+          <Route path="account-deletions" element={<AccountDeletions />} />
+          <Route path="complaints" element={<Complaints />} />
         </Route>
       </Routes>
     </BrowserRouter>
