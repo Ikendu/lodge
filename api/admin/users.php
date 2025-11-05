@@ -18,7 +18,7 @@ try {
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
     $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
 
-    $sql = 'SELECT id, userUid, userLoginMail, firstName, lastName, phone, mobile, nin, created_at FROM customers';
+    $sql = 'SELECT * FROM customers';
     $params = [];
     if ($search !== '') {
         $sql .= ' WHERE (userLoginMail LIKE :q OR firstName LIKE :q OR lastName LIKE :q OR nin LIKE :q)';

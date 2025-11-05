@@ -80,7 +80,7 @@ export default function RefundRequests() {
               <tr key={r.id} className="border-t">
                 <td className="px-4 py-2">{r.id}</td>
                 <td className="px-4 py-2">
-                  {r.user_name || r.user || r.email}
+                  {r.user_name || r.user || r.user_email}
                 </td>
                 <td className="px-4 py-2">{r.amount}</td>
                 <td className="px-4 py-2">{r.reason}</td>

@@ -71,6 +71,9 @@ export default function Lodges() {
               <th className="px-4 py-2 text-left">Title</th>
               <th className="px-4 py-2 text-left">Owner</th>
               <th className="px-4 py-2 text-left">City</th>
+              <th className="px-4 py-2 text-left">Price</th>
+              <th className="px-4 py-2 text-left">Type</th>
+              <th className="px-4 py-2 text-left">Date Created</th>
             </tr>
           </thead>
           <tbody>
@@ -78,8 +81,11 @@ export default function Lodges() {
               <tr key={l.id} className="border-t">
                 <td className="px-4 py-2">{l.id}</td>
                 <td className="px-4 py-2">{l.title}</td>
-                <td className="px-4 py-2">{l.owner_name || l.owner || ""}</td>
-                <td className="px-4 py-2">{l.city}</td>
+                <td className="px-4 py-2">{l.userLoginMail}</td>
+                <td className="px-4 py-2">{l.location}</td>
+                <td className="px-4 py-2">{l.price}</td>
+                <td className="px-4 py-2">{l.type}</td>
+                <td className="px-4 py-2">{l.created_at}</td>
                 <td className="px-4 py-2">
                   <button
                     className="px-2 py-1 bg-red-600 text-white rounded"
