@@ -17,7 +17,9 @@ error_reporting(0);
 
 class NINVerification {
     private string $apiKey;
-    private string $ninUrl = "https://api.korapay.com/merchant/api/v1/identities/ng/nin";
+    private string $ninUrl = "https://api.sandbox.youverify.co//v2/api/identity/:identityId";
+
+    // private string $ninUrl = "https://api.korapay.com/merchant/api/v1/identities/ng/nin";
     private string $phoneUrl = "https://api.korapay.com/merchant/api/v1/identities/ng/nin-phone";
 
     public function __construct(string $apiKey) {
@@ -102,6 +104,7 @@ class NINVerification {
 }
 
 // === RUN SCRIPT ===
-$apiKey = "sk_test_diVJ33chcUTmUNTeLnwaa4s8fSvDT9SqK5sJW5N5"; // Your Kora test key
+// $apiKey = "sk_test_diVJ33chcUTmUNTeLnwaa4s8fSvDT9SqK5sJW5N5"; // Your Kora test key
+$apiKey = "9uVBbhz3.8kixevS45id9FqvofGTu2QaBduQNJ0omq50FJ"; // Your Kora test key
 $verify = new NINVerification($apiKey);
 $verify->handleRequest();

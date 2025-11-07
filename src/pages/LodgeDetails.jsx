@@ -589,13 +589,16 @@ export default function LodgeDetails() {
                   {lodge?.raw?.capacity || lodge?.capacity} persons
                 </span>
               </div>
-              <div>
+              <div className="mb-4">
                 <span className="text-blue-400 font-bold">Lodge Type:</span>
                 <span className="text-gray-700 mb-4">
                   {" "}
                   {lodge?.raw?.type || lodge?.type}
                 </span>
               </div>
+              <p className="text-blue-400 font-semibold">
+                Select Entry and Exit dates
+              </p>
               {/* Inline date range picker */}
               {!lodge?.reference && (
                 <div className="mb-4">
