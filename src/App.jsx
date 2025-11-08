@@ -33,6 +33,8 @@ import RefundRequests from "./pages/admin/RefundRequests";
 import AccountDeletions from "./pages/admin/AccountDeletions";
 import Complaints from "./pages/admin/Complaints";
 import Dashboard from "./pages/admin/Dashboard";
+import DojahNINTest from "./pages/TestDoja.jsx";
+import Test from "./pages/Test.jsx";
 
 // (links array removed; not used in this file)
 
@@ -67,6 +69,8 @@ export default function App() {
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/safety" element={<SafetyTips />} />
+          <Route path="/testdoja" element={<DojahNINTest />} />
+          <Route path="/test" element={<Test />} />
         </Route>
 
         {/* admin routes */}

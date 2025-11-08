@@ -5,13 +5,16 @@ import { motion } from "framer-motion";
 export default function RegisterCustomerDetails() {
   const navigate = useNavigate();
   const location = useLocation();
-  const verified = location.state?.verified?.data || {};
+  const verified =
+    location.state?.verified || location.state?.verified?.data || {};
+  const moredata = location?.state || {};
   const provided = location.state?.provided || {};
   const from = location.state?.from;
 
   const userLogin = JSON.parse(localStorage.getItem("userLogin"));
   console.log("User Login Data:", userLogin);
   console.log("Verified Data:", verified);
+  console.log("Provided Data:", moredata);
 
   useEffect(() => {
     try {
@@ -27,7 +30,7 @@ export default function RegisterCustomerDetails() {
   }, [navigate]);
 
   const [form, setForm] = useState({
-    dob: verified.date_of_birth || "",
+    dob: verified?.entity.date_of_birth || "",
     address: "",
     addressLga: "",
     addressState: "",
@@ -35,7 +38,7 @@ export default function RegisterCustomerDetails() {
     lga: "",
     state: "",
     country: "Nigeria",
-    mobile: "",
+    mobile: moredata?.phone || "",
     imageFile: null,
     nextOfKinName: "",
     nextOfKinPhone: "",
@@ -106,26 +109,31 @@ export default function RegisterCustomerDetails() {
       const payload = new FormData();
       payload.append("userUid", userLogin?.uid || "");
       payload.append("userLoginMail", userLogin?.email || "");
-      payload.append("firstName", verified.first_name || "");
-      payload.append("middleName", verified.middle_name || "");
-      payload.append("lastName", verified.last_name || "");
-      payload.append("nin", verified.id || "");
+      payload.append("firstName", verified?.entity.first_name || "");
+      payload.append("middleName", verified?.entity.middle_name || "");
+      payload.append("lastName", verified?.entity.last_name || "");
+      payload.append("nin", verified?.id || moredata?.nin || "");
       payload.append(
         "nin_address",
-        `${verified.address?.street || ""} ${verified.address?.town || ""} ${
-          verified.address?.lga || ""
-        } ${verified.address?.state || ""}`
+        `${verified?.entity?.residence_address_line_1 || ""} ${
+          verified?.entity?.residence_town || ""
+        } ${verified?.entity?.residence_lga || ""} ${
+          verified?.entity?.residence_state || ""
+        }`
       );
       payload.append("dob", form.dob);
-      payload.append("phone", verified.phone_number || provided.phone || "");
+      payload.append(
+        "phone",
+        verified?.entity.phone_number || provided.phone || ""
+      );
       payload.append("mobile", form.mobile || "");
-      payload.append("birth_country", verified.birth_country || "");
-      payload.append("birth_lga", verified.birth_lga || "");
-      payload.append("birth_state", verified.birth_state || "");
-      payload.append("gender", verified.gender || "");
+      payload.append("birth_country", verified?.entity.birth_country || "");
+      payload.append("birth_lga", verified?.entity.birth_lga || "");
+      payload.append("birth_state", verified?.entity.birth_state || "");
+      payload.append("gender", verified?.entity.gender || "");
       // verified_signature and verified_image will be handled below (convert base64 to files
       // and upload to production first). Do not append raw strings here.
-      payload.append("nin_email", verified.email || "");
+      payload.append("nin_email", verified?.entity.email || "");
       payload.append("address", form.address);
       payload.append("addressLga", form.addressLga);
       payload.append("addressState", form.addressState);

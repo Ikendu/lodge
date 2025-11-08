@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function DojahNINTest() {
-  const [nin, setNin] = useState("");
+export default function Test() {
+  const [nin, setNin] = useState("70123456789");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

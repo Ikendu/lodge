@@ -6,105 +6,117 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-// For preflight OPTIONS requests (CORS)
+// Handle CORS preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Disable detailed error messages in production
+// Disable verbose errors (set to 0 in production)
 error_reporting(0);
 
-class NINVerification {
-    private string $apiKey;
-    private string $ninUrl = "https://api.sandbox.youverify.co//v2/api/identity/:identityId";
+require_once __DIR__ . '/config.php';
 
-    // private string $ninUrl = "https://api.korapay.com/merchant/api/v1/identities/ng/nin";
-    private string $phoneUrl = "https://api.korapay.com/merchant/api/v1/identities/ng/nin-phone";
-
-    public function __construct(string $apiKey) {
-        $this->apiKey = $apiKey;
-    }
-
-    private function sanitizeInput(?string $value): ?string {
-        return $value ? trim(filter_var($value, FILTER_SANITIZE_STRING)) : null;
-    }
-
-    public function handleRequest(): void {
-        $nin = $this->sanitizeInput($_POST['nin'] ?? null);
-        $phone = $this->sanitizeInput($_POST['phone'] ?? null);
-
-        if (empty($nin) && empty($phone)) {
-            $this->respond(false, "Please provide either 'nin' or 'phone'.");
-        }
-
-        if (!empty($nin)) {
-            $this->verifyNIN($nin);
-        } elseif (!empty($phone)) {
-            $this->verifyPhone($phone);
-        } else {
-            $this->respond(false, "Invalid request.");
-        }
-    }
-
-    private function verifyNIN(string $nin): void {
-        $payload = json_encode([
-            "id" => $nin,
-            "verification_consent" => true
-        ]);
-        $this->callKoraAPI($this->ninUrl, $payload);
-    }
-
-    private function verifyPhone(string $phone): void {
-        $payload = json_encode([
-            "id" => $phone,
-            "verification_consent" => true
-        ]);
-        $this->callKoraAPI($this->phoneUrl, $payload);
-    }
-
-    private function callKoraAPI(string $url, string $payload): void {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $payload,
-            CURLOPT_HTTPHEADER => [
-                "Content-Type: application/json",
-                "Authorization: Bearer " . $this->apiKey,
-            ],
-            CURLOPT_TIMEOUT => 60,
-        ]);
-
-        $response = curl_exec($ch);
-        $err = curl_error($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($err) {
-            $this->respond(false, "Request error: " . $err);
-        }
-
-        $data = json_decode($response, true);
-        if ($httpCode >= 400 || !is_array($data)) {
-            $this->respond(false, "Verification failed (HTTP $httpCode).", $data ?: []);
-        }
-
-        $this->respond(true, "Verification successful", $data);
-    }
-
-    private function respond(bool $success, string $message, array $data = []): void {
-        echo json_encode([
-            "success" => $success,
-            "message" => $message,
-            "data" => $data,
-        ]);
-        exit;
-    }
+// Simple JSON responder
+function respond(bool $success, string $message, array $data = [], int $code = 200)
+{
+    http_response_code($code);
+    echo json_encode([
+        'success' => $success,
+        'message' => $message,
+        'data' => $data
+    ]);
+    exit;
 }
 
-// === RUN SCRIPT ===
-// $apiKey = "sk_test_diVJ33chcUTmUNTeLnwaa4s8fSvDT9SqK5sJW5N5"; // Your Kora test key
-$apiKey = "9uVBbhz3.8kixevS45id9FqvofGTu2QaBduQNJ0omq50FJ"; // Your Kora test key
-$verify = new NINVerification($apiKey);
-$verify->handleRequest();
+// Enforce POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    respond(false, 'Invalid HTTP method. Use POST.', [], 405);
+}
+
+// Read NIN from POST
+$nin = isset($_POST['nin']) ? trim((string)$_POST['nin']) : '';
+if ($nin === '') {
+    respond(false, 'Missing required parameter: nin or vnin', [], 400);
+}
+
+// Basic validation
+if (!preg_match('/^[A-Za-z0-9]{6,20}$/', $nin)) {
+    respond(false, 'Invalid NIN/vNIN format', [], 400);
+}
+
+$database = new Database();
+$db = $database->connect();
+if (!is_object($db) || !method_exists($db, 'prepare')) {
+    error_log('[verify_nin] Invalid DB connection or PDO missing', 3, __DIR__ . '/verify_nin_error.log');
+    respond(false, 'Database connection failed', [], 500);
+}
+
+try {
+    $sql = "SELECT firstName, lastName FROM customers WHERE nin = :nin LIMIT 1";
+    $stmt = $db->prepare($sql);
+    $stmt->bindParam(':nin', $nin);
+    $stmt->execute();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($row) {
+        respond(false, 'NIN already registered', ['customer' => $row], 200);
+    }
+
+    // ✅ Dojah API setup
+    $appId = "68ee3f3ffd71c34bdb0c6524"; // your App ID
+    $secretKey = "test_sk_1BDJiWdVVPjUcpdK0YA5cHUZn";
+
+    // Detect vNIN
+    $isVnin = strlen($nin) > 11 || preg_match('/[A-Za-z]/', $nin);
+
+    // Correct sandbox endpoint
+    $dojahUrl = $isVnin
+        ? "https://sandbox.dojah.io/api/v1/kyc/vnin?vnin=$nin"
+        : "https://sandbox.dojah.io/api/v1/kyc/nin/advance?nin=$nin";
+
+    // Initialize CURL for GET request
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $dojahUrl,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPGET => true,
+        CURLOPT_HTTPHEADER => [
+            "Accept: application/json",
+            "Content-Type: application/json",
+            "AppId: $appId",
+            "Authorization: $secretKey"
+        ],
+        CURLOPT_TIMEOUT => 60,
+    ]);
+
+    $response = curl_exec($ch);
+    $err = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($err) {
+        respond(false, "External verification request error: $err", [], 502);
+    }
+
+    $data = json_decode($response, true);
+
+    if ($httpCode >= 400 || !is_array($data)) {
+        respond(false, 'External verification failed', [
+            'http_code' => $httpCode,
+            'response' => $data ?: $response
+        ], 502);
+    }
+
+    // ✅ Success
+    $type = $isVnin ? 'vNIN' : 'NIN';
+    respond(true, "$type verification successful", $data, 200);
+
+} catch (PDOException $e) {
+    error_log('[verify_nin] PDOException: ' . $e->getMessage() . "\n", 3, __DIR__ . '/verify_nin_error.log');
+    respond(false, 'Database error while checking NIN', [], 500);
+} catch (Throwable $t) {
+    error_log('[verify_nin] Unexpected error: ' . $t->getMessage() . "\n", 3, __DIR__ . '/verify_nin_error.log');
+    respond(false, 'Server error while processing request', [], 500);
+}
+?>

@@ -4,6 +4,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 export default function RegisterCustomer() {
   const navigate = useNavigate();
@@ -57,8 +58,8 @@ export default function RegisterCustomer() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.nin || !form.firstName || !form.lastName) {
-      alert("Please fill required fields");
+    if (!form.nin || !form.firstName || !form.lastName || !form.phone) {
+      toast.error("Please fill required fields");
       return;
     }
 
@@ -107,13 +108,19 @@ export default function RegisterCustomer() {
       }
 
       if (!data.success) {
-        alert(data.message || "NIN verification failed");
+        // If server indicates NIN already registered, show a clear toast and stop
+        console.log("NIN data", data);
+        toast.error(data.message || "NIN verification failed");
         return;
       }
 
       // merge verified data returned from server with phone and navigate to details step
       const verified = data.data || {};
-      const state = { verified, phone: form.phone };
+      const state = {
+        verified,
+        phone: form.phone,
+        nin: form.nin,
+      };
 
       if (location.state && location.state.from)
         state.from = location.state.from;
@@ -121,7 +128,7 @@ export default function RegisterCustomer() {
       navigate("/registeruser/details", { state });
     } catch (err) {
       console.error(err);
-      alert("Verification failed, please try again.");
+      toast.error("Verification failed, please try again.");
     } finally {
       setLoading(false);
     }
