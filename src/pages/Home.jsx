@@ -109,7 +109,6 @@ export default function Home() {
     }
     navigate("/registeruser");
   };
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 text-white p-6">
       {/* Header */}
@@ -119,7 +118,11 @@ export default function Home() {
         transition={{ duration: 0.8 }}
         className="text-4xl md:text-5xl font-extrabold text-center m-12 drop-shadow-lg"
       >
-        Welcome to <span className="text-yellow-300">MoreLink Lodge</span>
+        <i class="fa-solid fa-house-user"></i> Welcome to{" "}
+        <span className="text-yellow-300">MoreLink Lodge</span>
+        <p className="text-lg font-thin text-right italic py-2">
+          where life is made more easy and connections more safer
+        </p>
       </motion.h1>
 
       {/* Options Section */}
@@ -180,13 +183,316 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* Lodges List Section */}
-      <div className="w-full max-w-6xl bg-white/10 rounded-2xl p-8 shadow-lg mb-12">
+      {/* Feature / CTA sections (inserted) */}
+      <div className="w-full max-w-6xl mb-8">
+        {/* Part 1: Text left, mock graphics right (slide in from left) */}
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center p-8 rounded-2xl mb-6 "
+          initial={{ opacity: 0, x: -50 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: false, amount: 0.35 }}
+          transition={{ duration: 0.6 }}
+        >
+          <div>
+            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-yellow-300">
+              Affordable Stays. Easy Bookings. Real Connections.
+            </h3>
+            <p className="text-white/90 text-base md:text-lg">
+              Tired of missing that interview, training, or workshop just
+              because accommodation costs too much? With Morelinks Lodge
+              Listings, you can find comfortable, budget-friendly rooms near
+              your destination — anytime, anywhere.
+            </p>
+          </div>
+          <div className="flex justify-center md:justify-end">
+            {/* simple mockup graphic using SVG */}
+            <svg
+              className="w-64 h-40"
+              viewBox="0 0 300 200"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                x="6"
+                y="10"
+                width="188"
+                height="180"
+                rx="12"
+                fill="#0EA5E9"
+                opacity="0.15"
+              />
+              <rect
+                x="106"
+                y="30"
+                width="188"
+                height="130"
+                rx="12"
+                fill="#7C3AED"
+                opacity="0.12"
+              />
+              <rect
+                x="20"
+                y="24"
+                width="150"
+                height="24"
+                rx="6"
+                fill="#fff"
+                opacity="0.9"
+              />
+              <rect
+                x="20"
+                y="62"
+                width="110"
+                height="12"
+                rx="4"
+                fill="#fff"
+                opacity="0.8"
+              />
+              <rect
+                x="140"
+                y="62"
+                width="120"
+                height="12"
+                rx="4"
+                fill="#fff"
+                opacity="0.6"
+              />
+              <rect
+                x="20"
+                y="88"
+                width="240"
+                height="14"
+                rx="6"
+                fill="#fff"
+                opacity="0.5"
+              />
+              <circle cx="260" cy="150" r="22" fill="#F59E0B" opacity="0.95" />
+              <circle cx="20" cy="150" r="22" fill="#F59E0B" opacity="0.60" />
+            </svg>
+          </div>
+        </motion.div>
+
+        {/* Part 2: Reversed layout - mock graphics left, text right (slide in from right) */}
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center p-8 rounded-2xl mb-6 "
+          initial={{ opacity: 0, x: 50 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: false, amount: 0.35 }}
+          transition={{ duration: 0.6, delay: 0.05 }}
+        >
+          <div className="flex justify-center md:justify-start">
+            <svg
+              className="w-64 h-40"
+              viewBox="0 0 300 200"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                x="6"
+                y="10"
+                width="188"
+                height="180"
+                rx="12"
+                fill="#34D399"
+                opacity="0.12"
+              />
+              <rect
+                x="106"
+                y="30"
+                width="188"
+                height="130"
+                rx="12"
+                fill="#60A5FA"
+                opacity="0.12"
+              />
+              <rect
+                x="20"
+                y="24"
+                width="150"
+                height="24"
+                rx="6"
+                fill="#fff"
+                opacity="0.9"
+              />
+              <rect
+                x="20"
+                y="62"
+                width="110"
+                height="12"
+                rx="4"
+                fill="#fff"
+                opacity="0.8"
+              />
+              <rect
+                x="140"
+                y="62"
+                width="120"
+                height="12"
+                rx="4"
+                fill="#fff"
+                opacity="0.6"
+              />
+              <rect
+                x="20"
+                y="88"
+                width="240"
+                height="14"
+                rx="6"
+                fill="#fff"
+                opacity="0.5"
+              />
+              <circle cx="260" cy="150" r="22" fill="black" opacity="0.95" />
+              <circle cx="20" cy="150" r="22" fill="blue" opacity="0.60" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-yellow-300">
+              Need a Place to Stay?
+            </h3>
+            <p className="text-white/90 text-base md:text-lg mb-4">
+              Stay smart and save more with our verified, affordable lodges.
+              Whether you’re traveling for work, studies, or events, we’ve got
+              you covered.
+            </p>
+            <ul className="text-white/90 list-disc list-inside mb-4">
+              <li>Find stays that fit your budget</li>
+              <li> Book safely and easily online</li>
+              <li> Enjoy comfort and convenience wherever you go</li>
+            </ul>
+            <button
+              className="mt-2 inline-block bg-yellow-400 text-black font-semibold py-2 px-5 rounded-full shadow hover:bg-yellow-300 transition-all"
+              onClick={() => navigate("/apartments")}
+            >
+              🔍 Find a Lodge
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Part 3: Host CTA (slide in from left) */}
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center p-8 rounded-2xl mb-6"
+          initial={{ opacity: 0, x: -50 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: false, amount: 0.35 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <div>
+            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-yellow-300">
+              Have a Free Room or Space? Earn from It!
+            </h3>
+            <p className="text-white/90 text-base md:text-lg mb-4">
+              Turn your empty room or apartment into steady income. At
+              Morelinks, you’re in control — your space, your price, your rules.
+            </p>
+            <ul className="text-white/90 list-disc list-inside mb-4">
+              <li>Earn extra income effortlessly</li>
+              <li>List in minutes, get verified fast</li>
+              <li>Connect with great guests near you</li>
+            </ul>
+            <button
+              className="mt-2 inline-block bg-green-400 text-black font-semibold py-2 px-5 rounded-full shadow hover:bg-green-300 transition-all"
+              onClick={handleListLodge}
+            >
+              ➕ List Your Space Now
+            </button>
+          </div>
+          <div className="flex justify-center md:justify-end">
+            <svg
+              className="w-64 h-40"
+              viewBox="0 0 300 200"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                x="6"
+                y="10"
+                width="188"
+                height="180"
+                rx="12"
+                fill="#FBBF24"
+                opacity="0.12"
+              />
+              <rect
+                x="106"
+                y="30"
+                width="188"
+                height="130"
+                rx="12"
+                fill="#34D399"
+                opacity="0.12"
+              />
+              <rect
+                x="20"
+                y="24"
+                width="150"
+                height="24"
+                rx="6"
+                fill="#fff"
+                opacity="0.9"
+              />
+              <rect
+                x="20"
+                y="62"
+                width="110"
+                height="12"
+                rx="4"
+                fill="#fff"
+                opacity="0.8"
+              />
+              <rect
+                x="140"
+                y="62"
+                width="120"
+                height="12"
+                rx="4"
+                fill="#fff"
+                opacity="0.6"
+              />
+              <circle cx="260" cy="150" r="22" fill="#F59E0B" opacity="0.70" />
+              <circle cx="20" cy="150" r="22" fill="blue" opacity="0.60" />
+            </svg>
+          </div>
+        </motion.div>
+
+        {/* Part 4: Why Choose Morelinks (slide in from right) */}
+        <motion.div
+          className="bg-white/10 p-6 rounded-2xl"
+          initial={{ opacity: 0, x: 50 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: false, amount: 0.35 }}
+          transition={{ duration: 0.6, delay: 0.15 }}
+        >
+          <h4 className="text-xl font-bold text-center p-3 text-yellow-300 mb-3">
+            Why Choose Morelinks?
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-white/90">
+            <ul className="list-none space-y-2">
+              <li>✔ Safe and verified listings</li>
+              <li>✔ Affordable short or long stays</li>
+            </ul>
+            <ul className="list-none space-y-2">
+              <li>✔ Secure payments and trusted support</li>
+              <li>✔ Easy dashboard for hosts and guests</li>
+            </ul>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Lodges preview section (click anywhere to view all) */}
+      <div
+        className="w-full max-w-6xl bg-white/10 rounded-2xl p-8 shadow-lg mb-12 cursor-pointer"
+        onClick={() => navigate("/apartments")}
+        role="link"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") navigate("/apartments");
+        }}
+      >
         <h2 className="text-3xl font-semibold text-center mb-8 text-yellow-300">
           Explore Available Lodges
         </h2>
 
-        <div className="">
+        <div>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16">
               <svg
@@ -214,48 +520,71 @@ export default function Home() {
             </div>
           ) : error ? (
             <div className="py-16 text-center text-red-100">
-              Failed to load lodges, Please check your nextwork and reload the
+              Failed to load lodges, Please check your network and reload the
             </div>
           ) : (
+            // show newest three lodges
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {(filtered.length ? filtered : lodges).map((lodge, i) => (
-                <motion.div
-                  key={lodge.id}
-                  className="rounded-2xl bg-white text-gray-800 shadow-lg hover:shadow-2xl overflow-hidden cursor-pointer transition-all"
-                  initial={{ opacity: 0, y: 40 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.2 }}
-                  whileHover={{ scale: 1.03 }}
-                  onClick={() => handleLodgeClick(lodge)}
-                >
-                  <img
-                    src={
-                      lodge.images && lodge.images.length > 0
-                        ? lodge.images[0]
-                        : ""
-                    }
-                    alt={lodge.title}
-                    className="h-48 w-full object-cover hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg">{lodge.title}</h3>
-                    <p className="text-gray-500 text-sm">{lodge.location}</p>
-                    <div className="flex justify-between items-center mt-3">
-                      <span className="font-bold text-blue-600">
-                        ₦{lodge.price.toLocaleString()}/night
-                      </span>
-                      <div className="flex items-center text-yellow-500">
-                        <Star size={16} className="fill-yellow-500" />
-                        <span className="ml-1 text-sm">{lodge.rating}</span>
+              {lodges
+                .slice()
+                .sort((a, b) => (b.id || 0) - (a.id || 0))
+                .slice(0, 3)
+                .map((lodge, i) => (
+                  <div
+                    key={lodge.id}
+                    className="rounded-2xl bg-white text-gray-800 shadow-lg overflow-hidden"
+                  >
+                    <img
+                      src={
+                        lodge.images && lodge.images.length > 0
+                          ? lodge.images[0]
+                          : ""
+                      }
+                      alt={lodge.title}
+                      className="h-40 w-full object-cover"
+                    />
+                    <div className="p-4">
+                      <h3 className="font-bold text-lg">{lodge.title}</h3>
+                      <p className="text-gray-500 text-sm">{lodge.location}</p>
+                      <div className="flex justify-between items-center mt-3">
+                        <span className="font-bold text-blue-600">
+                          ₦{lodge.price.toLocaleString()}/night
+                        </span>
+                        <div className="flex items-center text-yellow-500">
+                          <Star size={16} className="fill-yellow-500" />
+                          <span className="ml-1 text-sm">{lodge.rating}</span>
+                        </div>
                       </div>
+                      {/* Join the Morelinks Community (final CTA) */}
                     </div>
                   </div>
-                </motion.div>
-              ))}
+                ))}
             </div>
           )}
         </div>
       </div>
+      <motion.div
+        className="w-full max-w-6xl mt-6 p-8 rounded-2xl bg-gradient-to-r from-indigo-600 via-blue-500 to-teal-400 text-white text-center"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: false, amount: 0.35 }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+      >
+        <h3 className="text-2xl md:text-3xl font-bold mb-3">
+          Join the Morelinks Community Today!
+        </h3>
+        <p className="max-w-2xl mx-auto text-white/90 mb-4">
+          Whether you’re looking for a place to stay or ready to make money from
+          your space, Morelinks connects people, opportunities, and comfort in
+          one platform.
+        </p>
+        <button
+          className="inline-block bg-white text-black font-semibold py-2 px-6 rounded-full shadow hover:opacity-95 transition-all"
+          onClick={() => navigate("/registeruser")}
+        >
+          Get Started Now
+        </button>
+      </motion.div>
     </div>
   );
 }
