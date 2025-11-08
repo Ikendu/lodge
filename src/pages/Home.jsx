@@ -118,8 +118,10 @@ export default function Home() {
         transition={{ duration: 0.8 }}
         className="text-4xl md:text-5xl font-extrabold text-center m-12 drop-shadow-lg"
       >
-        <i class="fa-solid fa-house-user"></i> Welcome to{" "}
-        <span className="text-yellow-300">MoreLink Lodge</span>
+        <p>
+          <i class="fa-solid fa-house-user p-4"></i>
+        </p>
+        Welcome to <span className="text-yellow-300">MoreLink Lodge</span>
         <p className="text-lg font-thin text-right italic py-2">
           where life is made more easy and connections more safer
         </p>
@@ -488,9 +490,20 @@ export default function Home() {
           if (e.key === "Enter") navigate("/apartments");
         }}
       >
-        <h2 className="text-3xl font-semibold text-center mb-8 text-yellow-300">
+        <h2 className="text-3xl font-semibold text-center mb-4 text-yellow-300">
           Explore Available Lodges
         </h2>
+        <div className="text-center mb-6">
+          <button
+            className="inline-block bg-yellow-400 text-black font-semibold py-2 px-6 rounded-full shadow hover:bg-yellow-300 transition-all"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate("/apartments");
+            }}
+          >
+            Checkout Lodges
+          </button>
+        </div>
 
         <div>
           {loading ? (
@@ -523,8 +536,7 @@ export default function Home() {
               Failed to load lodges, Please check your network and reload the
             </div>
           ) : (
-            // show newest three lodges
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-3 max-h-60 overflow-hidden">
               {lodges
                 .slice()
                 .sort((a, b) => (b.id || 0) - (a.id || 0))
@@ -555,7 +567,6 @@ export default function Home() {
                           <span className="ml-1 text-sm">{lodge.rating}</span>
                         </div>
                       </div>
-                      {/* Join the Morelinks Community (final CTA) */}
                     </div>
                   </div>
                 ))}
