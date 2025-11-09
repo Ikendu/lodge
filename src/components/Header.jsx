@@ -223,17 +223,7 @@ export default function Header() {
                 className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden"
                 aria-label="Account menu"
               >
-                {avatarSrc ? (
-                  <img
-                    src={avatarSrc}
-                    alt={
-                      user?.displayName || storedLogin?.displayName || "User"
-                    }
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User size={18} />
-                )}
+                <User size={18} />
               </button>
 
               {accountMenuOpen && (

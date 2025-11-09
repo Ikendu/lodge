@@ -122,7 +122,7 @@ export default function Home() {
           <i class="fa-solid fa-house-user p-4"></i>
         </p>
         Welcome to <span className="text-yellow-300">MoreLink Lodge</span>
-        <p className="text-lg font-thin text-right italic py-2">
+        <p className="font-thin text-right italic py-2 text-sm">
           where life is made more easy and connections more safer
         </p>
       </motion.h1>

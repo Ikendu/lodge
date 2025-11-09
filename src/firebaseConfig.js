@@ -68,13 +68,11 @@ export const twitterProvider = new TwitterAuthProvider();
 export const socialSignIn = async (provider) => {
   try {
     const result = await signInWithPopup(auth, provider);
-    const user = result.user;
-
-    alert(`Welcome ${user.displayName || "User"}!`);
-    return user;
+    // return the full result so callers can access both user and credential details
+    return result;
   } catch (error) {
     console.error("❌ Social Login Error:", error);
-    alert("Login failed. Please try again.");
+    // Let callers handle UI messaging; rethrow for visibility
     throw error;
   }
 };

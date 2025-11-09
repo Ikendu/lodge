@@ -33,18 +33,7 @@ export default function LoginPage() {
   const location = useLocation();
   const [user, authLoading] = useAuthState(auth);
 
-  // Debugging: log auth state and cached keys to help diagnose login issues
-  useEffect(() => {
-    console.debug("Login page auth state:", { user, authLoading });
-    try {
-      console.debug("localStorage keys:", {
-        customerProfile: localStorage.getItem("customerProfile"),
-        userLogin: localStorage.getItem("userLogin"),
-      });
-    } catch (e) {
-      console.debug("localStorage read error", e);
-    }
-  }, [user, authLoading]);
+  // (removed debug/test-only logging)
 
   // If a canonical customerProfile exists, prevent access to login page
   useEffect(() => {
@@ -312,7 +301,8 @@ export default function LoginPage() {
     try {
       setLoading(true);
       const result = await socialSignIn(provider);
-      const signedUser = result.user;
+      // socialSignIn now returns the full popup result; handle both shapes for compatibility
+      const signedUser = (result && result.user) || result;
       if (signedUser) {
         await fetchUserProfile(signedUser.uid, signedUser.email);
         // persist lightweight login info for social sign-ins too
@@ -465,15 +455,7 @@ export default function LoginPage() {
             </motion.button>
           ))}
         </div>
-        {/* Logout (for testing) */}
-        {user && (
-          <button
-            onClick={handleLogout}
-            className="w-full mt-4 bg-gray-300 py-2 rounded-lg hover:bg-gray-400"
-          >
-            Logout
-          </button>
-        )}
+        {/* (logout button removed from login page - use profile menu to logout) */}
       </motion.div>
     </div>
   );
