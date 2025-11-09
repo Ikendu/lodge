@@ -249,19 +249,23 @@ export default function PaymentSuccess() {
             </div>
             <div className="flex justify-between text-sm text-gray-700">
               <div>Amount Paid</div>
-              <div className="font-medium">₦{amount.toLocaleString()}</div>
+              <div className="font-medium">
+                ₦{lodge?.amount || amount?.toLocaleString()}
+              </div>
             </div>
             <div className="flex justify-between text-sm text-gray-700">
               <div>Transaction Date</div>
               <div className="font-medium">
                 {provider === "paystack"
                   ? formatDate(paystackdata?.data?.created_at)
-                  : formatDate(flutterdata?.created_at)}
+                  : provider === "paystack"
+                  ? formatDate(flutterdata?.created_at)
+                  : lodge?.created_at}
               </div>
             </div>
             <div className="flex justify-between text-sm text-gray-700">
               <div>Transaction ID</div>
-              <div className="font-medium">{paymentReference}</div>
+              <div className="font-medium">{lodge?.id || paymentReference}</div>
             </div>
             <div className="flex justify-between text-sm text-gray-700">
               <div>Payment Method</div>
@@ -271,15 +275,21 @@ export default function PaymentSuccess() {
             </div>
             <div className="flex justify-between text-sm text-gray-700">
               <div>Start Date</div>
-              <div className="font-medium">{startDate || "-"}</div>
+              <div className="font-medium">
+                {lodge?.startDate || startDate || "-"}
+              </div>
             </div>
             <div className="flex justify-between text-sm text-gray-700">
               <div>End Date</div>
-              <div className="font-medium">{endDate || "-"}</div>
+              <div className="font-medium">
+                {lodge?.endDate || endDate || "-"}
+              </div>
             </div>
             <div className="flex justify-between text-sm text-gray-700">
               <div>Number of Night(s)</div>
-              <div className="font-medium">{nights || "-"}</div>
+              <div className="font-medium">
+                {lodge?.nights || nights || "-"}
+              </div>
             </div>
           </div>
         </div>

@@ -155,6 +155,7 @@ export default function UserProfilePage() {
           let json = null;
           try {
             json = JSON.parse(text);
+            console.log("Payment Details", json);
           } catch (e) {
             continue;
           }
@@ -380,7 +381,7 @@ export default function UserProfilePage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col md:flex-row gap-2">
                     <button
                       onClick={() =>
                         navigate(
@@ -396,9 +397,45 @@ export default function UserProfilePage() {
                     >
                       View
                     </button>
+
+                    <button
+                      onClick={() => {
+                        // Build a lodge object for the receipt page
+                        const lodgeForReceipt = {
+                          id: b.order_id || b.lodge || null,
+                          title: b.lodge_title || b.lodge || "Untitled lodge",
+                          location: b.lodge_location || b.lodge_location || "",
+                          amount: b.amount || b.price || null,
+                          created_at: b.created_at || null,
+                          startDate: b.startDate,
+                          endDate: b.endDate,
+                          nights: b.nights || null,
+
+                          raw: b.lodge_raw || b.raw || {},
+                          description: b.description || null,
+                          room: b.room || null,
+                        };
+
+                        // provider/payment payload — attempt to pass paystack-shaped payload
+                        const paystackdata = { data: b };
+                        const provider = b.provider || b.channel || "paystack";
+
+                        navigate("/payment-success", {
+                          state: {
+                            lodge: lodgeForReceipt,
+                            profile: display,
+                            provider,
+                            paystackdata,
+                          },
+                        });
+                      }}
+                      className="px-3 py-1 bg-green-600 rounded text-white text-sm"
+                    >
+                      Receipt
+                    </button>
                     <button
                       onClick={() => requestRefund(b)}
-                      className="px-3 py-1 bg-yellow-600 rounded text-white text-sm"
+                      className=" rounded px-1 bg-yellow-500 text-white md:text-sm text-xs"
                     >
                       Request Refund
                     </button>

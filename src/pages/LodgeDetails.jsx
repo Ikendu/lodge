@@ -757,9 +757,9 @@ export default function LodgeDetails() {
                     </div>
                   </div>
 
-                  <div className="text-sm text-gray-600 space-y-2">
+                  <div className="text-sm text-gray-600 space-y-2 italic">
                     {/* hide sensitive owner contact until customer has completed payment for this lodge */}
-                    {(() => {
+                    {/* {(() => {
                       const paid = Boolean(
                         typeof window !== "undefined" &&
                           localStorage.getItem(
@@ -800,7 +800,10 @@ export default function LodgeDetails() {
                           </div>
                         </>
                       );
-                    })()}
+                    })()} */}
+                    <p>
+                      Other contact details will come with the booking reciept
+                    </p>
                     <div>
                       <strong className="text-gray-700">LGA of Origin:</strong>{" "}
                       {ownerProfile?.lga || lodge.owner?.lga || "Not provided"}
