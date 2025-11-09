@@ -35,9 +35,6 @@ export default function RegisterCustomerDetails() {
     addressLga: "",
     addressState: "",
     permanentAddress: "",
-    lga: "",
-    state: "",
-    country: "Nigeria",
     mobile: moredata?.phone || "",
     imageFile: null,
     nextOfKinName: "",
@@ -47,6 +44,7 @@ export default function RegisterCustomerDetails() {
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
 
   // If the user already has a customerProfile saved, redirect away from this step
   // to avoid re-registering once profile is complete.
@@ -65,6 +63,10 @@ export default function RegisterCustomerDetails() {
     const { name, value, files } = e.target;
     if (files) setForm((prev) => ({ ...prev, [name]: files[0] }));
     else setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleConsentChange = (e) => {
+    setConsentChecked(Boolean(e.target.checked));
   };
 
   // Compress image before upload (optional)
@@ -131,17 +133,17 @@ export default function RegisterCustomerDetails() {
       payload.append("birth_lga", verified?.entity.birth_lga || "");
       payload.append("birth_state", verified?.entity.birth_state || "");
       payload.append("gender", verified?.entity.gender || "");
-      // verified_signature and verified_image will be handled below (convert base64 to files
-      // and upload to production first). Do not append raw strings here.
       payload.append("nin_email", verified?.entity.email || "");
+      payload.append("state", verified?.entity.origin_state);
+      payload.append("lga", verified?.entity.origin_lga);
+      payload.append("place", verified?.entity.origin_place);
+      payload.append("religion", verified?.entity.religion);
+
       payload.append("address", form.address);
       payload.append("addressLga", form.addressLga);
       payload.append("addressState", form.addressState);
       payload.append("permanentAddress", form.permanentAddress);
       payload.append("email", form.email);
-      payload.append("lga", form.lga);
-      payload.append("state", form.state);
-      payload.append("country", form.country);
       payload.append("nextOfKinName", form.nextOfKinName);
       payload.append("nextOfKinPhone", form.nextOfKinPhone);
       payload.append("nextOfKinRelation", form.nextOfKinRelation);
@@ -149,12 +151,14 @@ export default function RegisterCustomerDetails() {
 
       // Upload verified_image to production first (so images live on production).
       // If upload fails, fall back to attaching the file so local register can save it.
-      const baseName =
-        verified.id || verified.nin || verified?.nin_number || Date.now();
+      const baseName = verified?.id || moredata?.nin || verified?.nin_number;
       let prodVerifiedFilename = null;
-      if (verified.image && typeof verified.image === "string") {
+      if (
+        verified?.entity.photo &&
+        typeof verified?.entity.photo === "string"
+      ) {
         try {
-          const imgStr = verified.image;
+          const imgStr = verified?.entity.photo;
           let base64 = null;
           let mime = "image/jpeg";
 
@@ -229,7 +233,10 @@ export default function RegisterCustomerDetails() {
 
       // Handle verified signature (may be a data URL, raw base64 that starts with '/9j',
       // or already a URL/filename). Convert base64 to File and try uploading to production.
-      if (verified.signature && typeof verified.signature === "string") {
+      if (
+        verified?.entity.signature &&
+        typeof verified?.entity.signature === "string"
+      ) {
         try {
           const sigStr = verified.signature;
           let isDataUrl = sigStr.startsWith("data:");
@@ -524,42 +531,6 @@ export default function RegisterCustomerDetails() {
             />
           </div>
 
-          {/* other fields */}
-          <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">LGA of Origin</label>
-            <input
-              name="lga"
-              value={form.lga}
-              onChange={handleChange}
-              className="p-3 rounded-xl"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">
-              State of Origin
-            </label>
-            <input
-              name="state"
-              value={form.state}
-              onChange={handleChange}
-              className="p-3 rounded-xl"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">Country</label>
-            <input
-              name="country"
-              value={form.country}
-              onChange={handleChange}
-              className="p-3 rounded-xl"
-              required
-            />
-          </div>
-
           <div className="flex flex-col">
             <label className="text-white mb-2 font-medium">
               WhatsApp Mobile
@@ -593,7 +564,8 @@ export default function RegisterCustomerDetails() {
             <h4 className="text-xl font-bold">Next of Kin Details</h4>
             <p className=" italic text-white/70">
               For security purpose your next-of-kin should not be the same
-              person traveling with
+              person traveling/lodging with you. You can alwyays update this
+              information later in your profile.
             </p>
           </div>
           <div className="flex flex-col">
@@ -649,12 +621,34 @@ export default function RegisterCustomerDetails() {
           </div>
 
           <div className="col-span-2">
+            <div className="flex items-start space-x-3 mt-4">
+              <input
+                id="consent"
+                type="checkbox"
+                checked={consentChecked}
+                onChange={handleConsentChange}
+                className="w-4 h-4 mt-1"
+              />
+              <label htmlFor="consent" className="text-white text-sm">
+                I agree to the{" "}
+                <a href="/terms" className="underline">
+                  Terms &amp; Conditions
+                </a>{" "}
+                and consent to the processing of my personal data for the
+                purposes of registration and verification.
+              </label>
+            </div>
+
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="submit"
-              disabled={submitting}
-              className="w-full py-3 mt-4 bg-gradient-to-r from-blue-400 to-purple-600 text-white font-semibold rounded-xl"
+              disabled={submitting || !consentChecked}
+              className={`w-full py-3 mt-4 font-semibold rounded-xl text-white ${
+                submitting || !consentChecked
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-400 to-purple-600"
+              }`}
             >
               {submitting ? "Submitting..." : "Complete Registration"}
             </motion.button>

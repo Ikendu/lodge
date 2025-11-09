@@ -11,8 +11,6 @@ export default function RegisterCustomer() {
   const location = useLocation();
   const [form, setForm] = useState({
     nin: "",
-    firstName: "",
-    lastName: "",
     phone: "",
   });
   const [loading, setLoading] = useState(false);
@@ -166,28 +164,6 @@ export default function RegisterCustomer() {
               value={form.nin}
               onChange={handleChange}
               maxLength={20}
-              className="p-3 rounded-xl"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">First Name</label>
-            <input
-              name="firstName"
-              value={form.firstName}
-              onChange={handleChange}
-              className="p-3 rounded-xl"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="text-white mb-2 font-medium">Last Name</label>
-            <input
-              name="lastName"
-              value={form.lastName}
-              onChange={handleChange}
               className="p-3 rounded-xl"
               required
             />
