@@ -39,18 +39,18 @@ class RegisterCustomer {
         }
 
         $query = "INSERT INTO customers (
-            userUid, userLoginMail, firstName, middleName, lastName, nin, nin_address, dob,
-            phone, mobile, birth_country, birth_lga, birth_state, gender,
-            verified_image, verified_signature, nin_email, address, addressLga, addressState,
-            permanentAddress, email, lga, state, country,
-            nextOfKinName, nextOfKinPhone, nextOfKinAddress, nextOfKinRelation, image, created_at
-        ) VALUES (
-            :userUid, :userLoginMail, :firstName, :middleName, :lastName, :nin, :nin_address, :dob,
-            :phone, :mobile, :birth_country, :birth_lga, :birth_state, :gender,
-            :verified_image, :verified_signature, :nin_email, :address, :addressLga, :addressState,
-            :permanentAddress, :email, :lga, :state, :country,
-            :nextOfKinName, :nextOfKinPhone, :nextOfKinAddress, :nextOfKinRelation, :image, NOW()
-        )";
+    userUid, userLoginMail, firstName, middleName, lastName, nin, nin_address, dob,
+    phone, mobile, birth_country, birth_lga, birth_state, gender,
+    verified_image, verified_signature, nin_email, address, addressLga, addressState,
+    permanentAddress, lga, state, place, religion, country,
+    nextOfKinName, nextOfKinPhone, nextOfKinAddress, nextOfKinRelation, image, created_at
+) VALUES (
+    :userUid, :userLoginMail, :firstName, :middleName, :lastName, :nin, :nin_address, :dob,
+    :phone, :mobile, :birth_country, :birth_lga, :birth_state, :gender,
+    :verified_image, :verified_signature, :nin_email, :address, :addressLga, :addressState,
+    :permanentAddress, :lga, :state, :place, :religion, :country,
+    :nextOfKinName, :nextOfKinPhone, :nextOfKinAddress, :nextOfKinRelation, :image, NOW()
+)";
 
         $stmt = $this->conn->prepare($query);
 
@@ -134,7 +134,7 @@ class RegisterCustomer {
             "userUid", "userLoginMail", "firstName", "middleName", "lastName", "nin",
             "nin_address", "dob", "phone", "mobile", "birth_country", "birth_lga",
             "birth_state", "gender", "verified_image", "verified_signature", "nin_email",
-            "address", "addressLga", "addressState", "permanentAddress", "email", "lga",
+            "address", "addressLga", "addressState", "permanentAddress", "lga",
             "state", "country", "nextOfKinName", "nextOfKinPhone", "nextOfKinAddress", "nextOfKinRelation"
         ];
 

@@ -56,7 +56,7 @@ export default function RegisterCustomer() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.nin || !form.firstName || !form.lastName || !form.phone) {
+    if (!form.nin || !form.phone) {
       toast.error("Please fill required fields");
       return;
     }

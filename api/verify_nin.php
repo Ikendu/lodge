@@ -119,4 +119,3 @@ try {
     error_log('[verify_nin] Unexpected error: ' . $t->getMessage() . "\n", 3, __DIR__ . '/verify_nin_error.log');
     respond(false, 'Server error while processing request', [], 500);
 }
-?>

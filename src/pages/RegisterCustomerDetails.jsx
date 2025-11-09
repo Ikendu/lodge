@@ -129,7 +129,7 @@ export default function RegisterCustomerDetails() {
         verified?.entity.phone_number || provided.phone || ""
       );
       payload.append("mobile", form.mobile || "");
-      payload.append("birth_country", verified?.entity.birth_country || "");
+      payload.append("country", verified?.entity.birth_country || "");
       payload.append("birth_lga", verified?.entity.birth_lga || "");
       payload.append("birth_state", verified?.entity.birth_state || "");
       payload.append("gender", verified?.entity.gender || "");

@@ -774,7 +774,7 @@ export default function LodgeDetails() {
                               ownerProfile?.userLoginMail || "Not provided"
                             ) : (
                               <span className="italic text-gray-500">
-                                Hidden until payment
+                                Will be revealed after booking
                               </span>
                             )}
                           </div>
@@ -784,7 +784,7 @@ export default function LodgeDetails() {
                               ownerProfile?.mobile || "Not provided"
                             ) : (
                               <span className="italic text-gray-500">
-                                Hidden until payment
+                                Will be revealed after booking
                               </span>
                             )}
                           </div>
@@ -794,7 +794,7 @@ export default function LodgeDetails() {
                               ownerProfile?.phone || "Not provided"
                             ) : (
                               <span className="italic text-gray-500">
-                                Hidden until payment
+                                Will be revealed after booking
                               </span>
                             )}
                           </div>
