@@ -154,13 +154,24 @@ export default function LodgeDetails() {
 
   // string inputs for manual/typed dates (format YYYY-MM-DD)
   const [startInput, setStartInput] = useState(
-    selectionRange.startDate.toISOString().slice(0, 10)
+    // format locally to avoid timezone shifts
+    `${selectionRange.startDate.getFullYear()}-${String(
+      selectionRange.startDate.getMonth() + 1
+    ).padStart(2, "0")}-${String(selectionRange.startDate.getDate()).padStart(
+      2,
+      "0"
+    )}`
   );
   const [endInput, setEndInput] = useState(
-    selectionRange.endDate.toISOString().slice(0, 10)
+    `${selectionRange.endDate.getFullYear()}-${String(
+      selectionRange.endDate.getMonth() + 1
+    ).padStart(2, "0")}-${String(selectionRange.endDate.getDate()).padStart(
+      2,
+      "0"
+    )}`
   );
 
-  // helper: safely parse yyyy-mm-dd into Date, return null if invalid
+  // helper: safely parse yyyy-mm-dd into a local Date (no timezone shift), return null if invalid
   const parseDateInput = (s) => {
     if (!s) return null;
     // Accept both YYYY-MM-DD and DD/MM/YYYY by normalizing
@@ -170,10 +181,19 @@ export default function LodgeDetails() {
     }
     // YYYY-MM-DD
     if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
-    const dt = new Date(s + "T00:00:00");
+    const [y, m, d] = s.split("-").map((x) => parseInt(x, 10));
+    if (!y || !m || !d) return null;
+    // Use local Date constructor to avoid timezone offset issues
+    const dt = new Date(y, m - 1, d, 0, 0, 0, 0);
     if (isNaN(dt.getTime())) return null;
     return dt;
   };
+
+  // format a Date to local YYYY-MM-DD (avoid timezone offsets)
+  const formatLocalDate = (dt) =>
+    `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(
+      dt.getDate()
+    ).padStart(2, "0")}`;
 
   // calculate nights and total when selectionRange changes
   useEffect(() => {
@@ -185,8 +205,9 @@ export default function LodgeDetails() {
     setTotal(nightsCalc * (Number(lodge.price) || 0));
     // keep text inputs in sync when selectionRange changes
     try {
-      setStartInput(selectionRange.startDate.toISOString().slice(0, 10));
-      setEndInput(selectionRange.endDate.toISOString().slice(0, 10));
+      // format as local YYYY-MM-DD to avoid timezone shifts
+      setStartInput(formatLocalDate(selectionRange.startDate));
+      setEndInput(formatLocalDate(selectionRange.endDate));
     } catch (e) {
       // ignore
     }
@@ -639,8 +660,9 @@ export default function LodgeDetails() {
                     onChange={(ranges) => {
                       const sel = ranges.selection;
                       let end = sel.endDate;
-                      if (differenceInCalendarDays(end, sel.startDate) <= 0) {
-                        end = addDays(sel.startDate, 1);
+                      // If end is before start, clamp it to start (allow same-day selection)
+                      if (differenceInCalendarDays(end, sel.startDate) < 0) {
+                        end = sel.startDate;
                       }
                       setSelectionRange({
                         startDate: sel.startDate,
@@ -654,48 +676,117 @@ export default function LodgeDetails() {
                   />
                   {/* Manual date inputs (also allow typing) */}
                   <div className="mt-3 flex gap-3 items-center text-sm">
-                    <label className="text-gray-700">Start:</label>
+                    <label className="text-blue-400">Start:</label>
                     <input
-                      type="date"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="YYYY-MM-DD"
                       value={startInput}
                       onChange={(e) => {
-                        setStartInput(e.target.value);
-                        let parsed = parseDateInput(e.target.value);
+                        // accept raw typing, then normalize if it forms a valid date
+                        const raw = e.target.value;
+                        setStartInput(raw);
+                        const parsed = parseDateInput(raw);
                         if (!parsed) return;
                         // ensure minimum date is today (compare date-only)
                         const today = new Date();
-                        const todayDate = new Date(today.toDateString());
-                        if (parsed < todayDate) parsed = todayDate;
-                        // if end is before or equal, bump end to start +1
+                        const todayDate = new Date(
+                          today.getFullYear(),
+                          today.getMonth(),
+                          today.getDate()
+                        );
+                        let p = parsed;
+                        if (p < todayDate) p = todayDate;
+                        // if end is before start, clamp end to start (allow same-day)
                         let endDt = selectionRange.endDate;
-                        if (differenceInCalendarDays(endDt, parsed) <= 0) {
-                          endDt = addDays(parsed, 1);
-                          setEndInput(endDt.toISOString().slice(0, 10));
+                        if (differenceInCalendarDays(endDt, p) < 0) {
+                          endDt = p;
+                          setEndInput(formatLocalDate(endDt));
                         }
+                        // immediately normalize the typed input to padded YYYY-MM-DD
+                        const norm = formatLocalDate(p);
+                        setStartInput(norm);
                         setSelectionRange({
-                          startDate: parsed,
+                          startDate: p,
                           endDate: endDt,
                           key: "selection",
                         });
                       }}
-                      className="p-2 rounded border bg-white"
+                      onBlur={() => {
+                        // commit typed value on blur; if invalid, revert to calendar value
+                        const parsed = parseDateInput(startInput);
+                        if (!parsed) {
+                          setStartInput(
+                            formatLocalDate(selectionRange.startDate)
+                          );
+                          return;
+                        }
+                        const today = new Date();
+                        const todayDate = new Date(
+                          today.getFullYear(),
+                          today.getMonth(),
+                          today.getDate()
+                        );
+                        let p = parsed;
+                        if (p < todayDate) p = todayDate;
+                        let endDt = selectionRange.endDate;
+                        if (differenceInCalendarDays(endDt, p) < 0) {
+                          endDt = p;
+                          setEndInput(formatLocalDate(endDt));
+                        }
+                        setSelectionRange({
+                          startDate: p,
+                          endDate: endDt,
+                          key: "selection",
+                        });
+                        setStartInput(formatLocalDate(p));
+                      }}
+                      className="p-2 rounded border bg-white max-w-28 text-center"
                     />
-                    <label className="text-gray-700">End:</label>
+                    <label className="text-blue-400">End:</label>
                     <input
-                      type="date"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="YYYY-MM-DD"
                       value={endInput}
                       onChange={(e) => {
-                        setEndInput(e.target.value);
-                        const dt = parseDateInput(e.target.value);
+                        const raw = e.target.value;
+                        setEndInput(raw);
+                        const dt = parseDateInput(raw);
                         if (!dt) return;
-                        // If end is not after start, set end = start + 1
                         const startDt = selectionRange.startDate;
-                        if (differenceInCalendarDays(dt, startDt) <= 0) {
-                          const newEnd = addDays(startDt, 1);
-                          setEndInput(newEnd.toISOString().slice(0, 10));
+                        // If end is before start, clamp to start (allow same-day)
+                        if (differenceInCalendarDays(dt, startDt) < 0) {
+                          const newEnd = startDt;
+                          const norm = formatLocalDate(newEnd);
+                          setEndInput(norm);
                           setSelectionRange({
                             startDate: startDt,
                             endDate: newEnd,
+                            key: "selection",
+                          });
+                        } else {
+                          const norm = formatLocalDate(dt);
+                          setEndInput(norm);
+                          setSelectionRange({
+                            startDate: startDt,
+                            endDate: dt,
+                            key: "selection",
+                          });
+                        }
+                      }}
+                      onBlur={() => {
+                        const dt = parseDateInput(endInput);
+                        const startDt = selectionRange.startDate;
+                        if (!dt) {
+                          setEndInput(formatLocalDate(selectionRange.endDate));
+                          return;
+                        }
+                        if (differenceInCalendarDays(dt, startDt) < 0) {
+                          setEndInput(formatLocalDate(startDt));
+                          setSelectionRange({
+                            startDate: startDt,
+                            endDate: startDt,
                             key: "selection",
                           });
                         } else {
@@ -704,13 +795,15 @@ export default function LodgeDetails() {
                             endDate: dt,
                             key: "selection",
                           });
+                          setEndInput(formatLocalDate(dt));
                         }
                       }}
-                      className="p-2 rounded border bg-white"
+                      className="p-2 rounded border bg-white max-w-28 text-center"
                     />
-                    <div className="text-xs text-gray-500">
-                      (You can type or pick a date)
-                    </div>
+                  </div>
+                  <div className="text-xs text-gray-400 italic">
+                    You can type the dates in YYYY-MM-DD format, add zero in
+                    single-digit
                   </div>
                 </div>
               )}
@@ -723,21 +816,24 @@ export default function LodgeDetails() {
                 {nights > 0 ? (
                   <div className="flex flex-col gap-2">
                     <div>
-                      <strong>From:</strong>{" "}
+                      <strong className="text-blue-400">From:</strong>{" "}
                       {lodge?.startDate ||
                         selectionRange.startDate.toLocaleDateString("en-GB")}
                     </div>
                     <div>
-                      <strong>To:</strong>{" "}
+                      <strong className="text-blue-400">To:</strong>{" "}
                       {lodge?.endDate ||
                         selectionRange.endDate.toLocaleDateString("en-GB")}
                     </div>
                     <div>
-                      <strong>{lodge?.nights || nights}</strong> night
+                      <strong className="text-blue-400">
+                        {lodge?.nights || nights}
+                      </strong>{" "}
+                      night
                       {nights > 1 ? "s" : ""}
                     </div>
-                    <div>
-                      Total:{" "}
+                    <div className="text-lg">
+                      <span className="text-blue-400">Total: </span>
                       <strong>
                         ₦
                         {lodge?.amount?.toLocaleString() ||

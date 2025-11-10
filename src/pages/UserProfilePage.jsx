@@ -127,7 +127,7 @@ export default function UserProfilePage() {
       if (!email && !nin) return;
       setLoadingPaid(true);
 
-      const fetchWithTimeout = (url, options = {}, timeout = 4000) => {
+      const fetchWithTimeout = (url, options = {}, timeout = 10000) => {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
         return fetch(url, { ...options, signal: controller.signal }).finally(

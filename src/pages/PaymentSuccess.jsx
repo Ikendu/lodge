@@ -258,14 +258,14 @@ export default function PaymentSuccess() {
               <div className="font-medium">
                 {provider === "paystack"
                   ? formatDate(paystackdata?.data?.created_at)
-                  : provider === "paystack"
+                  : provider === "flutterwave"
                   ? formatDate(flutterdata?.created_at)
                   : lodge?.created_at}
               </div>
             </div>
             <div className="flex justify-between text-sm text-gray-700">
               <div>Transaction ID</div>
-              <div className="font-medium">{lodge?.id || paymentReference}</div>
+              <div className="font-medium">{paymentReference || lodge?.id}</div>
             </div>
             <div className="flex justify-between text-sm text-gray-700">
               <div>Payment Method</div>

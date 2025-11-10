@@ -172,10 +172,22 @@ export default function Payment() {
       ></i>
       <div className="w-full max-w-2xl bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4">Payment</h2>
-        <div className="mb-4">
-          <div className="text-gray-700">Lodge: {lodge.title}</div>
+        <div className="mb-4 flex flex-col gap-5">
           <div className="text-gray-700">
-            Amount: ₦{Number(total).toLocaleString()}
+            <span className="font-bold text-blue-400">Lodge:</span>{" "}
+            {lodge?.title}
+          </div>
+          <div className="text-gray-700">
+            <span className="font-bold text-blue-400">Location:</span>{" "}
+            {lodge?.location}
+          </div>
+          <div className="text-gray-700">
+            <span className="font-bold text-blue-400">Amount:</span> ₦
+            {Number(total).toLocaleString()}
+          </div>
+          <div className="text-gray-700">
+            <span className="font-bold text-blue-400">Number of Night: </span>{" "}
+            {nights}
           </div>
         </div>
 
