@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function apiFetch(path, opts = {}) {
   const token = localStorage.getItem("adminToken");
@@ -11,6 +12,7 @@ export default function Lodges() {
   const [lodges, setLodges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     let mounted = true;
@@ -78,7 +80,26 @@ export default function Lodges() {
           </thead>
           <tbody>
             {lodges.map((l) => (
-              <tr key={l.id} className="border-t">
+              <tr
+                key={l.id}
+                className="border-t cursor-pointer hover:bg-gray-50"
+                onClick={(e) => {
+                  // avoid triggering when delete button clicked
+                  const target = e.target;
+                  if (
+                    target &&
+                    (target.tagName === "BUTTON" || target.closest("button"))
+                  )
+                    return;
+                  navigate(`/admin/lodges/${l.id}`, { state: l });
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter")
+                    navigate(`/admin/lodges/${l.id}`, { state: l });
+                }}
+              >
                 <td className="px-4 py-2">{l.id}</td>
                 <td className="px-4 py-2">{l.title}</td>
                 <td className="px-4 py-2">{l.userLoginMail}</td>

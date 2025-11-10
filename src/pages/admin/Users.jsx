@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function apiFetch(path, opts = {}) {
   const token = localStorage.getItem("adminToken");
@@ -11,6 +12,7 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     let mounted = true;
@@ -55,7 +57,17 @@ export default function Users() {
             <th className="px-4 py-2 text-left">Date Created</th>
           </tr>
           {users.map((u) => (
-            <tr key={u.id} className="border-t">
+            <tr
+              key={u.id}
+              className="border-t cursor-pointer hover:bg-gray-50"
+              onClick={() => navigate(`/admin/users/${u.id}`, { state: u })}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter")
+                  navigate(`/admin/users/${u.id}`, { state: u });
+              }}
+            >
               <td className="px-4 py-2">{u?.id}</td>
               <td className="px-4 py-2">{`${u?.firstName} ${
                 u?.middleName || ""

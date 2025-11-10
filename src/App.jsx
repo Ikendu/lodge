@@ -32,7 +32,9 @@ import Payments from "./pages/admin/Payments";
 import RefundRequests from "./pages/admin/RefundRequests";
 import AccountDeletions from "./pages/admin/AccountDeletions";
 import Complaints from "./pages/admin/Complaints";
+import Contacts from "./pages/admin/Contacts";
 import Dashboard from "./pages/admin/Dashboard";
+import ItemDetail from "./pages/admin/ItemDetail";
 import DojahNINTest from "./pages/TestDoja.jsx";
 import Test from "./pages/Test.jsx";
 
@@ -90,6 +92,9 @@ export default function App() {
           <Route path="refunds" element={<RefundRequests />} />
           <Route path="account-deletions" element={<AccountDeletions />} />
           <Route path="complaints" element={<Complaints />} />
+          <Route path="contacts" element={<Contacts />} />
+          {/* Generic detail view for admin resources (uses location.state when available) */}
+          <Route path=":resource/:id" element={<ItemDetail />} />
         </Route>
       </Routes>
     </BrowserRouter>

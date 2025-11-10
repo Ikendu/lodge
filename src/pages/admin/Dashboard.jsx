@@ -143,6 +143,15 @@ export default function Dashboard() {
             View complaints
           </a>
         </div>
+        <div className="p-4 bg-white rounded shadow">
+          <div className="text-sm text-gray-500">Contact Messages</div>
+          <div className="text-2xl font-semibold">
+            {metrics.contacts || "-"}
+          </div>
+          <a className="text-blue-600 text-sm" href="/admin/contacts">
+            View messages
+          </a>
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded shadow">

@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 import {
   FaPhoneAlt,
   FaEnvelope,
   FaMapMarkerAlt,
   FaWhatsapp,
 } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 export default function ContactUs() {
   const fadeInUp = {
@@ -15,6 +17,14 @@ export default function ContactUs() {
       transition: { delay: i * 0.2, duration: 0.6, ease: "easeOut" },
     }),
   };
+
+  // form state
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen text-gray-800">
@@ -123,6 +133,45 @@ export default function ContactUs() {
             initial="hidden"
             animate="visible"
             className="bg-white shadow-lg rounded-3xl p-8 space-y-6 border border-gray-100"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (sending) return;
+              setSending(true);
+              try {
+                const payload = {
+                  name: `${firstName} ${lastName}`.trim(),
+                  email: email,
+                  phone: phone,
+                  message: message,
+                };
+                const res = await fetch(
+                  "https://lodge.morelinks.com.ng//api/contact_submit.php",
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                  }
+                );
+                const json = await res.json();
+                console.log("Contact", json);
+                if (json && json.success) {
+                  toast.success("Message sent — we will get back to you soon");
+                  // reset
+                  setFirstName("");
+                  setLastName("");
+                  setEmail("");
+                  setPhone("");
+                  setMessage("");
+                } else {
+                  toast.error(json?.message || "Failed to send message");
+                }
+              } catch (err) {
+                console.error("Contact submit failed", err);
+                toast.error("Network or server error");
+              } finally {
+                setSending(false);
+              }
+            }}
           >
             <h3 className="text-2xl font-bold text-indigo-700 mb-4">
               Send us a Message
@@ -131,12 +180,16 @@ export default function ContactUs() {
               <input
                 type="text"
                 placeholder="First Name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
                 className="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 required
               />
               <input
                 type="text"
                 placeholder="Last Name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 className="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 required
               />
@@ -144,22 +197,37 @@ export default function ContactUs() {
             <input
               type="email"
               placeholder="Your Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
+            />
+            <input
+              type="tel"
+              placeholder="Phone (optional)"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             <textarea
               placeholder="Your Message"
               rows="5"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
             ></textarea>
             <motion.button
+              type="submit"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition duration-300"
+              disabled={sending}
+              className={`w-full ${
+                sending ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"
+              } text-white font-semibold py-3 rounded-lg transition duration-300`}
             >
-              Send Message
+              {sending ? "Sending…" : "Send Message"}
             </motion.button>
           </motion.form>
         </div>

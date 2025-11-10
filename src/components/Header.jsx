@@ -261,7 +261,6 @@ export default function Header() {
                       setAccountMenuOpen(false);
                       localStorage.removeItem("customerProfile");
                       localStorage.removeItem("userLogin");
-                      alert("Logged out successfully!");
                       navigate("/");
                     }}
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100"
@@ -350,7 +349,6 @@ export default function Header() {
                       setAccountMenuOpen(false);
                       localStorage.removeItem("customerProfile");
                       localStorage.removeItem("userLogin");
-                      alert("Logged out successfully!");
                       navigate("/");
                     }}
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100"
