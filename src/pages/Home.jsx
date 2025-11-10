@@ -23,10 +23,6 @@ export default function Home() {
     hover: { scale: 1.05, y: -5, transition: { duration: 0.3 } },
   };
 
-  const handleLodgeClick = (lodge) => {
-    navigate(`/lodge/${lodge.id}`, { state: { lodge } });
-  };
-
   const [user] = useAuthState(auth);
   const location = useLocation();
 
@@ -121,9 +117,9 @@ export default function Home() {
         <p>
           <i class="fa-solid fa-house-user p-4"></i>
         </p>
-        Welcome to <span className="text-yellow-300">MoreLink Lodge</span>
+        Welcome to <span className="text-yellow-300">MoreLinks Lodge</span>
         <p className="font-thin text-right italic py-2 text-sm">
-          where life is made more easy and connections more safer
+          where life is made easier and connections more safer
         </p>
       </motion.h1>
 
@@ -137,12 +133,7 @@ export default function Home() {
           animate="visible"
           whileHover="hover"
           custom={0}
-          onClick={() =>
-            window.scrollTo({
-              top: document.body.scrollHeight / 3.5,
-              behavior: "smooth",
-            })
-          }
+          onClick={() => navigate("/apartments")}
         >
           <img
             src={guest}
@@ -383,7 +374,7 @@ export default function Home() {
               Have a Free Room or Space? Earn from It!
             </h3>
             <p className="text-white/90 text-base md:text-lg mb-4">
-              Turn your empty room or apartment into steady income. At
+              Turn your unused space rooms or apartment into steady income. At
               Morelinks, you’re in control — your space, your price, your rules.
             </p>
             <ul className="text-white/90 list-disc list-inside mb-4">

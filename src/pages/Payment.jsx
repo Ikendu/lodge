@@ -166,6 +166,10 @@ export default function Payment() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
+      <i
+        onClick={() => navigate(-1)}
+        class="fa-solid fa-arrow-left cursor-pointer pb-10 absolute top-24 left-9 z-10"
+      ></i>
       <div className="w-full max-w-2xl bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4">Payment</h2>
         <div className="mb-4">

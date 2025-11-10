@@ -1,8 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { FaUsers, FaHandshake, FaHome, FaShieldAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 export default function AboutUs() {
+  const navigate = useNavigate();
   const fadeUp = {
     hidden: { opacity: 0, y: 40 },
     visible: {
@@ -15,20 +17,30 @@ export default function AboutUs() {
   return (
     <div className="bg-gray-50 text-gray-800">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-blue-800 via-indigo-700 to-purple-700 text-white py-20 px-6 text-center">
+      <section className="relative bg-gradient-to-r from-blue-800 via-indigo-700 to-purple-700 text-white py-10 px-6 text-center">
         <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="max-w-3xl mx-auto"
+          className="max-w-6xl mx-auto  gap-4"
         >
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            About <span className="text-yellow-300">MoreLink Lodge</span>
-          </h1>
-          <p className="text-lg md:text-xl text-gray-200">
-            Making accommodation simple, affordable, and accessible — one stay
-            at a time.
-          </p>
+          <div className="flex justify-between">
+            <i
+              onClick={() => navigate(-1)}
+              class="fa-solid fa-arrow-left cursor-pointer pb-10"
+            ></i>
+            <div></div>
+          </div>
+
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              About <span className="text-yellow-300">MoreLink Lodge</span>
+            </h1>
+            <p className="text-lg md:text-xl text-gray-200">
+              Making accommodation simple, affordable, and accessible — one stay
+              at a time.
+            </p>
+          </div>
         </motion.div>
 
         {/* Decorative Wave */}

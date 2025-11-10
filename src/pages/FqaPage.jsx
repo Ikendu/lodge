@@ -50,6 +50,13 @@ export default function FAQPage() {
         transition={{ duration: 0.6 }}
         className="max-w-3xl w-full bg-white shadow-lg rounded-2xl p-8 border border-gray-100"
       >
+        <div className="flex justify-between">
+          <i
+            onClick={() => navigate(-1)}
+            class="fa-solid fa-arrow-left cursor-pointer pb-10"
+          ></i>
+          <div></div>
+        </div>
         <h2 className="text-3xl font-bold text-center mb-8 text-blue-700">
           Frequently Asked Questions
         </h2>

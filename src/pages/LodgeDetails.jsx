@@ -152,6 +152,29 @@ export default function LodgeDetails() {
   const [nights, setNights] = useState(1);
   const [total, setTotal] = useState(Number(lodge.price) || 0);
 
+  // string inputs for manual/typed dates (format YYYY-MM-DD)
+  const [startInput, setStartInput] = useState(
+    selectionRange.startDate.toISOString().slice(0, 10)
+  );
+  const [endInput, setEndInput] = useState(
+    selectionRange.endDate.toISOString().slice(0, 10)
+  );
+
+  // helper: safely parse yyyy-mm-dd into Date, return null if invalid
+  const parseDateInput = (s) => {
+    if (!s) return null;
+    // Accept both YYYY-MM-DD and DD/MM/YYYY by normalizing
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
+      const [d, m, y] = s.split("/");
+      s = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+    }
+    // YYYY-MM-DD
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+    const dt = new Date(s + "T00:00:00");
+    if (isNaN(dt.getTime())) return null;
+    return dt;
+  };
+
   // calculate nights and total when selectionRange changes
   useEffect(() => {
     const s = selectionRange.startDate;
@@ -160,6 +183,13 @@ export default function LodgeDetails() {
     const nightsCalc = diff > 0 ? diff : 0;
     setNights(nightsCalc);
     setTotal(nightsCalc * (Number(lodge.price) || 0));
+    // keep text inputs in sync when selectionRange changes
+    try {
+      setStartInput(selectionRange.startDate.toISOString().slice(0, 10));
+      setEndInput(selectionRange.endDate.toISOString().slice(0, 10));
+    } catch (e) {
+      // ignore
+    }
   }, [selectionRange, lodge.price]);
 
   // If lodge is not provided in location state, show a friendly message.
@@ -408,6 +438,10 @@ export default function LodgeDetails() {
         initial="hidden"
         animate="show"
       >
+        <i
+          onClick={() => navigate(-1)}
+          class="fa-solid fa-arrow-left cursor-pointer pb-10 absolute top-24 left-9 z-10"
+        ></i>
         {/* Image Gallery Section */}
         <div className="w-full">
           <img
@@ -431,7 +465,6 @@ export default function LodgeDetails() {
             />
           </div>
         </div>
-
         {/* Fullscreen Viewer */}
         <AnimatePresence>
           {viewerOpen && (
@@ -536,7 +569,6 @@ export default function LodgeDetails() {
             </motion.div>
           )}
         </AnimatePresence>
-
         {/* Details Section - split into lodge info (left) and owner info (right) */}
         <div className="p-6">
           <motion.div
@@ -620,6 +652,66 @@ export default function LodgeDetails() {
                     moveRangeOnFirstSelection={false}
                     rangeColors={["#f6e05e"]}
                   />
+                  {/* Manual date inputs (also allow typing) */}
+                  <div className="mt-3 flex gap-3 items-center text-sm">
+                    <label className="text-gray-700">Start:</label>
+                    <input
+                      type="date"
+                      value={startInput}
+                      onChange={(e) => {
+                        setStartInput(e.target.value);
+                        let parsed = parseDateInput(e.target.value);
+                        if (!parsed) return;
+                        // ensure minimum date is today (compare date-only)
+                        const today = new Date();
+                        const todayDate = new Date(today.toDateString());
+                        if (parsed < todayDate) parsed = todayDate;
+                        // if end is before or equal, bump end to start +1
+                        let endDt = selectionRange.endDate;
+                        if (differenceInCalendarDays(endDt, parsed) <= 0) {
+                          endDt = addDays(parsed, 1);
+                          setEndInput(endDt.toISOString().slice(0, 10));
+                        }
+                        setSelectionRange({
+                          startDate: parsed,
+                          endDate: endDt,
+                          key: "selection",
+                        });
+                      }}
+                      className="p-2 rounded border bg-white"
+                    />
+                    <label className="text-gray-700">End:</label>
+                    <input
+                      type="date"
+                      value={endInput}
+                      onChange={(e) => {
+                        setEndInput(e.target.value);
+                        const dt = parseDateInput(e.target.value);
+                        if (!dt) return;
+                        // If end is not after start, set end = start + 1
+                        const startDt = selectionRange.startDate;
+                        if (differenceInCalendarDays(dt, startDt) <= 0) {
+                          const newEnd = addDays(startDt, 1);
+                          setEndInput(newEnd.toISOString().slice(0, 10));
+                          setSelectionRange({
+                            startDate: startDt,
+                            endDate: newEnd,
+                            key: "selection",
+                          });
+                        } else {
+                          setSelectionRange({
+                            startDate: startDt,
+                            endDate: dt,
+                            key: "selection",
+                          });
+                        }
+                      }}
+                      className="p-2 rounded border bg-white"
+                    />
+                    <div className="text-xs text-gray-500">
+                      (You can type or pick a date)
+                    </div>
+                  </div>
                 </div>
               )}
               <div className="mb-4 text-sm text-gray-700">
