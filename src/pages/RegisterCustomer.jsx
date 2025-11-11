@@ -164,7 +164,7 @@ export default function RegisterCustomer() {
               value={form.nin}
               onChange={handleChange}
               maxLength={20}
-              className="p-3 rounded-xl"
+              className="p-3 rounded-xl w-full"
               required
             />
           </div>
@@ -175,7 +175,7 @@ export default function RegisterCustomer() {
               name="phone"
               value={form.phone}
               onChange={handleChange}
-              className="p-3 rounded-xl"
+              className="p-3 rounded-xl w-full"
             />
           </div>
 

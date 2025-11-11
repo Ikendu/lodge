@@ -485,32 +485,32 @@ export default function RegisterCustomerDetails() {
               value={form.address}
               onChange={handleChange}
               rows="2"
-              className="p-3 rounded-xl"
+              className="p-3 rounded-xl w-full"
               required
             />
           </div>
 
           {/* address lga */}
-          <div className="flex flex-col">
+          <div className="col-span-2 md:col-span-1 flex flex-col">
             <label className="text-white mb-2 font-medium">Address LGA</label>
             <input
               name="addressLga"
               value={form.addressLga}
               onChange={handleChange}
-              className="p-3 rounded-xl"
+              className="p-3 rounded-xl w-full"
               placeholder="e.g. Nsukka"
               required
             />
           </div>
 
           {/* address state */}
-          <div className="flex flex-col">
+          <div className="col-span-2 md:col-span-1 flex flex-col">
             <label className="text-white mb-2 font-medium">Address State</label>
             <input
               name="addressState"
               value={form.addressState}
               onChange={handleChange}
-              className="p-3 rounded-xl"
+              className="p-3 rounded-xl w-full"
               placeholder="e.g. Enugu"
               required
             />
@@ -526,12 +526,12 @@ export default function RegisterCustomerDetails() {
               value={form.permanentAddress}
               onChange={handleChange}
               rows="2"
-              className="p-3 rounded-xl"
+              className="p-3 rounded-xl w-full"
               required
             />
           </div>
 
-          <div className="flex flex-col">
+          <div className="col-span-2 md:col-span-1 flex flex-col">
             <label className="text-white mb-2 font-medium">
               WhatsApp Mobile
             </label>
@@ -539,7 +539,7 @@ export default function RegisterCustomerDetails() {
               name="mobile"
               value={form.mobile}
               onChange={handleChange}
-              className="p-3 rounded-xl"
+              className="p-3 rounded-xl w-full"
               placeholder="e.g. 08012345678"
               required
             />
@@ -552,7 +552,7 @@ export default function RegisterCustomerDetails() {
               type="file"
               accept="image/*"
               onChange={handleChange}
-              className="p-2 rounded-xl"
+              className="p-2 rounded-xl w-full"
               required
             />
           </div>
@@ -568,7 +568,7 @@ export default function RegisterCustomerDetails() {
               information later in your profile.
             </p>
           </div>
-          <div className="flex flex-col">
+          <div className="col-span-2 md:col-span-1 flex flex-col">
             <label className="text-white mb-2 font-medium">
               Next of Kin Name
             </label>
@@ -576,12 +576,12 @@ export default function RegisterCustomerDetails() {
               name="nextOfKinName"
               value={form.nextOfKinName}
               onChange={handleChange}
-              className="p-3 rounded-xl"
+              className="p-3 rounded-xl w-full"
               required
             />
           </div>
 
-          <div className="flex flex-col">
+          <div className="col-span-2 md:col-span-1 flex flex-col">
             <label className="text-white mb-2 font-medium">
               Next of Kin Phone
             </label>
@@ -589,12 +589,12 @@ export default function RegisterCustomerDetails() {
               name="nextOfKinPhone"
               value={form.nextOfKinPhone}
               onChange={handleChange}
-              className="p-3 rounded-xl"
+              className="p-3 rounded-xl w-full"
               required
             />
           </div>
 
-          <div className="flex flex-col">
+          <div className="col-span-2 md:col-span-1 flex flex-col">
             <label className="text-white mb-2 font-medium">
               Relationship to Next of Kin
             </label>
@@ -602,12 +602,12 @@ export default function RegisterCustomerDetails() {
               name="nextOfKinRelation"
               value={form.nextOfKinRelation}
               onChange={handleChange}
-              className="p-3 rounded-xl"
+              className="p-3 rounded-xl w-full"
               required
             />
           </div>
 
-          <div className="flex flex-col">
+          <div className="col-span-2 md:col-span-1 flex flex-col">
             <label className="text-white mb-2 font-medium">
               Next of Kin Address
             </label>
@@ -615,7 +615,7 @@ export default function RegisterCustomerDetails() {
               name="nextOfKinAddress"
               value={form.nextOfKinAddress}
               onChange={handleChange}
-              className="p-3 rounded-xl"
+              className="p-3 rounded-xl w-full"
               required
             />
           </div>
