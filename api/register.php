@@ -5,6 +5,11 @@ header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json");
 require_once "config.php";
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+
+
 class RegisterCustomer {
     private $conn;
     public function __construct($db) {
@@ -38,7 +43,7 @@ class RegisterCustomer {
             return ["success" => false, "message" => "Customer already exists"];
         }
 
-        $query = "INSERT INTO customers (
+   $query = "INSERT INTO customers (
     userUid, userLoginMail, firstName, middleName, lastName, nin, nin_address, dob,
     phone, mobile, birth_country, birth_lga, birth_state, gender,
     verified_image, verified_signature, nin_email, address, addressLga, addressState,
@@ -51,7 +56,6 @@ class RegisterCustomer {
     :permanentAddress, :lga, :state, :place, :religion, :country,
     :nextOfKinName, :nextOfKinPhone, :nextOfKinAddress, :nextOfKinRelation, :image, NOW()
 )";
-
         $stmt = $this->conn->prepare($query);
 
         // Prepare userImage directory
@@ -130,12 +134,12 @@ class RegisterCustomer {
         }
 
         // Bind parameters safely
-        $fields = [
+       $fields = [
             "userUid", "userLoginMail", "firstName", "middleName", "lastName", "nin",
             "nin_address", "dob", "phone", "mobile", "birth_country", "birth_lga",
             "birth_state", "gender", "verified_image", "verified_signature", "nin_email",
             "address", "addressLga", "addressState", "permanentAddress", "lga",
-            "state", "country", "nextOfKinName", "nextOfKinPhone", "nextOfKinAddress", "nextOfKinRelation"
+            "state", "place", "religion", "country", "nextOfKinName", "nextOfKinPhone", "nextOfKinAddress", "nextOfKinRelation"
         ];
 
         foreach ($fields as $field) {
@@ -200,5 +204,67 @@ $database = new Database();
 $db = $database->connect();
 $customer = new RegisterCustomer($db);
 $response = $customer->register($_POST, $_FILES);
+
+require 'PHPMailer/src/PHPMailer.php';
+require 'PHPMailer/src/SMTP.php';
+require 'PHPMailer/src/Exception.php';
+
+// Attempt to send welcome email on successful registration
+if (!empty($response['success']) && !empty($response['data']) && !empty($response['data']['userLoginMail'])) {
+    $to = $response['data']['userLoginMail'];
+    $subject = 'Welcome to MoreLinks Lodge Thanks for registering';
+    // load template
+    $templateFile = __DIR__ . '/email_templates/welcome_email.php';
+    $html = '';
+    if (file_exists($templateFile)) {
+        require_once $templateFile;
+        if (function_exists('generate_welcome_email_html')) {
+            $html = generate_welcome_email_html($response['data']);
+        }
+    }
+
+    // default from
+    $fromEmail = 'admin@morelinks.com.ng';
+    $fromName =  'Morelinks Lodge Team';
+
+    $emailSent = false;
+    $emailError = null;
+
+    // Try PHPMailer via Composer if available
+        try {
+            $mail = new PHPMailer(true);
+
+            $mail->isSMTP();
+            $mail->Host = 'mail.morelinks.com.ng';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'admin@morelinks.com.ng';
+            $mail->Password = '9652Aa@!@!@!@';
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port = 465;
+            
+
+            $mail->setFrom($fromEmail, $fromName);
+            $mail->addAddress($to);
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body = $html ?: "Welcome to Lodge";
+            $mail->AltBody = strip_tags($html ?: "Welcome to Lodge");
+
+            $mail->send();
+            $emailSent = true;
+        } catch (Exception $e) {
+            $emailError = 'Mailer Error: ' . $e->getMessage();
+            error_log("PHPMailer error sending welcome email: " . $e->getMessage() . "\n", 3, __DIR__ . '/email_debug.log');
+        }
+   
+
+    if ($emailSent) {
+        $response['email_sent'] = true;
+    } else {
+        $response['email_sent'] = false;
+        if ($emailError) $response['email_error'] = $emailError;
+    }
+}
+
 echo json_encode($response);
 ?>

@@ -64,16 +64,21 @@ try {
     }
 
     // ✅ Dojah API setup
-    $appId = "68ee3f3ffd71c34bdb0c6524"; // your App ID
-    $secretKey = "test_sk_1BDJiWdVVPjUcpdK0YA5cHUZn";
+    $appId = "not available"; // your App ID
+    // $secretKey = "test_sk_1BDJiWdVVPjUcpdK0YA5cHUZn"; // for testing
+    $secretKey = "not available"; //for production
 
     // Detect vNIN
     $isVnin = strlen($nin) > 11 || preg_match('/[A-Za-z]/', $nin);
 
     // Correct sandbox endpoint
-    $dojahUrl = $isVnin
-        ? "https://sandbox.dojah.io/api/v1/kyc/vnin?vnin=$nin"
-        : "https://sandbox.dojah.io/api/v1/kyc/nin/advance?nin=$nin";
+    // $dojahUrl = $isVnin
+    //     ? "https://sandbox.dojah.io/api/v1/kyc/vnin?vnin=$nin"
+    //     : "https://sandbox.dojah.io/api/v1/kyc/nin/advance?nin=$nin";
+
+    = $isVnin
+        ? "https://api.dojah.io/api/v1/kyc/vnin?vnin=$nin"
+        : "https://api.dojah.io/api/v1/kyc/nin/advance?nin=$nin";
 
     // Initialize CURL for GET request
     $ch = curl_init();
