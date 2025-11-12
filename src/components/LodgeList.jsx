@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useModalContext } from "./ui/ModalProvider";
 
 export default function LodgeList({
   userUid,
@@ -13,6 +14,8 @@ export default function LodgeList({
   const [loading, setLoading] = useState(true);
   const inFlight = useRef(false);
   const navigate = useNavigate();
+  const modal = useModalContext();
+  // const modal = useModalContext();
 
   useEffect(() => {
     const fetchLodges = async () => {
@@ -114,7 +117,7 @@ export default function LodgeList({
               <div className="mt-3 flex flex-col justify-end gap-2">
                 <button
                   onClick={() =>
-                    navigate(`/lodges/${encodeURIComponent(lodge.id)}`, {
+                    navigate(`/lodge/${encodeURIComponent(lodge.id)}`, {
                       state: { lodge },
                     })
                   }
@@ -133,12 +136,16 @@ export default function LodgeList({
                 {onDelete && (
                   <button
                     onClick={() => {
-                      if (
-                        confirm(
-                          "Delete this lodge? This action cannot be undone."
-                        )
-                      )
-                        onDelete(lodge.id);
+                      (async () => {
+                        const ok = await modal.confirm({
+                          title: "Delete",
+                          message:
+                            "Delete this lodge? This action cannot be undone.",
+                          okText: "Delete",
+                          cancelText: "Cancel",
+                        });
+                        if (ok) onDelete(lodge.id);
+                      })();
                     }}
                     className="px-3 py-1 bg-red-600 text-white rounded text-sm"
                   >

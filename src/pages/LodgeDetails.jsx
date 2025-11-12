@@ -5,6 +5,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useModalContext } from "../components/ui/ModalProvider";
 import { FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import ownerImg from "../assets/icons/user.png";
@@ -18,6 +19,7 @@ export default function LodgeDetails() {
   const location = useLocation();
   const navigate = useNavigate();
   const params = useParams();
+  const modal = useModalContext();
   const stateLodge = location.state?.lodge;
   const [fetchedLodge, setFetchedLodge] = useState(null);
   const lodge = stateLodge || fetchedLodge;
@@ -847,16 +849,19 @@ export default function LodgeDetails() {
               </div>
               {!lodge?.reference && (
                 <motion.button
-                  onClick={() => {
+                  onClick={async () => {
                     if (
                       differenceInCalendarDays(
                         selectionRange.endDate,
                         selectionRange.startDate
                       ) <= 0
                     ) {
-                      return alert(
-                        "Please select an end date after the start date"
-                      );
+                      await modal.alert({
+                        title: "Invalid dates",
+                        message:
+                          "Please select an end date after the start date",
+                      });
+                      return;
                     }
                     handleBookNow();
                   }}

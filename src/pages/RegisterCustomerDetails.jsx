@@ -1,10 +1,13 @@
 import { use, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useModalContext } from "../components/ui/ModalProvider";
 
 export default function RegisterCustomerDetails() {
   const navigate = useNavigate();
   const location = useLocation();
+  const modal = useModalContext();
+
   const verified =
     location.state?.verified || location.state?.verified?.data || {};
   const moredata = location?.state || {};
@@ -415,13 +418,19 @@ export default function RegisterCustomerDetails() {
 
       if (!data) {
         console.error("Registration failed, no valid response:", lastError);
-        alert("Registration request failed. Please try again later.");
+        await modal.alert({
+          title: "Registration failed",
+          message: "Registration request failed. Please try again later.",
+        });
         setSubmitting(false);
         return;
       }
 
       if (!data.success) {
-        alert(data.message || "Registration failed");
+        await modal.alert({
+          title: "Registration failed",
+          message: data.message || "Registration failed",
+        });
         setSubmitting(false);
         return;
       }
@@ -433,7 +442,10 @@ export default function RegisterCustomerDetails() {
       // ✅ Store in localStorage
       localStorage.setItem("customerProfile", JSON.stringify(profile));
 
-      alert(data.message || "Registration successful!");
+      await modal.alert({
+        title: "Registration",
+        message: data.message || "Registration successful!",
+      });
       // Redirect back to the page the user came from (if provided). This handles
       // the flow where the user was directed to login/register from a protected page
       // (for example a lodge details page) so they return there to continue booking.
@@ -447,7 +459,10 @@ export default function RegisterCustomerDetails() {
       }
     } catch (err) {
       console.error("Error during registration:", err);
-      alert("Registration request failed.");
+      await modal.alert({
+        title: "Error",
+        message: "Registration request failed.",
+      });
     } finally {
       setSubmitting(false);
     }

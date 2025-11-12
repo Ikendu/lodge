@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useModalContext } from "../../components/ui/ModalProvider";
 import { useNavigate } from "react-router-dom";
 
 function apiFetch(path, opts = {}) {
@@ -13,6 +14,7 @@ export default function Lodges() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const modal = useModalContext();
 
   useEffect(() => {
     let mounted = true;
@@ -30,7 +32,14 @@ export default function Lodges() {
   }, []);
 
   const handleDelete = async (id) => {
-    if (!confirm(`Delete lodge #${id}? This is irreversible.`)) return;
+    const modal = useModalContext();
+    const ok = await modal.confirm({
+      title: "Delete lodge",
+      message: `Delete lodge #${id}? This is irreversible.`,
+      okText: "Delete",
+      cancelText: "Cancel",
+    });
+    if (!ok) return;
     try {
       const res = await apiFetch(
         "https://lodge.morelinks.com.ng/api/admin/lodges_action.php",
@@ -43,7 +52,10 @@ export default function Lodges() {
       const text = await res.text();
       const json = text ? JSON.parse(text) : {};
       if (!json.success) throw new Error(json.message || "Delete failed");
-      alert(json.message || "Deleted");
+      await modal.alert({
+        title: "Deleted",
+        message: json.message || "Deleted",
+      });
       // refresh
       setLoading(true);
       const r = await apiFetch(
@@ -53,7 +65,7 @@ export default function Lodges() {
       const j = jt ? JSON.parse(jt) : {};
       setLodges(j.data || []);
     } catch (err) {
-      alert(err.message || "Error");
+      await modal.alert({ title: "Error", message: err.message || "Error" });
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useModalContext } from "../components/ui/ModalProvider";
 
 const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_KEY;
 const TEST_PAYSTACK_KEY = import.meta.env.VITE_TEST_PAYSTACK_KEY;
@@ -25,6 +26,7 @@ export default function Payment() {
   const [method, setMethod] = useState("flutterwave");
   const [processing, setProcessing] = useState(false);
   const [verifyPaystack, setVerifyPaystack] = useState(null);
+  const modal = useModalContext();
 
   const amount = total;
   // const amount = 100;
@@ -84,7 +86,10 @@ export default function Payment() {
                 },
               });
             } else {
-              alert("Payment verification failed. Try again.");
+              await modal.alert({
+                title: "Payment failed",
+                message: "Payment verification failed. Try again.",
+              });
             }
           } catch (error) {
             console.error("Error verifying payment:", error);

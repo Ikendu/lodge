@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import ScrollToTop from "./components/ScrollToTop";
 import { Toaster } from "react-hot-toast";
+import ModalProvider from "./components/ui/ModalProvider";
 import Home from "./pages/Home";
 import About from "./pages/AboutUs.jsx";
 import RegisterCustomer from "./pages/RegisterCustomer";
@@ -43,60 +44,62 @@ import Test from "./pages/Test.jsx";
 export default function App() {
   return (
     <BrowserRouter>
-      <ScrollToTop />
-      <Toaster position="top-right" />
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<ContactUs />} />
-          <Route path="/registeruser" element={<RegisterCustomer />} />
+      <ModalProvider>
+        <ScrollToTop />
+        <Toaster position="top-right" />
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<ContactUs />} />
+            <Route path="/registeruser" element={<RegisterCustomer />} />
+            <Route
+              path="/registeruser/details"
+              element={<RegisterCustomerDetails />}
+            />
+
+            <Route path="/register-success" element={<RegisterSuccess />} />
+            <Route path="/lodge/:id" element={<LodgeDetails />} />
+            <Route path="/lodge/" element={<LodgeDetails />} />
+
+            <Route path="/apartments" element={<Apartments />} />
+            <Route path="/list_new_lodge" element={<AddNewLodge />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/payment" element={<Payment />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/profile" element={<UserProfilePage />} />
+            <Route path="/faqs" element={<FAQPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsAndConditions />} />
+            <Route path="/help" element={<HelpCenter />} />
+            <Route path="/safety" element={<SafetyTips />} />
+            <Route path="/testdoja" element={<DojahNINTest />} />
+            <Route path="/test" element={<Test />} />
+          </Route>
+
+          {/* admin routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route
-            path="/registeruser/details"
-            element={<RegisterCustomerDetails />}
-          />
-
-          <Route path="/register-success" element={<RegisterSuccess />} />
-          <Route path="/lodge/:id" element={<LodgeDetails />} />
-          <Route path="/lodge/" element={<LodgeDetails />} />
-
-          <Route path="/apartments" element={<Apartments />} />
-          <Route path="/list_new_lodge" element={<AddNewLodge />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/payment" element={<Payment />} />
-          <Route path="/payment-success" element={<PaymentSuccess />} />
-          <Route path="/profile" element={<UserProfilePage />} />
-          <Route path="/faqs" element={<FAQPage />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsAndConditions />} />
-          <Route path="/help" element={<HelpCenter />} />
-          <Route path="/safety" element={<SafetyTips />} />
-          <Route path="/testdoja" element={<DojahNINTest />} />
-          <Route path="/test" element={<Test />} />
-        </Route>
-
-        {/* admin routes */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route
-          path="/admin"
-          element={
-            <AdminProtectedRoute>
-              <AdminLayout />
-            </AdminProtectedRoute>
-          }
-        >
-          <Route index element={<Dashboard />} />
-          <Route path="users" element={<Users />} />
-          <Route path="lodges" element={<Lodges />} />
-          <Route path="payments" element={<Payments />} />
-          <Route path="refunds" element={<RefundRequests />} />
-          <Route path="account-deletions" element={<AccountDeletions />} />
-          <Route path="complaints" element={<Complaints />} />
-          <Route path="contacts" element={<Contacts />} />
-          {/* Generic detail view for admin resources (uses location.state when available) */}
-          <Route path=":resource/:id" element={<ItemDetail />} />
-        </Route>
-      </Routes>
+            path="/admin"
+            element={
+              <AdminProtectedRoute>
+                <AdminLayout />
+              </AdminProtectedRoute>
+            }
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="users" element={<Users />} />
+            <Route path="lodges" element={<Lodges />} />
+            <Route path="payments" element={<Payments />} />
+            <Route path="refunds" element={<RefundRequests />} />
+            <Route path="account-deletions" element={<AccountDeletions />} />
+            <Route path="complaints" element={<Complaints />} />
+            <Route path="contacts" element={<Contacts />} />
+            {/* Generic detail view for admin resources (uses location.state when available) */}
+            <Route path=":resource/:id" element={<ItemDetail />} />
+          </Route>
+        </Routes>
+      </ModalProvider>
     </BrowserRouter>
   );
 }

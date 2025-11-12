@@ -5,11 +5,13 @@ import { auth } from "../firebaseConfig";
 import { motion } from "framer-motion";
 import LodgeList from "../components/LodgeList";
 import RequestAccountDeleteModal from "../components/RequestAccountDeleteModal";
+import { useModalContext } from "../components/ui/ModalProvider";
 
 export default function UserProfilePage() {
   const [user, loading] = useAuthState(auth);
   const navigate = useNavigate();
   const location = useLocation();
+  const modal = useModalContext();
 
   const [profileData, setProfileData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -173,14 +175,21 @@ export default function UserProfilePage() {
   }, [savedData, display]);
 
   const requestRefund = async (payment) => {
-    const ok = window.confirm(
-      "Are you sure you want to request a refund for this booking?"
-    );
+    const ok = await modal.confirm({
+      title: "Request refund",
+      message: "Are you sure you want to request a refund for this booking?",
+      okText: "Yes",
+      cancelText: "No",
+    });
     if (!ok) return;
-    const reason = window.prompt(
-      "Optional: enter a short reason for the refund request",
-      ""
-    );
+    const reason = await modal.prompt({
+      title: "Refund reason (optional)",
+      message: "Optional: enter a short reason for the refund request",
+      placeholder: "Reason (optional)",
+      okText: "Submit",
+      cancelText: "Skip",
+      defaultValue: "",
+    });
     const endpoints = [
       "https://lodge.morelinks.com.ng/api/request_refund.php",
       "http://localhost/lodge/api/request_refund.php",
@@ -212,15 +221,25 @@ export default function UserProfilePage() {
         try {
           json = JSON.parse(text);
         } catch (e) {
-          alert("Invalid response from server");
+          await modal.alert({
+            title: "Error",
+            message: "Invalid response from server",
+          });
           return;
         }
         if (!res.ok) {
-          alert(json.message || "Request failed");
+          await modal.alert({
+            title: "Request failed",
+            message: json.message || "Request failed",
+          });
           continue;
         }
         if (json.success) {
-          alert("Refund request submitted. Support will contact you shortly.");
+          await modal.alert({
+            title: "Refund request",
+            message:
+              "Refund request submitted. Support will contact you shortly.",
+          });
           // update local status
           setPaidBookings((prev) =>
             prev.map((p) =>
@@ -229,21 +248,32 @@ export default function UserProfilePage() {
           );
           return;
         } else {
-          alert(json.message || "Request failed");
+          await modal.alert({
+            title: "Request failed",
+            message: json.message || "Request failed",
+          });
           continue;
         }
       } catch (e) {
         continue;
       }
     }
-    alert("Failed to submit refund request. Please try again later.");
+    await modal.alert({
+      title: "Error",
+      message: "Failed to submit refund request. Please try again later.",
+    });
   };
 
   const handleDeleteLodge = async (lodgeId) => {
     if (!lodgeId) return;
-    const ok = window.confirm(
-      "Are you sure you want to delete this lodge? This cannot be undone."
-    );
+    const modal = useModalContext();
+    const ok = await modal.confirm({
+      title: "Delete lodge",
+      message:
+        "Are you sure you want to delete this lodge? This cannot be undone.",
+      okText: "Delete",
+      cancelText: "Cancel",
+    });
     if (!ok) return;
 
     const payload = {
@@ -269,26 +299,38 @@ export default function UserProfilePage() {
         try {
           json = JSON.parse(text);
         } catch (e) {
-          alert("Invalid response from server");
+          await modal.alert({
+            title: "Error",
+            message: "Invalid response from server",
+          });
           return;
         }
         if (!res.ok) {
-          alert(json.message || "Failed to delete lodge");
+          await modal.alert({
+            title: "Delete failed",
+            message: json.message || "Failed to delete lodge",
+          });
           continue;
         }
         if (json.success) {
-          alert("Lodge deleted");
+          await modal.alert({ title: "Deleted", message: "Lodge deleted" });
           setLodgesRefreshKey((k) => k + 1);
           return;
         } else {
-          alert(json.message || "Failed to delete lodge");
+          await modal.alert({
+            title: "Delete failed",
+            message: json.message || "Failed to delete lodge",
+          });
           continue;
         }
       } catch (e) {
         continue;
       }
     }
-    alert("Failed to delete lodge. Please try again later.");
+    await modal.alert({
+      title: "Error",
+      message: "Failed to delete lodge. Please try again later.",
+    });
   };
 
   const handleAccountDeleteSubmit = async (payload) => {
@@ -315,9 +357,11 @@ export default function UserProfilePage() {
           throw new Error(json.message || "Request failed");
         }
         if (json.success) {
-          alert(
-            "Account deletion request submitted. Support will contact you."
-          );
+          await modal.alert({
+            title: "Account deletion",
+            message:
+              "Account deletion request submitted. Support will contact you.",
+          });
           return;
         } else {
           throw new Error(json.message || "Request failed");
@@ -375,11 +419,19 @@ export default function UserProfilePage() {
                     <div className="text-xs text-gray-400">
                       Ref: {b.reference || b.payment_reference || b.order_id}
                     </div>
-                    {b.refund_requested == 1 && (
+                    {b.refund_requested === 1 ? (
                       <div className="text-xs text-yellow-200">
                         Refund requested
                       </div>
-                    )}
+                    ) : b.refund_requested === 2 ? (
+                      <div className="text-xs text-yellow-200">
+                        Refund accepted
+                      </div>
+                    ) : b.refund_requested === 3 ? (
+                      <div className="text-xs text-yellow-200">
+                        Refund denied
+                      </div>
+                    ) : null}
                   </div>
                   <div className="flex flex-col md:flex-row gap-2">
                     <button

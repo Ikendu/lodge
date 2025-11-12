@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useModalContext } from "../components/ui/ModalProvider";
 
 export default function Test() {
   const [nin, setNin] = useState("70123456789");
@@ -7,12 +8,17 @@ export default function Test() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [verified, setVerified] = useState(false);
+  const modal = useModalContext();
 
   const API_URL = "https://api.korapay.com/merchant/api/v1/identities/ng/nin";
   const API_KEY = "sk_test_diVJ33chcUTmUNTeLnwaa4s8fSvDT9SqK5sJW5N5";
 
   const verifyNIN = async () => {
-    if (!nin) return alert("Please enter a NIN");
+    if (!nin)
+      return await modal.alert({
+        title: "Missing NIN",
+        message: "Please enter a NIN",
+      });
 
     setLoading(true);
     setError(null);

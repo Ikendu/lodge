@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useModalContext } from "../../components/ui/ModalProvider";
 
 function apiFetch(path, opts = {}) {
   const token = localStorage.getItem("adminToken");
@@ -12,6 +13,7 @@ export default function RefundRequests() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const modal = useModalContext();
 
   useEffect(() => {
     let mounted = true;
@@ -29,7 +31,13 @@ export default function RefundRequests() {
   }, []);
 
   const handleAction = async (id, action) => {
-    if (!confirm(`Are you sure you want to ${action} request #${id}?`)) return;
+    const ok = await modal.confirm({
+      title: `${action} refund request`,
+      message: `Are you sure you want to ${action} request #${id}?`,
+      okText: action === "approve" ? "Approve" : "Proceed",
+      cancelText: "Cancel",
+    });
+    if (!ok) return;
     try {
       const res = await apiFetch(
         "https://lodge.morelinks.com.ng/api/admin/refunds_action.php",

@@ -20,6 +20,7 @@ import {
   signOut,
 } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { useModalContext } from "../components/ui/ModalProvider";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -32,6 +33,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, authLoading] = useAuthState(auth);
+  const modal = useModalContext();
 
   // (removed debug/test-only logging)
 
@@ -233,14 +235,19 @@ export default function LoginPage() {
           email,
           password
         );
-        alert("✅ Account created successfully.");
+        const modal = useModalContext();
+        await modal.alert({
+          title: "Account created",
+          message: "✅ Account created successfully.",
+        });
       } else {
         userCredential = await signInWithEmailAndPassword(
           auth,
           email,
           password
         );
-        alert("✅ Login successful!");
+        const modal = useModalContext();
+        await modal.alert({ title: "Login", message: "✅ Login successful!" });
       }
 
       const uid = userCredential.user.uid;
