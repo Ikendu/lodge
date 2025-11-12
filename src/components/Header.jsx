@@ -264,7 +264,7 @@ export default function Header() {
                       localStorage.removeItem("customerProfile");
                       localStorage.removeItem("userLogin");
                       await modal.alert({
-                        title: "Thank you",
+                        title: "Stay in touch",
                         message:
                           "Thank you for being part of Morelinks community. We look forward to having you again.",
                         okText: "Close",
@@ -358,7 +358,7 @@ export default function Header() {
                       localStorage.removeItem("customerProfile");
                       localStorage.removeItem("userLogin");
                       await modal.alert({
-                        title: "Thank you",
+                        title: "Stay in touch",
                         message:
                           "Thank you for being part of Morelinks community. We look forward to having you again.",
                         okText: "Close",

@@ -76,8 +76,8 @@ export default function ContactUs() {
               className="text-gray-600 mb-8"
             >
               Feel free to reach out to us anytime — our support team is
-              available 24/7 to assist with your questions, booking issues, or
-              listing inquiries.
+              available 24/7 to assist with your questions, booking issues,
+              complaints or listing inquiries.
             </motion.p>
 
             <motion.div

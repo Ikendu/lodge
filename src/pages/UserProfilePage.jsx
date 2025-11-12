@@ -266,7 +266,6 @@ export default function UserProfilePage() {
 
   const handleDeleteLodge = async (lodgeId) => {
     if (!lodgeId) return;
-    const modal = useModalContext();
     const ok = await modal.confirm({
       title: "Delete lodge",
       message:

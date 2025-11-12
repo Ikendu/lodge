@@ -103,7 +103,7 @@ export default function Home() {
       navigate("/login", { state: { from: { pathname: "/registeruser" } } });
       return;
     }
-    navigate("/registeruser");
+    navigate("/list_new_lodge");
   };
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 text-white p-6">

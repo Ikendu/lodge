@@ -189,10 +189,10 @@ export default function PaymentSuccess() {
             </p>
           </div>
 
-          <div className="text-right no-print">
+          <div className="text-right no-print text-xs">
             <button
               onClick={handlePrint}
-              className="px-4 py-2 bg-green-600 text-white rounded mr-2"
+              className="px-2 py-1 bg-green-600 text-white rounded md:mr-2"
             >
               Print
             </button>
@@ -200,13 +200,13 @@ export default function PaymentSuccess() {
               onClick={() =>
                 navigate(`/lodge/${lodge.id}`, { state: { lodge } })
               }
-              className="px-4 py-2 border  bg-blue-600 text-white rounded mr-2"
+              className="px-2 py-1 border  bg-blue-600 text-white rounded md:mr-2"
             >
               Lodge Details
             </button>
             <button
               onClick={() => navigate("/profile")}
-              className="px-4 py-2 border rounded"
+              className="px-2 py-1 border rounded"
             >
               Done
             </button>

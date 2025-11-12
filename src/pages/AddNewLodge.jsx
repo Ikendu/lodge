@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { PlusCircle, Upload } from "lucide-react";
+import { useModalContext } from "../components/ui/ModalProvider";
 
 export default function AddNewLodge() {
   const navigate = useNavigate();
+  const modal = useModalContext();
 
   const [images, setImages] = useState([]);
   const [form, setForm] = useState({
@@ -36,10 +38,13 @@ export default function AddNewLodge() {
   }, [navigate]);
 
   // ✅ Handle image uploads and preview
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
     if (images.length + files.length > 3) {
-      alert("You can only upload up to 3 images.");
+      await modal.alert({
+        title: "Images limit",
+        message: "You can only upload up to 3 images.",
+      });
       return;
     }
 
@@ -69,7 +74,10 @@ export default function AddNewLodge() {
     e.preventDefault();
     if (submitting) return; // prevent double-submit
     if (images.length === 0) {
-      alert("Please upload at least one image.");
+      await modal.alert({
+        title: "Images required",
+        message: "Please upload at least one image.",
+      });
       return;
     }
 
@@ -144,16 +152,25 @@ export default function AddNewLodge() {
 
       if (!json || !json.success) {
         const message = (json && json.message) || "Unknown server error";
-        alert("Failed to create lodge: " + message);
+        await modal.alert({
+          title: "Create failed",
+          message: "Failed to create lodge: " + message,
+        });
         console.error("add_lodge failed", json);
       } else {
-        alert("Lodge created successfully.");
+        await modal.alert({
+          title: "Created",
+          message: "Lodge created successfully.",
+        });
         // Navigate to homepage or lodge page; adjust as needed
         navigate("/profile");
       }
     } catch (err) {
       console.error("Error submitting lodge:", err);
-      alert("Network or server error: " + (err.message || err));
+      await modal.alert({
+        title: "Network error",
+        message: "Network or server error: " + (err.message || err),
+      });
     } finally {
       setSubmitting(false);
     }
@@ -340,7 +357,7 @@ export default function AddNewLodge() {
               <option value="Shared Apartment">Shared Apartment</option>
               <option value="Entire Lodge">Entire Lodge</option>
               <option value="Guest House">Guest House</option>
-              <option value="Guest House">Hotel Room</option>
+              <option value="Hotel Room">Hotel Room</option>
             </select>
           </div>
 
@@ -354,7 +371,7 @@ export default function AddNewLodge() {
               value={form.amenities}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="WiFi, Air Conditioning, Parking..."
+              placeholder="WiFi, Air Conditioning, TV, Parking..."
             />
           </div>
 

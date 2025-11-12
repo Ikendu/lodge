@@ -1025,24 +1025,30 @@ export default function LodgeDetails() {
               Contact our admin for assistance with bookings or questions.
             </p>
             <div className="flex items-center justify-center gap-3">
-              <a
-                href="tel:+2349023977057"
-                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-blue-700"
-                aria-label="Call admin"
-              >
-                Call Admin: +234 902 397 7057
-              </a>
+              <div>
+                <p>Call Admin:</p>{" "}
+                <a
+                  href="tel:+2349023977057"
+                  className="inline-flex items-center bg-blue-600 text-white px-3 py-1 rounded-full font-semibold hover:bg-blue-700"
+                  aria-label="Call admin"
+                >
+                  +234 902 397 7057
+                </a>
+              </div>
+              <div>
+                <p>Chat on:</p>
 
-              <a
-                href="https://wa.me/2349023977057"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-full font-semibold hover:bg-green-600"
-                aria-label="Chat on WhatsApp"
-              >
-                <FaWhatsapp />
-                Chat on WhatsApp
-              </a>
+                <a
+                  href="https://wa.me/2349023977057"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-green-500 align-middle text-white px-4 py-2 rounded-full font-semibold hover:bg-green-600"
+                  aria-label="Chat on WhatsApp"
+                >
+                  WhatsApp
+                  <FaWhatsapp />
+                </a>
+              </div>
             </div>
           </div>
         </div>
