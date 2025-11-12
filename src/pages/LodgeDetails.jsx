@@ -681,7 +681,7 @@ export default function LodgeDetails() {
                     <label className="text-blue-400">Start:</label>
                     <input
                       type="text"
-                      inputMode="numeric"
+                      // inputMode="numeric"
                       placeholder="YYYY-MM-DD"
                       value={startInput}
                       onChange={(e) => {
@@ -748,7 +748,7 @@ export default function LodgeDetails() {
                     <label className="text-blue-400">End:</label>
                     <input
                       type="text"
-                      inputMode="numeric"
+                      // inputMode="numeric"
                       placeholder="YYYY-MM-DD"
                       value={endInput}
                       onChange={(e) => {
