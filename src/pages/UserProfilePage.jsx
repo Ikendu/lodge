@@ -425,11 +425,11 @@ export default function UserProfilePage() {
                       </div>
                     ) : b.refund_requested === 2 ? (
                       <div className="text-xs text-yellow-200">
-                        Refund accepted
+                        Refund approved
                       </div>
                     ) : b.refund_requested === 3 ? (
                       <div className="text-xs text-yellow-200">
-                        Refund denied
+                        Refund under consideration
                       </div>
                     ) : null}
                   </div>
@@ -691,7 +691,7 @@ export default function UserProfilePage() {
                         className="w-full p-2 rounded text-black text-sm"
                       />
                     ) : (
-                      value
+                      <span className=" break-words">{value}</span>
                     )}
                   </div>
                 </motion.div>

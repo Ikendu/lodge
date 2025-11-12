@@ -14,7 +14,7 @@ function ModalShell({ open, onClose, title, children, footer }) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg w-full max-w-lg shadow-lg overflow-hidden"
+        className="bg-white rounded-lg w-[95%] max-w-lg shadow-lg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

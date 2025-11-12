@@ -5,6 +5,7 @@ import { Menu, X, User, Search } from "lucide-react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
 import { signOut } from "firebase/auth";
+import { useModalContext } from "./ui/ModalProvider";
 import { lodges } from "../lodgedata";
 import toast from "react-hot-toast";
 
@@ -36,6 +37,7 @@ export default function Header() {
   }, [query]);
   const [user] = useAuthState(auth);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const modal = useModalContext();
   // Prefer stored login info for avatar (set at login) falling back to Firebase user.photoURL
   let storedLogin = null;
   try {
@@ -261,6 +263,12 @@ export default function Header() {
                       setAccountMenuOpen(false);
                       localStorage.removeItem("customerProfile");
                       localStorage.removeItem("userLogin");
+                      await modal.alert({
+                        title: "Thank you",
+                        message:
+                          "Thank you for being part of Morelinks community. We look forward to having you again.",
+                        okText: "Close",
+                      });
                       navigate("/");
                     }}
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100"
@@ -349,6 +357,12 @@ export default function Header() {
                       setAccountMenuOpen(false);
                       localStorage.removeItem("customerProfile");
                       localStorage.removeItem("userLogin");
+                      await modal.alert({
+                        title: "Thank you",
+                        message:
+                          "Thank you for being part of Morelinks community. We look forward to having you again.",
+                        okText: "Close",
+                      });
                       navigate("/");
                     }}
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100"

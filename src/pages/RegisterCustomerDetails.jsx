@@ -444,7 +444,8 @@ export default function RegisterCustomerDetails() {
 
       await modal.alert({
         title: "Registration",
-        message: data.message || "Registration successful!",
+        // message: data.message || "Welcome to the MoreLinks community!",
+        message: `Hello ${verified?.entity.first_name}, you are welcome to MoreLinks community!`,
       });
       // Redirect back to the page the user came from (if provided). This handles
       // the flow where the user was directed to login/register from a protected page
