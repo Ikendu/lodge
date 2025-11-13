@@ -451,8 +451,20 @@ export default function RegisterCustomerDetails() {
       // the flow where the user was directed to login/register from a protected page
       // (for example a lodge details page) so they return there to continue booking.
       try {
-        const returnTo = from || (location.state && location.state.from) || "/";
-        navigate(returnTo, { replace: true });
+        const rawReturn =
+          from || (location.state && location.state.from) || "/";
+        // Normalize: if rawReturn is a string, navigate directly; if it's a location
+        // object (from useLocation), build a path and pass its state similar to Login.jsx
+        if (typeof rawReturn === "string") {
+          navigate(rawReturn, { replace: true });
+        } else if (rawReturn && typeof rawReturn === "object") {
+          const path = `${rawReturn.pathname || "/"}${rawReturn.search || ""}${
+            rawReturn.hash || ""
+          }`;
+          navigate(path, { replace: true, state: rawReturn.state });
+        } else {
+          navigate("/", { replace: true });
+        }
         return;
       } catch (e) {
         // fallback to profile

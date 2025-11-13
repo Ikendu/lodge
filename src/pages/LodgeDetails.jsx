@@ -54,6 +54,87 @@ export default function LodgeDetails() {
   const [ownerLoading, setOwnerLoading] = useState(false);
   const [ownerError, setOwnerError] = useState(null);
 
+  useEffect(() => {
+    if (lodge) setViewerSources(lodge?.images || ["", "", ""]);
+  }, [lodge]);
+
+  useEffect(() => {
+    if (!viewerOpen) setViewerSources(images);
+  }, [viewerOpen]);
+
+  // when viewer closes, reset the kind back to lodge
+  useEffect(() => {
+    if (!viewerOpen) setViewerKind("lodge");
+  }, [viewerOpen]);
+
+  // Fetch owner profile when lodge is available
+  useEffect(() => {
+    if (!lodge) return;
+    const nin = lodge?.raw?.nin || lodge?.nin;
+    const email = lodge?.raw?.userLoginMail || lodge?.userLoginMail;
+    if (!nin && !email) return; // nothing to query
+
+    let mounted = true;
+    setOwnerLoading(true);
+    setOwnerError(null);
+    setOwnerProfile(null);
+
+    fetch("https://lodge.morelinks.com.ng/api/get_profile.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nin: nin || lodge?.lodge_nin,
+        email: email || lodge?.lodge_email,
+      }),
+    })
+      .then((r) => r.text())
+      .then((text) => {
+        if (!mounted) return;
+        let json = null;
+        try {
+          json = JSON.parse(text);
+
+          // handle parsed JSON below
+        } catch (e) {
+          console.warn("Invalid JSON from get_profile.php:", text);
+          setOwnerError("Invalid server response");
+          return;
+        }
+        if (json && json.success && json.profile) {
+          setOwnerProfile(json.profile);
+          localStorage.setItem("ownerProfile", JSON.stringify(json.profile));
+        } else {
+          setOwnerError(
+            json && json.message ? json.message : "Profile not found"
+          );
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch owner profile:", err);
+        if (!mounted) return;
+        setOwnerError(String(err));
+      })
+      .finally(() => mounted && setOwnerLoading(false));
+
+    return () => {
+      mounted = false;
+    };
+  }, [lodge]);
+
+  // Ensure lodge.images is an array of 3 URLs; fallback to empty strings if missing
+  const images = lodge?.images || ["", "", ""];
+
+  useEffect(() => {
+    if (!viewerOpen) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") closeViewer();
+      if (e.key === "ArrowRight") nextImage();
+      if (e.key === "ArrowLeft") prevImage();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [viewerOpen, images?.length]);
+
   // helper to resolve owner image fields which may be:
   // - a full URL (http/https)
   // - a data URI
@@ -142,9 +223,6 @@ export default function LodgeDetails() {
     navigate("/payment", { state: booking });
   };
 
-  // Ensure lodge.images is an array of 3 URLs; fallback to empty strings if missing
-  const images = lodge.images || ["", "", ""];
-
   // Booking date states (react-date-range)
   const [selectionRange, setSelectionRange] = useState({
     startDate: new Date(),
@@ -152,7 +230,7 @@ export default function LodgeDetails() {
     key: "selection",
   });
   const [nights, setNights] = useState(1);
-  const [total, setTotal] = useState(Number(lodge.price) || 0);
+  const [total, setTotal] = useState(Number(lodge?.price) || 0);
 
   // string inputs for manual/typed dates (format YYYY-MM-DD)
   const [startInput, setStartInput] = useState(
@@ -204,7 +282,7 @@ export default function LodgeDetails() {
     const diff = differenceInCalendarDays(e, s);
     const nightsCalc = diff > 0 ? diff : 0;
     setNights(nightsCalc);
-    setTotal(nightsCalc * (Number(lodge.price) || 0));
+    setTotal(nightsCalc * (Number(lodge?.price) || 0));
     // keep text inputs in sync when selectionRange changes
     try {
       // format as local YYYY-MM-DD to avoid timezone shifts
@@ -213,7 +291,7 @@ export default function LodgeDetails() {
     } catch (e) {
       // ignore
     }
-  }, [selectionRange, lodge.price]);
+  }, [selectionRange, lodge?.price]);
 
   // If lodge is not provided in location state, show a friendly message.
   // This check is placed after hooks/state to avoid violating the rules of hooks.
@@ -268,9 +346,6 @@ export default function LodgeDetails() {
     return <p className="text-center mt-10 text-gray-600">Lodge not found</p>;
 
   // populate viewerSources from lodge.images when lodge becomes available
-  useEffect(() => {
-    if (lodge) setViewerSources(lodge.images || ["", "", ""]);
-  }, [lodge]);
 
   const openViewer = (index, kind = "lodge") => {
     setViewerKind(kind || "lodge");
@@ -303,68 +378,6 @@ export default function LodgeDetails() {
 
   const closeViewer = () => setViewerOpen(false);
   // Reset viewerSources after closing to default to lodge images
-  useEffect(() => {
-    if (!viewerOpen) setViewerSources(images);
-  }, [viewerOpen]);
-
-  // when viewer closes, reset the kind back to lodge
-  useEffect(() => {
-    if (!viewerOpen) setViewerKind("lodge");
-  }, [viewerOpen]);
-
-  // Fetch owner profile when lodge is available
-  useEffect(() => {
-    if (!lodge) return;
-    const nin = lodge.raw?.nin || lodge?.nin;
-    const email = lodge.raw?.userLoginMail || lodge?.userLoginMail;
-    if (!nin && !email) return; // nothing to query
-
-    let mounted = true;
-    setOwnerLoading(true);
-    setOwnerError(null);
-    setOwnerProfile(null);
-
-    fetch("https://lodge.morelinks.com.ng/api/get_profile.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        nin: nin || lodge?.lodge_nin,
-        email: email || lodge?.lodge_email,
-      }),
-    })
-      .then((r) => r.text())
-      .then((text) => {
-        if (!mounted) return;
-        let json = null;
-        try {
-          json = JSON.parse(text);
-
-          // handle parsed JSON below
-        } catch (e) {
-          console.warn("Invalid JSON from get_profile.php:", text);
-          setOwnerError("Invalid server response");
-          return;
-        }
-        if (json && json.success && json.profile) {
-          setOwnerProfile(json.profile);
-          localStorage.setItem("ownerProfile", JSON.stringify(json.profile));
-        } else {
-          setOwnerError(
-            json && json.message ? json.message : "Profile not found"
-          );
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch owner profile:", err);
-        if (!mounted) return;
-        setOwnerError(String(err));
-      })
-      .finally(() => mounted && setOwnerLoading(false));
-
-    return () => {
-      mounted = false;
-    };
-  }, [lodge]);
 
   // Play a short click/beep using WebAudio for slide feedback
   const playSlideSound = () => {
@@ -397,16 +410,6 @@ export default function LodgeDetails() {
   const prevImage = () => changeImage(-1);
 
   // Keyboard navigation when viewer is open
-  useEffect(() => {
-    if (!viewerOpen) return;
-    const onKey = (e) => {
-      if (e.key === "Escape") closeViewer();
-      if (e.key === "ArrowRight") nextImage();
-      if (e.key === "ArrowLeft") prevImage();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [viewerOpen, images.length]);
 
   const dragThreshold = 120; // larger threshold for deliberate swipes
 
@@ -1024,15 +1027,15 @@ export default function LodgeDetails() {
             <p className="text-gray-600 mb-3">
               Contact our admin for assistance with bookings or questions.
             </p>
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-3  text-sm">
               <div>
                 <p>Call Admin:</p>{" "}
                 <a
                   href="tel:+2349023977057"
-                  className="inline-flex items-center bg-blue-600 text-white px-3 py-1 rounded-full font-semibold hover:bg-blue-700"
+                  className="inline-flex items-center bg-blue-600 text-white px-3 py-1 font-semibold rounded-full hover:bg-blue-700"
                   aria-label="Call admin"
                 >
-                  +234 902 397 7057
+                  0902 397 7057
                 </a>
               </div>
               <div>
@@ -1042,7 +1045,7 @@ export default function LodgeDetails() {
                   href="https://wa.me/2349023977057"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-green-500 align-middle text-white px-4 py-2 rounded-full font-semibold hover:bg-green-600"
+                  className="flex items-center gap-2 bg-green-500 align-middle text-white px-3 py-1 rounded-full font-semibold hover:bg-green-600"
                   aria-label="Chat on WhatsApp"
                 >
                   WhatsApp
@@ -1100,7 +1103,16 @@ export default function LodgeDetails() {
                       <button
                         onClick={() => {
                           setBookingModalOpen(false);
-                          navigate("/login", { state: { from: location } });
+                          navigate("/login", {
+                            state: {
+                              from: {
+                                pathname: location.pathname,
+                                search: location.search,
+                                hash: location.hash,
+                                state: location.state,
+                              },
+                            },
+                          });
                         }}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md font-semibold"
                       >
@@ -1119,7 +1131,14 @@ export default function LodgeDetails() {
                         onClick={() => {
                           setBookingModalOpen(false);
                           navigate("/registeruser", {
-                            state: { from: location },
+                            state: {
+                              from: {
+                                pathname: location.pathname,
+                                search: location.search,
+                                hash: location.hash,
+                                state: location.state,
+                              },
+                            },
                           });
                         }}
                         className="px-4 py-2 bg-indigo-600 text-white rounded-md font-semibold"

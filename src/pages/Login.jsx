@@ -171,7 +171,13 @@ export default function LoginPage() {
           return;
         }
 
-        navigate(fromTarget.path, { replace: true, state: fromTarget.state });
+        // Avoid passing overly large or complex objects as history state. If
+        // the returned state contains a `lodge` object, forward only that.
+        const returnState =
+          fromTarget.state && fromTarget.state.lodge
+            ? { lodge: fromTarget.state.lodge }
+            : fromTarget.state;
+        navigate(fromTarget.path, { replace: true, state: returnState });
       })();
     }
   }, [user]);
@@ -271,7 +277,11 @@ export default function LoginPage() {
         toast("Complete your profile to continue", { icon: "ℹ️" });
         navigate("/registeruser", { replace: true });
       } else {
-        navigate(fromTarget.path, { replace: true, state: fromTarget.state });
+        const returnState2 =
+          fromTarget.state && fromTarget.state.lodge
+            ? { lodge: fromTarget.state.lodge }
+            : fromTarget.state;
+        navigate(fromTarget.path, { replace: true, state: returnState2 });
       }
     } catch (err) {
       console.error("Authentication error:", err);

@@ -76,6 +76,10 @@ export default function PaymentSuccess() {
       image_second_url: lodge?.raw?.image_second_url || null,
       image_third_url: lodge?.raw?.image_third_url || null,
 
+      owner_email: owner?.userLoginMail || null,
+      owner_mobile: owner?.mobile || null,
+      owner_phone: owner?.phone || null,
+
       order_id: paymentReference || null,
     };
 
