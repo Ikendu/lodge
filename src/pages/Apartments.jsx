@@ -36,7 +36,7 @@ export default function Apartments() {
             description: row.description,
             location: row.location,
             price: parseFloat(row.price) || 0,
-            rating: row.rating || 0,
+            rating: row.rating || 3,
             images: [
               row.image_first_url,
               row.image_second_url,

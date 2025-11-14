@@ -196,9 +196,8 @@ export default function Header() {
               key={i}
               onClick={() => {
                 if (link.path === "/list_new_lodge" && !user) {
-                  navigate("/login", {
-                    state: { from: { pathname: "/list_new_lodge" } },
-                  });
+                  const from = { pathname: "/list_new_lodge" };
+                  navigate("/login", { state: { from } });
                 } else {
                   navigate(link.path);
                 }
@@ -211,9 +210,14 @@ export default function Header() {
           {/* Login / Account */}
           {!user ? (
             <button
-              onClick={() =>
-                navigate("/login", { state: { from: location.pathname } })
-              }
+              onClick={() => {
+                const from = {
+                  pathname: location.pathname,
+                  search: location.search,
+                  hash: location.hash,
+                };
+                navigate("/login", { state: { from } });
+              }}
               className="bg-yellow-400 text-blue-800 px-4 py-1 rounded-md font-semibold hover:bg-yellow-300 transition-colors"
             >
               Login
@@ -246,9 +250,12 @@ export default function Header() {
                         toast("Complete your profile to continue", {
                           icon: "ℹ️",
                         });
-                        navigate("/registeruser", {
-                          state: { from: location.pathname },
-                        });
+                        const from = {
+                          pathname: location.pathname,
+                          search: location.search,
+                          hash: location.hash,
+                        };
+                        navigate("/registeruser", { state: { from } });
                       } else {
                         navigate("/profile");
                       }
@@ -296,9 +303,14 @@ export default function Header() {
           </button>
           {!user ? (
             <button
-              onClick={() =>
-                navigate("/login", { state: { from: location.pathname } })
-              }
+              onClick={() => {
+                const from = {
+                  pathname: location.pathname,
+                  search: location.search,
+                  hash: location.hash,
+                };
+                navigate("/login", { state: { from } });
+              }}
               className="text-yellow-300 font-semibold hover:underline"
             >
               Login
@@ -340,9 +352,12 @@ export default function Header() {
                         toast("Complete your profile to continue", {
                           icon: "ℹ️",
                         });
-                        navigate("/registeruser", {
-                          state: { from: location.pathname },
-                        });
+                        const from = {
+                          pathname: location.pathname,
+                          search: location.search,
+                          hash: location.hash,
+                        };
+                        navigate("/registeruser", { state: { from } });
                       } else {
                         navigate("/profile");
                       }
@@ -467,9 +482,8 @@ export default function Header() {
               key={i}
               onClick={() => {
                 if (link.path === "/list_new_lodge" && !user) {
-                  navigate("/login", {
-                    state: { from: { pathname: "/list_new_lodge" } },
-                  });
+                  const from = { pathname: "/list_new_lodge" };
+                  navigate("/login", { state: { from } });
                 } else {
                   navigate(link.path);
                 }

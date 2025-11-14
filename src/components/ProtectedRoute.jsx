@@ -8,7 +8,12 @@ export default function ProtectedRoute({ children }) {
   const location = useLocation();
 
   if (!user) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    const from = {
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
+    };
+    return <Navigate to="/login" state={{ from }} replace />;
   }
 
   return children;

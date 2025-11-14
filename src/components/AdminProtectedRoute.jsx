@@ -13,9 +13,12 @@ export default function AdminProtectedRoute({ children }) {
 
   // simple guard: require token; more thorough validation happens on each API call
   if (!token) {
-    return (
-      <Navigate to="/admin/login" state={{ from: location.pathname }} replace />
-    );
+    const from = {
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
+    };
+    return <Navigate to="/admin/login" state={{ from }} replace />;
   }
   return children;
 }

@@ -3,17 +3,16 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Star } from "lucide-react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useModalContext } from "../components/ui/ModalProvider";
 import { FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import ownerImg from "../assets/icons/user.png";
 import ownerImg2 from "../assets/icons/userNin.png";
-import { DateRange } from "react-date-range";
-import { addDays, differenceInCalendarDays } from "date-fns";
-import "react-date-range/dist/styles.css";
-import "react-date-range/dist/theme/default.css";
+import { differenceInCalendarDays } from "date-fns";
+
+import calendarIcon from "../assets/icons/calendar.png";
 
 export default function LodgeDetails() {
   const location = useLocation();
@@ -24,6 +23,9 @@ export default function LodgeDetails() {
   const [fetchedLodge, setFetchedLodge] = useState(null);
   const lodge = stateLodge || fetchedLodge;
   console.log("Lodge details page - lodge:", lodge, "; params:", params);
+
+  const startRef = useRef(null);
+  const endRef = useRef(null);
 
   // compute a stable key for this lodge to track payment in localStorage
   const lodgeKey =
@@ -226,7 +228,7 @@ export default function LodgeDetails() {
   // Booking date states (react-date-range)
   const [selectionRange, setSelectionRange] = useState({
     startDate: new Date(),
-    endDate: addDays(new Date(), 1),
+    endDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
     key: "selection",
   });
   const [nights, setNights] = useState(1);
@@ -250,6 +252,7 @@ export default function LodgeDetails() {
       "0"
     )}`
   );
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
 
   // helper: safely parse yyyy-mm-dd into a local Date (no timezone shift), return null if invalid
   const parseDateInput = (s) => {
@@ -292,6 +295,18 @@ export default function LodgeDetails() {
       // ignore
     }
   }, [selectionRange, lodge?.price]);
+
+  // detect touch devices (used to render native date picker on mobile)
+  useEffect(() => {
+    try {
+      const touch =
+        typeof navigator !== "undefined" &&
+        (navigator.maxTouchPoints > 0 || "ontouchstart" in window);
+      setIsTouchDevice(Boolean(touch));
+    } catch (e) {
+      setIsTouchDevice(false);
+    }
+  }, []);
 
   // If lodge is not provided in location state, show a friendly message.
   // This check is placed after hooks/state to avoid violating the rules of hooks.
@@ -399,21 +414,6 @@ export default function LodgeDetails() {
     }
   };
 
-  const changeImage = (delta) => {
-    setDirection(delta > 0 ? 1 : -1);
-    const len = (viewerSources && viewerSources.length) || 1;
-    setCurrentIndex((p) => (p + delta + len) % len);
-    playSlideSound();
-  };
-
-  const nextImage = () => changeImage(1);
-  const prevImage = () => changeImage(-1);
-
-  // Keyboard navigation when viewer is open
-
-  const dragThreshold = 120; // larger threshold for deliberate swipes
-
-  // Compute owner thumbnail sources so they follow the viewer when owner images are active
   const ownerThumbLeft =
     viewerOpen && viewerKind === "owner"
       ? viewerSources[currentIndex]
@@ -443,18 +443,6 @@ export default function LodgeDetails() {
       transition: { staggerChildren: 0.06, when: "beforeChildren" },
     },
   };
-
-  const leftVariants = {
-    hidden: { opacity: 0, x: -20 },
-    show: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" } },
-  };
-
-  const rightVariants = {
-    hidden: { opacity: 0, x: 20 },
-    show: { opacity: 1, x: 0, transition: { duration: 0.7, ease: "easeOut" } },
-  };
-
-  console.log("Profile info", ownerProfile);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex justify-center items-center p-6">
@@ -604,7 +592,7 @@ export default function LodgeDetails() {
             variants={sectionVariants}
           >
             {/* Left: Lodge Info (60%) */}
-            <motion.div className="md:w-3/5" variants={leftVariants}>
+            <motion.div className="md:w-3/5">
               <h2 className="text-3xl font-bold text-gray-800 mb-2">
                 {lodge?.title || lodge?.lodge_title}
               </h2>
@@ -618,12 +606,12 @@ export default function LodgeDetails() {
                     lodge?.amount?.toLocaleString()}
                   /night
                 </span>
-                <div className="flex items-center text-yellow-500">
+                {/* <div className="flex items-center text-yellow-500">
                   <Star size={18} className="fill-yellow-500" />
                   <span className="ml-1 text-sm font-medium">
                     {lodge?.rating}
                   </span>
-                </div>
+                </div> */}
               </div>
               <p className="text-gray-700 mb-4">{lodge?.description}</p>
               <div>
@@ -657,158 +645,91 @@ export default function LodgeDetails() {
               <p className="text-blue-400 font-semibold">
                 Select Entry and Exit dates
               </p>
-              {/* Inline date range picker */}
+              {/* Native date inputs (mobile-friendly) */}
               {!lodge?.reference && (
                 <div className="mb-4">
-                  <DateRange
-                    ranges={[selectionRange]}
-                    onChange={(ranges) => {
-                      const sel = ranges.selection;
-                      let end = sel.endDate;
-                      // If end is before start, clamp it to start (allow same-day selection)
-                      if (differenceInCalendarDays(end, sel.startDate) < 0) {
-                        end = sel.startDate;
-                      }
-                      setSelectionRange({
-                        startDate: sel.startDate,
-                        endDate: end,
-                        key: "selection",
-                      });
-                    }}
-                    minDate={new Date()}
-                    moveRangeOnFirstSelection={false}
-                    rangeColors={["#f6e05e"]}
-                  />
-                  {/* Manual date inputs (also allow typing) */}
-                  <div className="mt-3 flex gap-3 items-center text-sm">
-                    <label className="text-blue-400">Start:</label>
-                    <input
-                      type="text"
-                      // inputMode="numeric"
-                      placeholder="YYYY-MM-DD"
-                      value={startInput}
-                      onChange={(e) => {
-                        // accept raw typing, then normalize if it forms a valid date
-                        const raw = e.target.value;
-                        setStartInput(raw);
-                        const parsed = parseDateInput(raw);
-                        if (!parsed) return;
-                        // ensure minimum date is today (compare date-only)
-                        const today = new Date();
-                        const todayDate = new Date(
-                          today.getFullYear(),
-                          today.getMonth(),
-                          today.getDate()
-                        );
-                        let p = parsed;
-                        if (p < todayDate) p = todayDate;
-                        // if end is before start, clamp end to start (allow same-day)
-                        let endDt = selectionRange.endDate;
-                        if (differenceInCalendarDays(endDt, p) < 0) {
-                          endDt = p;
-                          setEndInput(formatLocalDate(endDt));
-                        }
-                        // immediately normalize the typed input to padded YYYY-MM-DD
-                        const norm = formatLocalDate(p);
-                        setStartInput(norm);
-                        setSelectionRange({
-                          startDate: p,
-                          endDate: endDt,
-                          key: "selection",
-                        });
-                      }}
-                      onBlur={() => {
-                        // commit typed value on blur; if invalid, revert to calendar value
-                        const parsed = parseDateInput(startInput);
-                        if (!parsed) {
-                          setStartInput(
-                            formatLocalDate(selectionRange.startDate)
-                          );
-                          return;
-                        }
-                        const today = new Date();
-                        const todayDate = new Date(
-                          today.getFullYear(),
-                          today.getMonth(),
-                          today.getDate()
-                        );
-                        let p = parsed;
-                        if (p < todayDate) p = todayDate;
-                        let endDt = selectionRange.endDate;
-                        if (differenceInCalendarDays(endDt, p) < 0) {
-                          endDt = p;
-                          setEndInput(formatLocalDate(endDt));
-                        }
-                        setSelectionRange({
-                          startDate: p,
-                          endDate: endDt,
-                          key: "selection",
-                        });
-                        setStartInput(formatLocalDate(p));
-                      }}
-                      className="p-2 rounded border bg-white max-w-28 text-center"
-                    />
-                    <label className="text-blue-400">End:</label>
-                    <input
-                      type="text"
-                      // inputMode="numeric"
-                      placeholder="YYYY-MM-DD"
-                      value={endInput}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        setEndInput(raw);
-                        const dt = parseDateInput(raw);
-                        if (!dt) return;
-                        const startDt = selectionRange.startDate;
-                        // If end is before start, clamp to start (allow same-day)
-                        if (differenceInCalendarDays(dt, startDt) < 0) {
-                          const newEnd = startDt;
-                          const norm = formatLocalDate(newEnd);
-                          setEndInput(norm);
-                          setSelectionRange({
-                            startDate: startDt,
-                            endDate: newEnd,
-                            key: "selection",
-                          });
-                        } else {
-                          const norm = formatLocalDate(dt);
-                          setEndInput(norm);
-                          setSelectionRange({
-                            startDate: startDt,
-                            endDate: dt,
-                            key: "selection",
-                          });
-                        }
-                      }}
-                      onBlur={() => {
-                        const dt = parseDateInput(endInput);
-                        const startDt = selectionRange.startDate;
-                        if (!dt) {
-                          setEndInput(formatLocalDate(selectionRange.endDate));
-                          return;
-                        }
-                        if (differenceInCalendarDays(dt, startDt) < 0) {
-                          setEndInput(formatLocalDate(startDt));
-                          setSelectionRange({
-                            startDate: startDt,
-                            endDate: startDt,
-                            key: "selection",
-                          });
-                        } else {
-                          setSelectionRange({
-                            startDate: startDt,
-                            endDate: dt,
-                            key: "selection",
-                          });
-                          setEndInput(formatLocalDate(dt));
-                        }
-                      }}
-                      className="p-2 rounded border bg-white max-w-28 text-center"
-                    />
+                  <div className="space-y-4 mt-4">
+                    {/* Start Date */}
+                    <div className="flex items-center gap-3">
+                      <p className="font-medium text-blue-500">Start Date:</p>
+
+                      {/* Hidden native date input */}
+                      <input
+                        ref={startRef}
+                        type="date"
+                        value={startInput}
+                        onChange={(e) => {
+                          const dt = parseDateInput(e.target.value);
+                          if (dt) {
+                            setSelectionRange((prev) => ({
+                              ...prev,
+                              startDate: dt,
+                            }));
+                          }
+                          setStartInput(e.target.value);
+                        }}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+
+                      {/* Calendar icon */}
+                      <img
+                        src={calendarIcon}
+                        alt="Select start date"
+                        onClick={() => startRef.current?.showPicker()}
+                        className="w-8 h-8 cursor-pointer hover:scale-110 transition"
+                      />
+
+                      {/* Display date as text */}
+                      <span
+                        onClick={() => startRef.current?.showPicker()}
+                        className="text-gray-800"
+                      >
+                        {startInput}
+                      </span>
+                    </div>
+
+                    {/* End Date */}
+                    <div className="flex items-center gap-3">
+                      <p className="font-medium text-blue-500">End Date:</p>
+
+                      {/* Hidden input */}
+                      <input
+                        ref={endRef}
+                        type="date"
+                        value={endInput}
+                        onChange={(e) => {
+                          const dt = parseDateInput(e.target.value);
+                          if (dt) {
+                            setSelectionRange((prev) => ({
+                              ...prev,
+                              endDate: dt,
+                            }));
+                          }
+                          setEndInput(e.target.value);
+                        }}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+
+                      {/* Calendar Icon */}
+                      <img
+                        src={calendarIcon}
+                        alt="Select end date"
+                        onClick={() => endRef.current?.showPicker()}
+                        className="h-8 pl-2 cursor-pointer hover:scale-110 transition"
+                      />
+
+                      {/* Display date */}
+                      <span
+                        onClick={() => endRef.current?.showPicker()}
+                        className="text-gray-800"
+                      >
+                        {endInput}
+                      </span>
+                    </div>
                   </div>
+
                   <div className="text-xs text-gray-400 italic">
-                    You can type the dates in YYYY-MM-DD format, add zero in
-                    single-digit
+                    Tap the date fields to pick dates: Year-Month-Day.
                   </div>
                 </div>
               )}
@@ -820,16 +741,6 @@ export default function LodgeDetails() {
                 ) : null}
                 {nights > 0 ? (
                   <div className="flex flex-col gap-2">
-                    <div>
-                      <strong className="text-blue-400">From:</strong>{" "}
-                      {lodge?.startDate ||
-                        selectionRange.startDate.toLocaleDateString("en-GB")}
-                    </div>
-                    <div>
-                      <strong className="text-blue-400">To:</strong>{" "}
-                      {lodge?.endDate ||
-                        selectionRange.endDate.toLocaleDateString("en-GB")}
-                    </div>
                     <div>
                       <strong className="text-blue-400">
                         {lodge?.nights || nights}
@@ -878,10 +789,7 @@ export default function LodgeDetails() {
             </motion.div>
 
             {/* Right: Owner Info (40%) */}
-            <motion.aside
-              className="md:w-2/5 mt-6 md:mt-0 bg-gray-50 p-4 rounded-lg"
-              variants={rightVariants}
-            >
+            <motion.aside className="md:w-2/5 mt-6 md:mt-0 bg-gray-50 p-4 rounded-lg">
               <h3 className="text-xl font-semibold mb-3 text-gray-800">
                 Owner Details
               </h3>
@@ -954,49 +862,6 @@ export default function LodgeDetails() {
                   </div>
 
                   <div className="text-sm text-gray-600 space-y-2 italic">
-                    {/* hide sensitive owner contact until customer has completed payment for this lodge */}
-                    {/* {(() => {
-                      const paid = Boolean(
-                        typeof window !== "undefined" &&
-                          localStorage.getItem(
-                            `paid_lodge_${encodeURIComponent(lodgeKey)}`
-                          )
-                      );
-                      return (
-                        <>
-                          <div>
-                            <strong className="text-gray-700">Email:</strong>{" "}
-                            {paid || lodge?.reference ? (
-                              ownerProfile?.userLoginMail || "Not provided"
-                            ) : (
-                              <span className="italic text-gray-500">
-                                Will be revealed after booking
-                              </span>
-                            )}
-                          </div>
-                          <div>
-                            <strong className="text-gray-700">Mobile:</strong>{" "}
-                            {paid || lodge?.reference ? (
-                              ownerProfile?.mobile || "Not provided"
-                            ) : (
-                              <span className="italic text-gray-500">
-                                Will be revealed after booking
-                              </span>
-                            )}
-                          </div>
-                          <div>
-                            <strong className="text-gray-700">Phone:</strong>{" "}
-                            {paid || lodge?.reference ? (
-                              ownerProfile?.phone || "Not provided"
-                            ) : (
-                              <span className="italic text-gray-500">
-                                Will be revealed after booking
-                              </span>
-                            )}
-                          </div>
-                        </>
-                      );
-                    })()} */}
                     <p>
                       Other contact details will come with the booking reciept
                     </p>
@@ -1103,16 +968,19 @@ export default function LodgeDetails() {
                       <button
                         onClick={() => {
                           setBookingModalOpen(false);
-                          navigate("/login", {
-                            state: {
-                              from: {
-                                pathname: location.pathname,
-                                search: location.search,
-                                hash: location.hash,
-                                state: location.state,
-                              },
-                            },
-                          });
+                          const from = {
+                            pathname: location.pathname,
+                            search: location.search,
+                            hash: location.hash,
+                            // if there's a lodge in state, pass only its id to keep object small
+                            lodgeId:
+                              (location.state &&
+                                location.state.lodge &&
+                                (location.state.lodge.id ||
+                                  location.state.lodge._id)) ||
+                              null,
+                          };
+                          navigate("/login", { state: { from } });
                         }}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md font-semibold"
                       >
@@ -1130,16 +998,18 @@ export default function LodgeDetails() {
                       <button
                         onClick={() => {
                           setBookingModalOpen(false);
-                          navigate("/registeruser", {
-                            state: {
-                              from: {
-                                pathname: location.pathname,
-                                search: location.search,
-                                hash: location.hash,
-                                state: location.state,
-                              },
-                            },
-                          });
+                          const from = {
+                            pathname: location.pathname,
+                            search: location.search,
+                            hash: location.hash,
+                            lodgeId:
+                              (location.state &&
+                                location.state.lodge &&
+                                (location.state.lodge.id ||
+                                  location.state.lodge._id)) ||
+                              null,
+                          };
+                          navigate("/registeruser", { state: { from } });
                         }}
                         className="px-4 py-2 bg-indigo-600 text-white rounded-md font-semibold"
                       >

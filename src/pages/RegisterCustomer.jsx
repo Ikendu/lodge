@@ -9,12 +9,20 @@ import { toast } from "react-hot-toast";
 export default function RegisterCustomer() {
   const navigate = useNavigate();
   const location = useLocation();
+  // This page now receives 'provided' (details collected on previous step)
+  // via location.state.provided. It is responsible for NIN verification and
+  // the final registration submit which sends the combined payload.
+  const provided = location.state?.provided || {};
+
   const [form, setForm] = useState({
     nin: "",
-    phone: "",
+    phone: provided.mobile || "",
   });
   const [loading, setLoading] = useState(false);
   const [checkingLogin, setCheckingLogin] = useState(true);
+
+  const [verified, setVerified] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // also accept Firebase auth presence as a valid login
   const [firebaseUser, loadingAuth] = useAuthState(auth);
@@ -53,84 +61,248 @@ export default function RegisterCustomer() {
   const handleChange = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!form.nin || !form.phone) {
-      toast.error("Please fill required fields");
+  const verifyNin = async () => {
+    if (!form.nin) return toast.error("Please enter NIN");
+    // If already verified, avoid calling the endpoint again
+    if (verified) {
+      toast.success("NIN already verified");
       return;
     }
-
     setLoading(true);
     try {
       const payload = new FormData();
       payload.append("nin", form.nin);
-      payload.append("firstName", form.firstName);
-      payload.append("lastName", form.lastName);
-      payload.append("phone", form.phone);
+      payload.append("phone", form.phone || "");
 
-      // Try endpoints in order: production first, then  local dev
       const endpoints = [
         "https://lodge.morelinks.com.ng/api/verify_nin.php",
         "http://localhost/lodge/api/verify_nin.php",
       ];
 
       let data = null;
-      let lastErr = null;
       for (const url of endpoints) {
         try {
           const res = await fetch(url, { method: "POST", body: payload });
           const text = await res.text();
           try {
             const parsed = JSON.parse(text);
+            console.log("verifyNin response NIN", parsed);
             if (parsed && typeof parsed === "object") {
               data = parsed;
-            } else {
-              // not an object — try next
-              lastErr = new Error("Invalid JSON from " + url);
+              break;
             }
           } catch (err) {
-            // invalid json from this endpoint
-            lastErr = err;
+            // ignore invalid json from this endpoint
           }
         } catch (err) {
-          // network error — try next endpoint
-          lastErr = err;
+          // try next
         }
-        if (data) break;
       }
 
       if (!data) {
-        console.error("All verify endpoints failed", lastErr);
-        throw new Error("Invalid JSON from server");
+        toast.error("Verification failed — no response from server");
+        return;
       }
-
       if (!data.success) {
-        // If server indicates NIN already registered, show a clear toast and stop
-        console.log("NIN data", data);
         toast.error(data.message || "NIN verification failed");
         return;
       }
 
-      // merge verified data returned from server with phone and navigate to details step
-      const verified = data.data || {};
-      const state = {
-        verified,
-        phone: form.phone,
-        nin: form.nin,
-      };
-
-      if (location.state && location.state.from)
-        state.from = location.state.from;
-
-      navigate("/registeruser/details", { state });
+      setVerified(data.data || {});
+      toast.success("NIN verified — proceed to submit");
     } catch (err) {
       console.error(err);
-      toast.error("Verification failed, please try again.");
+      toast.error("Verification error");
     } finally {
       setLoading(false);
     }
   };
+
+  // Utility: convert data URL or raw base64 (e.g. starts with '/9j') into a File
+  const toFileFromData = async (input, filenamePrefix = "file") => {
+    if (!input || typeof input !== "string") return null;
+
+    // Data URL (has mime)
+    if (input.startsWith("data:")) {
+      try {
+        const r = await fetch(input);
+        const b = await r.blob();
+        return new File([b], `${filenamePrefix}.jpg`, {
+          type: b.type || "image/jpeg",
+        });
+      } catch (e) {
+        console.warn("toFileFromData failed to fetch data URL", e);
+        return null;
+      }
+    }
+
+    // Raw base64 (jpeg often begins with '/9j') or a pure base64 string
+    const trimmed = input.replace(/\s+/g, "");
+    const looksLikeBase64 =
+      trimmed.startsWith("/9j") || /^[A-Za-z0-9+/=]+$/.test(trimmed);
+    if (looksLikeBase64) {
+      try {
+        // atob on the base64 payload
+        const binary = atob(trimmed);
+        const len = binary.length;
+        const u8 = new Uint8Array(len);
+        for (let i = 0; i < len; i++) u8[i] = binary.charCodeAt(i);
+        const blob = new Blob([u8], { type: "image/jpeg" });
+        return new File([blob], `${filenamePrefix}.jpg`, {
+          type: "image/jpeg",
+        });
+      } catch (e) {
+        console.warn("toFileFromData failed to decode base64", e);
+        return null;
+      }
+    }
+
+    // Not a data URL or base64 — return null so caller can decide to append raw string
+    return null;
+  };
+
+  // Final submit: combine provided + verified and send to register endpoint
+  const submitRegistration = async () => {
+    if (!verified) return toast.error("Please verify NIN first");
+    setSubmitting(true);
+    try {
+      const payload = new FormData();
+
+      // lightweight userLogin info
+      const userLogin = JSON.parse(localStorage.getItem("userLogin") || "null");
+      payload.append("userUid", userLogin?.uid || "");
+      payload.append("userLoginMail", userLogin?.email || "");
+
+      // merge verified fields
+      payload.append("firstName", verified.entity?.first_name || "");
+      payload.append("middleName", verified.entity?.middle_name || "");
+      payload.append("lastName", verified.entity?.last_name || "");
+      payload.append("nin", verified.id || form.nin || "");
+      payload.append(
+        "nin_address",
+        `${verified.entity?.residence_address_line_1 || ""} ${
+          verified.entity?.residence_town || ""
+        } ${verified.entity?.residence_lga || ""} ${
+          verified.entity?.residence_state || ""
+        }`
+      );
+      payload.append("birth_country", verified.entity?.birth_country || "");
+      payload.append("birth_state", verified.entity?.birth_state || "");
+      payload.append("birth_lga", verified.entity?.birth_lga || "");
+
+      payload.append("nin_email", verified.entity?.email || "");
+      payload.append("religion", verified.entity?.religion || "");
+
+      payload.append("lga", verified.entity?.origin_lga || "");
+      payload.append("state", verified.entity?.origin_state || "");
+      payload.append("place", verified.entity?.origin_place || "");
+
+      payload.append("dob", provided.dob || "");
+      payload.append("phone", verified.entity?.phone_number || "");
+      payload.append("mobile", provided.mobile || "");
+      payload.append("gender", verified.entity?.gender || "");
+      payload.append("dob", verified.entity?.date_of_birth || "");
+
+      // provided details
+      payload.append("address", provided.address || "");
+      payload.append("addressLga", provided.addressLga || "");
+      payload.append("addressState", provided.addressState || "");
+      payload.append("permanentAddress", provided.permanentAddress || "");
+      payload.append("nextOfKinName", provided.nextOfKinName || "");
+      payload.append("nextOfKinPhone", provided.nextOfKinPhone || "");
+      payload.append("nextOfKinRelation", provided.nextOfKinRelation || "");
+      payload.append("nextOfKinAddress", provided.nextOfKinAddress || "");
+
+      // attach provided imageData (data URL) as file if present
+      if (provided.imageData) {
+        try {
+          const res = await fetch(provided.imageData);
+          const blob = await res.blob();
+          const file = new File([blob], `given_image.jpg`, {
+            type: blob.type || "image/jpeg",
+          });
+          payload.append("image", file, file.name);
+        } catch (e) {
+          console.warn("Failed to attach provided image data", e);
+        }
+      }
+
+      // attach verified photo/signature: support data URLs, raw base64 (starts with '/9j'), or fall back to string
+      if (verified.entity?.photo && typeof verified.entity.photo === "string") {
+        const file = await toFileFromData(verified.entity.photo, "verified");
+        if (file) payload.append("verified_image", file, file.name);
+        else payload.append("verified_image", verified.entity.photo);
+      }
+      if (
+        verified.entity?.signature &&
+        typeof verified.entity.signature === "string"
+      ) {
+        const file = await toFileFromData(
+          verified.entity.signature,
+          "signature"
+        );
+        if (file) payload.append("verified_signature", file, file.name);
+        else payload.append("verified_signature", verified.entity.signature);
+      }
+
+      const endpoints = [
+        "https://lodge.morelinks.com.ng/api/register.php",
+        "http://localhost/lodge/api/register.php",
+      ];
+
+      let data = null;
+      for (const url of endpoints) {
+        try {
+          const res = await fetch(url, { method: "POST", body: payload });
+          const text = await res.text();
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            data = null;
+          }
+          if (data) break;
+        } catch (e) {
+          console.warn("register request failed", e);
+        }
+      }
+
+      if (!data) {
+        toast.error("Registration failed — no server response");
+        setSubmitting(false);
+        return;
+      }
+      if (!data.success) {
+        toast.error(data.message || "Registration failed");
+        setSubmitting(false);
+        return;
+      }
+
+      const profile = data.data || {};
+      try {
+        localStorage.setItem("customerProfile", JSON.stringify(profile));
+      } catch (e) {
+        /* ignore */
+      }
+      toast.success("Registration complete");
+
+      // navigate back to origin if provided
+      const rawReturn = location.state?.from || "/";
+      if (typeof rawReturn === "string") navigate(rawReturn, { replace: true });
+      else if (rawReturn && typeof rawReturn === "object") {
+        const path = `${rawReturn.pathname || "/"}${rawReturn.search || ""}${
+          rawReturn.hash || ""
+        }`;
+        navigate(path, { replace: true, state: rawReturn.state });
+      } else navigate("/profile", { replace: true });
+    } catch (err) {
+      console.error("submitRegistration error", err);
+      toast.error("Submission failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // old handleSubmit removed — we now use verifyNin() and submitRegistration()
 
   // ✅ Prevent render flicker while checking login
   if (checkingLogin) {
@@ -154,7 +326,7 @@ export default function RegisterCustomer() {
         </h2>
 
         <form
-          onSubmit={handleSubmit}
+          onSubmit={(e) => e.preventDefault()}
           className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
           <div className="flex flex-col">
@@ -179,16 +351,40 @@ export default function RegisterCustomer() {
             />
           </div>
 
-          <div className="col-span-1 md:col-span-2">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 mt-4 bg-gradient-to-r from-blue-400 to-purple-600 text-white font-semibold rounded-xl"
+          <div className="col-span-1 md:col-span-2 space-y-3">
+            <button
+              type="button"
+              onClick={verifyNin}
+              disabled={loading || !!verified}
+              aria-disabled={loading || !!verified}
+              className={`w-full py-3 rounded-xl font-semibold text-white ${
+                loading || verified ? "bg-slate-400" : "bg-blue-500"
+              }`}
             >
-              {loading ? "Verifying..." : "Verify & Continue"}
-            </motion.button>
+              {loading
+                ? "Verifying..."
+                : verified
+                ? "Verified ✓"
+                : "Verify NIN"}
+            </button>
+
+            <button
+              type="button"
+              onClick={submitRegistration}
+              disabled={!verified || submitting}
+              className="w-full py-3 bg-green-500 text-white rounded-xl font-semibold"
+            >
+              {submitting ? "Submitting..." : "Submit Registration"}
+            </button>
+            {verified ? (
+              <div className="text-sm text-white/90 mt-2 p-3 bg-white/10 rounded">
+                Verified:{" "}
+                <strong>
+                  {verified.entity?.first_name} {verified.entity?.middle_name}{" "}
+                  {verified.entity?.last_name}
+                </strong>
+              </div>
+            ) : null}
           </div>
         </form>
       </motion.div>

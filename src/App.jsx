@@ -52,10 +52,10 @@ export default function App() {
             <Route index element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<ContactUs />} />
-            <Route path="/registeruser" element={<RegisterCustomer />} />
+            <Route path="/registeruser" element={<RegisterCustomerDetails />} />
             <Route
               path="/registeruser/details"
-              element={<RegisterCustomerDetails />}
+              element={<RegisterCustomer />}
             />
 
             <Route path="/register-success" element={<RegisterSuccess />} />

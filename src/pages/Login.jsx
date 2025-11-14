@@ -12,6 +12,7 @@ import {
   socialSignIn,
   auth,
 } from "../firebaseConfig";
+import { updateProfile } from "firebase/auth";
 import toast from "react-hot-toast";
 import {
   signInWithEmailAndPassword,
@@ -25,8 +26,14 @@ import { useModalContext } from "../components/ui/ModalProvider";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({
+    email: "",
+    password: "",
+    fullName: "",
+  });
   const [loading, setLoading] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
 
@@ -166,7 +173,9 @@ export default function LoginPage() {
           toast("Complete your profile to continue", { icon: "ℹ️" });
           navigate("/registeruser", {
             replace: true,
-            state: { from: fromTarget.path },
+            state: {
+              from: { pathname: fromTarget.path, state: fromTarget.state },
+            },
           });
           return;
         }
@@ -185,9 +194,14 @@ export default function LoginPage() {
   // Email/Password login
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!email || !password) {
-      setError("Please fill in all fields.");
+    // Per-field validation
+    const fErr = { email: "", password: "", fullName: "" };
+    if (!email) fErr.email = "Enter email";
+    if (!password) fErr.password = "Enter password";
+    if (isRegister && !fullName) fErr.fullName = "Enter full name";
+    setFieldErrors(fErr);
+    if (fErr.email || fErr.password || fErr.fullName) {
+      setError("Please complete the required fields.");
       return;
     }
 
@@ -241,6 +255,14 @@ export default function LoginPage() {
           email,
           password
         );
+        // set displayName if provided
+        try {
+          if (fullName && userCredential && userCredential.user) {
+            await updateProfile(userCredential.user, { displayName: fullName });
+          }
+        } catch (e) {
+          console.warn("Failed to set displayName", e);
+        }
         const modal = useModalContext();
         await modal.alert({
           title: "Account created",
@@ -290,12 +312,57 @@ export default function LoginPage() {
           "Network error while contacting authentication server. Check your internet connection and disable blockers (adblock/privacy)."
         );
       } else {
-        const msg =
-          err?.message ||
-          (err?.code
-            ? err.code.replace("auth/", "").replace(/-/g, " ")
-            : "Authentication failed.");
-        setError(msg);
+        const rawMsg = String(err?.message || err?.code || "");
+        const lower = rawMsg.toLowerCase();
+        // treat these cases as "no account" or invalid credentials where we offer to create an account
+        const createHints = [
+          "auth/user-not-found",
+          "auth/invalid-credential",
+          "auth/wrong-password",
+          "auth/invalid-email",
+        ];
+        const shouldOfferCreate =
+          createHints.includes(err?.code) ||
+          /user-not-found|no user|no account|user does not exist|invalid credential|invalid-credential|wrong password/i.test(
+            lower
+          );
+
+        if (shouldOfferCreate) {
+          try {
+            if (modal && typeof modal.confirm === "function") {
+              const confirmed = await modal.confirm({
+                title: "Login failed",
+                message: `Login failed,\n\nIf you don't have an account, would you like to create one?`,
+                okText: "Create account",
+                cancelText: "Cancel",
+              });
+              if (confirmed) setIsRegister(true);
+            } else {
+              // fallback
+              setIsRegister(true);
+            }
+          } catch (e) {
+            console.warn("Modal confirm failed", e);
+            setIsRegister(true);
+          }
+          // user-not-found specific message is clearer
+          if (
+            err?.code === "auth/user-not-found" ||
+            /user-not-found|no user|no account/i.test(lower)
+          ) {
+            setError("No account found for this email.");
+          } else
+            setError(
+              "Authentication failed. Check credentials or create an account."
+            );
+        } else {
+          const msg =
+            err?.message ||
+            (err?.code
+              ? err.code.replace("auth/", "").replace(/-/g, " ")
+              : "Authentication failed.");
+          setError(msg);
+        }
       }
     } finally {
       setLoading(false);
@@ -381,16 +448,28 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-gray-600">
               Email Address
             </label>
-            <div className="flex items-center border rounded-lg px-3 mt-1">
+            <div
+              className={`flex items-center border rounded-lg px-3 mt-1 ${
+                fieldErrors.email ? "border-red-500" : ""
+              }`}
+            >
               <Mail size={18} className="text-gray-400" />
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setFieldErrors((s) => ({ ...s, email: "" }));
+                }}
                 placeholder="example@mail.com"
                 className="w-full p-2 outline-none"
               />
             </div>
+            {fieldErrors.email ? (
+              <div className="text-xs text-red-500 mt-1">
+                {fieldErrors.email}
+              </div>
+            ) : null}
           </div>
 
           {/* Password */}
@@ -398,7 +477,11 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-gray-600">
               Password
             </label>
-            <div className="flex items-center border rounded-lg px-3 mt-1">
+            <div
+              className={`flex items-center border rounded-lg px-3 mt-1 ${
+                fieldErrors.password ? "border-red-500" : ""
+              }`}
+            >
               <Lock size={18} className="text-gray-400" />
               <input
                 type={showPassword ? "text" : "password"}
@@ -415,24 +498,83 @@ export default function LoginPage() {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {fieldErrors.password ? (
+              <div className="text-xs text-red-500 mt-1">
+                {fieldErrors.password}
+              </div>
+            ) : null}
           </div>
+
+          {/* Full name (only on register) */}
+          {isRegister ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-600">
+                Full name
+              </label>
+              <div
+                className={`flex items-center border rounded-lg px-3 mt-1 ${
+                  fieldErrors.fullName ? "border-red-500" : ""
+                }`}
+              >
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    setFieldErrors((s) => ({ ...s, fullName: "" }));
+                  }}
+                  placeholder="John Doe"
+                  className="w-full p-2 outline-none"
+                />
+              </div>
+              {fieldErrors.fullName ? (
+                <div className="text-xs text-red-500 mt-1">
+                  {fieldErrors.fullName}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           {/* Submit */}
           <div className="space-y-2">
             <button
               type="submit"
               disabled={loading}
-              className={`w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition ${
-                loading ? "opacity-70 cursor-not-allowed" : ""
+              className={`w-full text-white py-2 rounded-lg font-semibold transition flex items-center justify-center ${
+                loading
+                  ? "bg-indigo-500 opacity-70 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700"
               }`}
             >
-              {loading
-                ? isRegister
-                  ? "Creating..."
-                  : "Logging in..."
-                : isRegister
-                ? "Create account"
-                : "Login"}
+              {loading ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 mr-2 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    ></path>
+                  </svg>
+                  {isRegister ? "Creating..." : "Logging in..."}
+                </>
+              ) : isRegister ? (
+                "Create account"
+              ) : (
+                "Login"
+              )}
             </button>
           </div>
         </form>
