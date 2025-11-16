@@ -243,6 +243,17 @@ export default function LoginPage() {
       setError(
         "Network connectivity to Firebase appears to be blocked or slow. Disable extensions (adblock/privacy), check firewall/proxy, or try another network."
       );
+      try {
+        if (modal && typeof modal.alert === "function") {
+          await modal.alert({
+            title: "Network error",
+            message:
+              "Network connectivity to Firebase appears to be blocked or slow. Disable extensions (adblock/privacy), check firewall/proxy, or try another network.",
+          });
+        }
+      } catch (e) {
+        console.warn("Modal alert failed:", e);
+      }
       setLoading(false);
       return;
     }
@@ -263,19 +274,25 @@ export default function LoginPage() {
         } catch (e) {
           console.warn("Failed to set displayName", e);
         }
-        const modal = useModalContext();
-        await modal.alert({
-          title: "Account created",
-          message: "✅ Account created successfully.",
-        });
+        // use top-level `modal` (hooks must only be called at top level)
+        if (modal && typeof modal.alert === "function") {
+          await modal.alert({
+            title: "Account created",
+            message: "✅ Account created successfully.",
+          });
+        }
       } else {
         userCredential = await signInWithEmailAndPassword(
           auth,
           email,
           password
         );
-        const modal = useModalContext();
-        await modal.alert({ title: "Login", message: "✅ Login successful!" });
+        if (modal && typeof modal.alert === "function") {
+          await modal.alert({
+            title: "Login",
+            message: "✅ Login successful!",
+          });
+        }
       }
 
       const uid = userCredential.user.uid;
@@ -306,11 +323,25 @@ export default function LoginPage() {
         navigate(fromTarget.path, { replace: true, state: returnState2 });
       }
     } catch (err) {
-      console.error("Authentication error:", err);
+      console.log("Authentication error:", err);
+      const rawMsg = String(
+        err?.message || err?.code || "Authentication failed."
+      );
       if (err && err.code === "auth/network-request-failed") {
         setError(
           "Network error while contacting authentication server. Check your internet connection and disable blockers (adblock/privacy)."
         );
+        try {
+          if (modal && typeof modal.alert === "function") {
+            await modal.alert({
+              title: "Network error",
+              message:
+                "Network error while contacting authentication server. Check your internet connection and disable blockers (adblock/privacy).",
+            });
+          }
+        } catch (e) {
+          console.warn("Modal alert failed:", e);
+        }
       } else {
         const rawMsg = String(err?.message || err?.code || "");
         const lower = rawMsg.toLowerCase();
@@ -363,6 +394,19 @@ export default function LoginPage() {
               : "Authentication failed.");
           setError(msg);
         }
+        // Always show a modal with the raw error message so users see the problem clearly
+        try {
+          if (modal && typeof modal.alert === "function") {
+            await modal.alert({
+              title: "Account Creation Error",
+              message: rawMsg.includes("auth/email-already-in-us")
+                ? "Account already exists for this email, check your password or try using Google."
+                : "Error details: " + rawMsg,
+            });
+          }
+        } catch (e) {
+          console.warn("Modal alert failed:", e);
+        }
       }
     } finally {
       setLoading(false);
@@ -412,6 +456,16 @@ export default function LoginPage() {
     } catch (error) {
       console.error("Social login failed:", error);
       setError("Login failed. Please try again.");
+      try {
+        if (modal && typeof modal.alert === "function") {
+          await modal.alert({
+            title: "Login failed",
+            message: String(error?.message || error),
+          });
+        }
+      } catch (e) {
+        console.warn("Modal alert failed:", e);
+      }
     } finally {
       setLoading(false);
     }

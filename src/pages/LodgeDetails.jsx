@@ -799,6 +799,7 @@ export default function LodgeDetails() {
                         src={calendarIcon}
                         alt="Select start date"
                         onClick={() => openDatePicker(startNativeRef)}
+                        onFocus={() => openDatePicker(startNativeRef)}
                         className="w-8 h-8 cursor-pointer hover:scale-110 "
                       />
                     </div>
@@ -843,6 +844,7 @@ export default function LodgeDetails() {
                         src={calendarIcon}
                         alt="Select end date"
                         onClick={() => openDatePicker(endNativeRef)}
+                        onFocus={() => openDatePicker(startNativeRef)}
                         className="h-8 cursor-pointer hover:scale-110 transition"
                       />
                     </div>
