@@ -308,6 +308,67 @@ export default function LodgeDetails() {
     }
   }, []);
 
+  // helper to open the native date picker in a cross-browser way.
+  // Some browsers (older Safari on iOS) don't implement showPicker(). In that case
+  // we try focus()+click() and as a last resort temporarily make the hidden
+  // input visible so the user can tap it.
+  const openDatePicker = (ref) => {
+    if (!ref || !ref.current) return;
+    const el = ref.current;
+    try {
+      if (typeof el.showPicker === "function") {
+        el.showPicker();
+        return;
+      }
+    } catch (e) {
+      // continue to fallbacks
+    }
+
+    try {
+      el.focus();
+      // some browsers will open the picker on click()
+      el.click();
+    } catch (e) {
+      // ignore
+    }
+
+    // If the above didn't open the picker (some iOS versions), make the input
+    // temporarily visible and focus it so the native control can be shown when
+    // the user taps. We revert styles after a short timeout.
+    try {
+      const prev = {
+        opacity: el.style.opacity,
+        width: el.style.width,
+        height: el.style.height,
+        pointerEvents: el.style.pointerEvents,
+        position: el.style.position,
+      };
+      el.style.opacity = "1";
+      el.style.width = "180px";
+      el.style.height = "38px";
+      el.style.position = "relative";
+      el.style.pointerEvents = "auto";
+      // focus after making visible
+      setTimeout(() => {
+        try {
+          el.focus();
+        } catch (e) {}
+      }, 50);
+      // revert after 2s
+      setTimeout(() => {
+        try {
+          el.style.opacity = prev.opacity || "0";
+          el.style.width = prev.width || "8px";
+          el.style.height = prev.height || "8px";
+          el.style.position = prev.position || "absolute";
+          el.style.pointerEvents = prev.pointerEvents || "none";
+        } catch (e) {}
+      }, 2000);
+    } catch (e) {
+      // ignore DOM style errors
+    }
+  };
+
   // If lodge is not provided in location state, show a friendly message.
   // This check is placed after hooks/state to avoid violating the rules of hooks.
   // If lodge wasn't supplied via location.state, try to fetch by route param id
@@ -653,7 +714,7 @@ export default function LodgeDetails() {
                     <div className="flex items-center gap-3">
                       <p className="font-medium text-blue-500">Start Date:</p>
 
-                      {/* Hidden native date input */}
+                      {/* Visible native date input (clicking or focusing opens the calendar) */}
                       <input
                         ref={startRef}
                         type="date"
@@ -668,31 +729,27 @@ export default function LodgeDetails() {
                           }
                           setStartInput(e.target.value);
                         }}
-                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onClick={() => openDatePicker(startRef)}
+                        onFocus={() => openDatePicker(startRef)}
+                        readOnly={!isTouchDevice}
+                        aria-label="Start date"
+                        className="px-3 py-2 border rounded-md text-gray-800 bg-white cursor-pointer"
                       />
 
-                      {/* Calendar icon */}
+                      {/* Calendar icon (also opens picker) */}
                       <img
                         src={calendarIcon}
                         alt="Select start date"
-                        onClick={() => startRef.current?.showPicker()}
+                        onClick={() => openDatePicker(startRef)}
                         className="w-8 h-8 cursor-pointer hover:scale-110 transition"
                       />
-
-                      {/* Display date as text */}
-                      <span
-                        onClick={() => startRef.current?.showPicker()}
-                        className="text-gray-800"
-                      >
-                        {startInput}
-                      </span>
                     </div>
 
                     {/* End Date */}
                     <div className="flex items-center gap-3">
                       <p className="font-medium text-blue-500">End Date:</p>
 
-                      {/* Hidden input */}
+                      {/* Visible native date input (clicking or focusing opens the calendar) */}
                       <input
                         ref={endRef}
                         type="date"
@@ -707,24 +764,20 @@ export default function LodgeDetails() {
                           }
                           setEndInput(e.target.value);
                         }}
-                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onClick={() => openDatePicker(endRef)}
+                        onFocus={() => openDatePicker(endRef)}
+                        readOnly={!isTouchDevice}
+                        aria-label="End date"
+                        className="px-3 py-2 border rounded-md text-gray-800 bg-white cursor-pointer"
                       />
 
-                      {/* Calendar Icon */}
+                      {/* Calendar Icon (also opens picker) */}
                       <img
                         src={calendarIcon}
                         alt="Select end date"
-                        onClick={() => endRef.current?.showPicker()}
+                        onClick={() => openDatePicker(endRef)}
                         className="h-8 pl-2 cursor-pointer hover:scale-110 transition"
                       />
-
-                      {/* Display date */}
-                      <span
-                        onClick={() => endRef.current?.showPicker()}
-                        className="text-gray-800"
-                      >
-                        {endInput}
-                      </span>
                     </div>
                   </div>
 
