@@ -26,6 +26,8 @@ export default function LodgeDetails() {
 
   const startRef = useRef(null);
   const endRef = useRef(null);
+  const startNativeRef = useRef(null);
+  const endNativeRef = useRef(null);
 
   // compute a stable key for this lodge to track payment in localStorage
   const lodgeKey =
@@ -278,6 +280,19 @@ export default function LodgeDetails() {
       dt.getDate()
     ).padStart(2, "0")}`;
 
+  // Format a yyyy-mm-dd string (or Date) as DD/MM/YYYY for display
+  const formatDisplayDate = (val) => {
+    if (!val) return "";
+    let dt = null;
+    if (typeof val === "string") dt = parseDateInput(val);
+    else if (val instanceof Date) dt = val;
+    if (!dt) return "";
+    const d = String(dt.getDate()).padStart(2, "0");
+    const m = String(dt.getMonth() + 1).padStart(2, "0");
+    const y = dt.getFullYear();
+    return `${d}/${m}/${y}`;
+  };
+
   // calculate nights and total when selectionRange changes
   useEffect(() => {
     const s = selectionRange.startDate;
@@ -325,9 +340,19 @@ export default function LodgeDetails() {
     }
 
     try {
+      // Focus the input. Avoid programmatic click() which can cause unexpected
+      // behavior in some browsers (and recursion with event handlers). Focusing
+      // makes the control ready for user interaction which tends to open the
+      // native picker on most platforms when tapped/clicked by the user.
       el.focus();
-      // some browsers will open the picker on click()
-      el.click();
+    } catch (e) {
+      // ignore
+    }
+
+    // For icon clicks (a user gesture) some browsers allow programmatic click.
+    // Try calling click() to open the picker when showPicker isn't available.
+    try {
+      if (typeof el.click === "function") el.click();
     } catch (e) {
       // ignore
     }
@@ -367,6 +392,28 @@ export default function LodgeDetails() {
     } catch (e) {
       // ignore DOM style errors
     }
+  };
+
+  // swipe/drag threshold in pixels for viewer navigation
+  const dragThreshold = 80;
+
+  // viewer navigation helpers
+  const prevImage = () => {
+    try {
+      playSlideSound();
+    } catch (e) {}
+    const len = (viewerSources && viewerSources.length) || 1;
+    setDirection(-1);
+    setCurrentIndex((i) => (i - 1 + len) % len);
+  };
+
+  const nextImage = () => {
+    try {
+      playSlideSound();
+    } catch (e) {}
+    const len = (viewerSources && viewerSources.length) || 1;
+    setDirection(1);
+    setCurrentIndex((i) => (i + 1) % len);
   };
 
   // If lodge is not provided in location state, show a friendly message.
@@ -714,34 +761,45 @@ export default function LodgeDetails() {
                     <div className="flex items-center gap-3">
                       <p className="font-medium text-blue-500">Start Date:</p>
 
-                      {/* Visible native date input (clicking or focusing opens the calendar) */}
-                      <input
-                        ref={startRef}
-                        type="date"
-                        value={startInput}
-                        onChange={(e) => {
-                          const dt = parseDateInput(e.target.value);
-                          if (dt) {
-                            setSelectionRange((prev) => ({
-                              ...prev,
-                              startDate: dt,
-                            }));
-                          }
-                          setStartInput(e.target.value);
-                        }}
-                        onClick={() => openDatePicker(startRef)}
-                        onFocus={() => openDatePicker(startRef)}
-                        readOnly={!isTouchDevice}
-                        aria-label="Start date"
-                        className="px-3 py-2 border rounded-md text-gray-800 bg-white cursor-pointer"
-                      />
+                      <div className="relative">
+                        {/* visible formatted display (DD/MM/YYYY) */}
+                        <input
+                          type="text"
+                          value={formatDisplayDate(startInput)}
+                          readOnly
+                          onClick={() => openDatePicker(startNativeRef)}
+                          onFocus={() => openDatePicker(startNativeRef)}
+                          aria-label="Start date display"
+                          className="px-3 py-2 border rounded-md text-gray-800 bg-white w-36"
+                        />
+
+                        {/* native date input overlaid to capture clicks and open native picker */}
+                        <input
+                          ref={startNativeRef}
+                          type="date"
+                          value={startInput}
+                          onChange={(e) => {
+                            const dt = parseDateInput(e.target.value);
+                            if (dt) {
+                              setSelectionRange((prev) => ({
+                                ...prev,
+                                startDate: dt,
+                              }));
+                            }
+                            setStartInput(e.target.value);
+                          }}
+                          onClick={() => openDatePicker(startNativeRef)}
+                          aria-label="Start date"
+                          className="absolute left-0 top-0 w-36 h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
 
                       {/* Calendar icon (also opens picker) */}
                       <img
                         src={calendarIcon}
                         alt="Select start date"
-                        onClick={() => openDatePicker(startRef)}
-                        className="w-8 h-8 cursor-pointer hover:scale-110 transition"
+                        onClick={() => openDatePicker(startNativeRef)}
+                        className="w-8 h-8 cursor-pointer hover:scale-110 "
                       />
                     </div>
 
@@ -749,34 +807,43 @@ export default function LodgeDetails() {
                     <div className="flex items-center gap-3">
                       <p className="font-medium text-blue-500">End Date:</p>
 
-                      {/* Visible native date input (clicking or focusing opens the calendar) */}
-                      <input
-                        ref={endRef}
-                        type="date"
-                        value={endInput}
-                        onChange={(e) => {
-                          const dt = parseDateInput(e.target.value);
-                          if (dt) {
-                            setSelectionRange((prev) => ({
-                              ...prev,
-                              endDate: dt,
-                            }));
-                          }
-                          setEndInput(e.target.value);
-                        }}
-                        onClick={() => openDatePicker(endRef)}
-                        onFocus={() => openDatePicker(endRef)}
-                        readOnly={!isTouchDevice}
-                        aria-label="End date"
-                        className="px-3 py-2 border rounded-md text-gray-800 bg-white cursor-pointer"
-                      />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={formatDisplayDate(endInput)}
+                          readOnly
+                          onClick={() => openDatePicker(endNativeRef)}
+                          onFocus={() => openDatePicker(endNativeRef)}
+                          aria-label="End date display"
+                          className="px-3 py-2 ml-2 border rounded-md text-gray-800 bg-white w-36"
+                        />
+
+                        <input
+                          ref={endNativeRef}
+                          type="date"
+                          value={endInput}
+                          onChange={(e) => {
+                            const dt = parseDateInput(e.target.value);
+                            if (dt) {
+                              setSelectionRange((prev) => ({
+                                ...prev,
+                                endDate: dt,
+                              }));
+                            }
+                            setEndInput(e.target.value);
+                          }}
+                          onClick={() => openDatePicker(endNativeRef)}
+                          aria-label="End date"
+                          className="absolute left-0 top-0 w-36 h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
 
                       {/* Calendar Icon (also opens picker) */}
                       <img
                         src={calendarIcon}
                         alt="Select end date"
-                        onClick={() => openDatePicker(endRef)}
-                        className="h-8 pl-2 cursor-pointer hover:scale-110 transition"
+                        onClick={() => openDatePicker(endNativeRef)}
+                        className="h-8 cursor-pointer hover:scale-110 transition"
                       />
                     </div>
                   </div>
