@@ -17,8 +17,6 @@ import toast from "react-hot-toast";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
-  signOut,
 } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useModalContext } from "../components/ui/ModalProvider";
@@ -400,8 +398,10 @@ export default function LoginPage() {
             await modal.alert({
               title: "Account Creation Error",
               message: rawMsg.includes("auth/email-already-in-us")
-                ? "Account already exists for this email, check your password or try using Google."
-                : "Error details: " + rawMsg,
+                ? "Account already exists for this email, check your password or try using <b>Google.<b>"
+                : rawMsg.includes("at least 6 characters")
+                ? "Password must be at least 6 characters long."
+                : rawMsg,
             });
           }
         } catch (e) {

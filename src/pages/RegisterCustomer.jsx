@@ -1,5 +1,6 @@
 // src/pages/RegisterCustomer.jsx
 import { useEffect, useState } from "react";
+import { useModalContext } from "../components/ui/ModalProvider";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
 import { motion } from "framer-motion";
@@ -20,6 +21,9 @@ export default function RegisterCustomer() {
   });
   const [loading, setLoading] = useState(false);
   const [checkingLogin, setCheckingLogin] = useState(true);
+
+  const modal = useModalContext();
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const [verified, setVerified] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -61,8 +65,27 @@ export default function RegisterCustomer() {
   const handleChange = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
 
+  // clear field error on change
+  const handleChangeWithClear = (e) => {
+    setFieldErrors((s) => ({ ...s, [e.target.name]: undefined }));
+    handleChange(e);
+  };
+
   const verifyNin = async () => {
-    if (!form.nin) return toast.error("Please enter NIN");
+    if (!form.nin) {
+      setFieldErrors({ nin: "Required" });
+      try {
+        if (modal && typeof modal.alert === "function") {
+          await modal.alert({
+            title: "Missing NIN",
+            message: "Please enter your NIN number before verification.",
+          });
+        }
+      } catch (e) {
+        console.warn("Modal alert failed:", e);
+      }
+      return;
+    }
     // If already verified, avoid calling the endpoint again
     if (verified) {
       toast.success("NIN already verified");
@@ -101,15 +124,43 @@ export default function RegisterCustomer() {
 
       if (!data) {
         toast.error("Verification failed — no response from server");
+        try {
+          if (modal && typeof modal.alert === "function") {
+            await modal.alert({
+              title: "Verification failed",
+              message: "No response from verification server. Try again later.",
+            });
+          }
+        } catch (e) {
+          console.warn("Modal alert failed:", e);
+        }
         return;
       }
       if (!data.success) {
         toast.error(data.message || "NIN verification failed");
+        try {
+          if (modal && typeof modal.alert === "function") {
+            await modal.alert({
+              title: "Verification failed",
+              message: data.message || "NIN verification failed",
+            });
+          }
+        } catch (e) {
+          console.warn("Modal alert failed:", e);
+        }
         return;
       }
 
       setVerified(data.data || {});
-      toast.success("NIN verified — proceed to submit");
+      if (data?.data && modal && typeof modal.alert === "function") {
+        await modal.alert({
+          title: "Verification Successful",
+          message: "NIN verified successfully — you can now proceed to submit",
+        });
+      }
+      toast.success(
+        "NIN verified successfully — you can now proceed to submit"
+      );
     } catch (err) {
       console.error(err);
       toast.error("Verification error");
@@ -163,7 +214,20 @@ export default function RegisterCustomer() {
 
   // Final submit: combine provided + verified and send to register endpoint
   const submitRegistration = async () => {
-    if (!verified) return toast.error("Please verify NIN first");
+    if (!verified) {
+      setFieldErrors((s) => ({ ...s, nin: "Verify NIN first" }));
+      try {
+        if (modal && typeof modal.alert === "function") {
+          await modal.alert({
+            title: "Missing verification",
+            message: "Please verify your NIN before submitting registration.",
+          });
+        }
+      } catch (e) {
+        console.warn("Modal alert failed:", e);
+      }
+      return;
+    }
     setSubmitting(true);
     try {
       const payload = new FormData();
@@ -324,6 +388,9 @@ export default function RegisterCustomer() {
         <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-6">
           Verify NIN
         </h2>
+        <p className="text-white text-center italic pb-5">
+          first verify your NIN, after wish you can submit your registration
+        </p>
 
         <form
           onSubmit={(e) => e.preventDefault()}
@@ -334,11 +401,36 @@ export default function RegisterCustomer() {
             <input
               name="nin"
               value={form.nin}
-              onChange={handleChange}
+              onChange={(e) => {
+                setFieldErrors((s) => ({ ...s, nin: undefined }));
+                handleChange(e);
+              }}
+              onBlur={async (e) => {
+                const v = e.target.value && String(e.target.value).trim();
+                if (!v) {
+                  setFieldErrors((s) => ({ ...s, nin: "Required" }));
+                  try {
+                    if (modal && typeof modal.alert === "function") {
+                      await modal.alert({
+                        title: "Missing NIN",
+                        message: "Please enter your NIN number.",
+                      });
+                    }
+                  } catch (err) {
+                    console.warn("Modal alert failed:", err);
+                  }
+                }
+              }}
               maxLength={20}
-              className="p-3 rounded-xl w-full"
+              className={`p-3 rounded-xl w-full ${
+                fieldErrors.nin ? "border-red-500 ring-1 ring-red-400" : ""
+              }`}
               required
+              aria-invalid={fieldErrors.nin ? "true" : "false"}
             />
+            {fieldErrors.nin ? (
+              <div className="text-xs text-red-500 mt-1">{fieldErrors.nin}</div>
+            ) : null}
           </div>
 
           <div className="flex flex-col">
@@ -365,7 +457,7 @@ export default function RegisterCustomer() {
                 ? "Verifying..."
                 : verified
                 ? "Verified ✓"
-                : "Verify NIN"}
+                : "Verify NIN first"}
             </button>
 
             <button

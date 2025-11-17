@@ -109,7 +109,9 @@ export default function LodgeDetails() {
           localStorage.setItem("ownerProfile", JSON.stringify(json.profile));
         } else {
           setOwnerError(
-            json && json.message ? json.message : "Profile not found"
+            json && json.message
+              ? json.message
+              : "Owner's Profile not found, please contact admin before booking"
           );
         }
       })
@@ -553,7 +555,7 @@ export default function LodgeDetails() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex justify-center items-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex justify-center items-center p-3">
       <motion.div
         className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden"
         variants={sectionVariants}

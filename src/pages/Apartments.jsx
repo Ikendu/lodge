@@ -152,10 +152,10 @@ export default function Apartments() {
                     <span className="font-bold text-blue-600">
                       ₦{lodge.price.toLocaleString()}/night
                     </span>
-                    <div className="flex items-center text-yellow-500">
+                    {/* <div className="flex items-center text-yellow-500">
                       <Star size={16} className="fill-yellow-500" />
                       <span className="ml-1 text-sm">{lodge.rating}</span>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </motion.div>
