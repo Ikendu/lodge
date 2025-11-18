@@ -702,7 +702,7 @@ export default function LodgeDetails() {
           {availabilityConflicts?.length > 0 && (
             <div className="absolute inset-0 z-30 flex items-start justify-center p-4 py-10 pointer-events-none">
               <div className="bg-red-700/70 text-white font-bold rounded-md px-4 py-3 text-center pointer-events-auto max-w-2xl">
-                {`Booked! Not available from ${formatDisplayDate(
+                {`Booked! - Not available from ${formatDisplayDate(
                   availabilityConflicts[0].start_date
                 )} to ${formatDisplayDate(
                   availabilityConflicts[0].end_date
