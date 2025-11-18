@@ -219,9 +219,12 @@ export default function LodgeDetails() {
       }
       const payload = {
         lodge_id: lodge?.id || lodge?.raw?.id || null,
-        startDate:
-          selectionRange.startDate?.toISOString()?.slice(0, 10) || null,
-        endDate: selectionRange.endDate?.toISOString()?.slice(0, 10) || null,
+        startDate: selectionRange.startDate
+          ? formatLocalDate(selectionRange.startDate)
+          : null,
+        endDate: selectionRange.endDate
+          ? formatLocalDate(selectionRange.endDate)
+          : null,
       };
       try {
         const res = await fetch(
@@ -266,9 +269,12 @@ export default function LodgeDetails() {
         const booking = {
           lodge,
           profile,
-          startDate:
-            selectionRange.startDate?.toISOString()?.slice(0, 10) || null,
-          endDate: selectionRange.endDate?.toISOString()?.slice(0, 10) || null,
+          startDate: selectionRange.startDate
+            ? formatLocalDate(selectionRange.startDate)
+            : null,
+          endDate: selectionRange.endDate
+            ? formatLocalDate(selectionRange.endDate)
+            : null,
           nights: nights || 0,
           total: total || 0,
         };
