@@ -18,6 +18,7 @@ export default function AddNewLodge() {
     amenities: "",
     capacity: "",
     bathroomType: "",
+    availability: true,
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -106,6 +107,8 @@ export default function AddNewLodge() {
     formData.append("amenities", form.amenities);
     formData.append("capacity", form.capacity || "");
     formData.append("bathroomType", form.bathroomType || "");
+    // availability: send 1 for true, 0 for false
+    formData.append("availability", form.availability ? "1" : "0");
 
     // include user identifiers if available
     if (userLogin && userLogin.uid) formData.append("userUid", userLogin.uid);
@@ -358,7 +361,39 @@ export default function AddNewLodge() {
               <option value="Entire Lodge">Entire Lodge</option>
               <option value="Guest House">Guest House</option>
               <option value="Hotel Room">Hotel Room</option>
+              <option value="2 Bedroom Flat">2 Bedroom Flat</option>
+              <option value="3 Bedroom Flat">3 Bedroom Flat</option>
+              <option value="Self contained">Self contained</option>
             </select>
+          </div>
+
+          {/* Availability radio */}
+          <div>
+            <label className="block font-semibold text-gray-700 mb-1">
+              Availability
+            </label>
+            <div className="flex items-center gap-6">
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="availability"
+                  value="1"
+                  checked={Boolean(form.availability)}
+                  onChange={() => setForm({ ...form, availability: true })}
+                />
+                <span>Currently Available</span>
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="availability"
+                  value="0"
+                  checked={!Boolean(form.availability)}
+                  onChange={() => setForm({ ...form, availability: false })}
+                />
+                <span>Not available</span>
+              </label>
+            </div>
           </div>
 
           <div>

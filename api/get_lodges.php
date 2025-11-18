@@ -29,7 +29,7 @@ try {
         $params[':nin'] = $nin;
     }
 
-    $sql = 'SELECT id, userUid, userLoginMail, nin, title, location, price, type, description, amenities, capacity, bathroomType, image_first, image_second, image_third, created_at FROM lodges';
+    $sql = 'SELECT id, userUid, userLoginMail, nin, title, location, price, availability, type, description, amenities, capacity, bathroomType, image_first, image_second, image_third, created_at FROM lodges';
     if (!empty($where)) {
         $sql .= ' WHERE ' . implode(' AND ', $where);
     }

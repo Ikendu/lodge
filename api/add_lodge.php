@@ -108,6 +108,7 @@ try {
     $amenities = clean($_POST['amenities'] ?? '');
     $capacity = clean($_POST['capacity'] ?? '');
     $bathroomType = clean($_POST['bathroomType'] ?? '');
+    $availability = isset($_POST['availability']) ? (int) $_POST['availability'] : 1;
     $userUid = clean($_POST['userUid'] ?? '');
     $userLoginMail = clean($_POST['userLoginMail'] ?? '');
 
@@ -118,10 +119,10 @@ try {
 
     $sql = "INSERT INTO lodges (
         userUid, userLoginMail, nin, title, location, price, type, description,
-        amenities, capacity, bathroomType, image_first, image_second, image_third, created_at
+        amenities, capacity, bathroomType, availability, image_first, image_second, image_third, created_at
     ) VALUES (
         :userUid, :userLoginMail, :nin, :title, :location, :price, :type, :description,
-        :amenities, :capacity, :bathroomType, '', '', '', NOW()
+        :amenities, :capacity, :bathroomType, :availability, '', '', '', NOW()
     )";
 
     $stmt = $pdo->prepare($sql);
@@ -136,7 +137,8 @@ try {
         ':description' => $description,
         ':amenities' => $amenities,
         ':capacity' => $capacity,
-        ':bathroomType' => $bathroomType
+        ':bathroomType' => $bathroomType,
+        ':availability' => $availability
     ]);
 
     $id = $pdo->lastInsertId();

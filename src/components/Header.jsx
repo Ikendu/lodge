@@ -372,6 +372,7 @@ export default function Header() {
                       setAccountMenuOpen(false);
                       localStorage.removeItem("customerProfile");
                       localStorage.removeItem("userLogin");
+                      localStorage.removeItem("ownerProfile");
                       await modal.alert({
                         title: "Stay in touch",
                         message:

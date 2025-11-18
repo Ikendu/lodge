@@ -22,21 +22,10 @@ export default function LodgeDetails() {
   const stateLodge = location.state?.lodge;
   const [fetchedLodge, setFetchedLodge] = useState(null);
   const lodge = stateLodge || fetchedLodge;
-  console.log("Lodge details page - lodge:", lodge, "; params:", params);
+  // console.log("Lodge details page - lodge:", lodge);
 
-  const startRef = useRef(null);
-  const endRef = useRef(null);
   const startNativeRef = useRef(null);
   const endNativeRef = useRef(null);
-
-  // compute a stable key for this lodge to track payment in localStorage
-  const lodgeKey =
-    lodge?.id ||
-    lodge?._id ||
-    lodge?.raw?.id ||
-    lodge?.raw?.nid ||
-    lodge?.title ||
-    "unknown_lodge";
 
   // Use Firebase auth state to determine whether the user is signed in
   const [user] = useAuthState(auth);
@@ -219,6 +208,15 @@ export default function LodgeDetails() {
 
     // Profile exists -> check availability before proceeding to payment
     (async () => {
+      // Block booking early if owner has manually marked this lodge unavailable
+      if (lodge?.raw.availability == 0) {
+        await modal.alert({
+          title: "Not available",
+          message:
+            "This lodge is currently marked unavailable by the owner. Please check another lodge.",
+        });
+        return;
+      }
       const payload = {
         lodge_id: lodge?.id || lodge?.raw?.id || null,
         startDate:
@@ -238,6 +236,7 @@ export default function LodgeDetails() {
         let json = null;
         try {
           json = JSON.parse(text);
+          console.log("Availability check response:", json);
         } catch (e) {
           await modal.alert({
             title: "Availability check failed",
@@ -318,6 +317,17 @@ export default function LodgeDetails() {
   // availability state: null = unknown, true = available, false = not available
   const [availability, setAvailability] = useState(null);
   const [availabilityConflicts, setAvailabilityConflicts] = useState([]);
+
+  // synchronize owner-marked availability when lodge is provided (could be 0/1, "0"/"1", true/false)
+  useEffect(() => {
+    if (!lodge) return;
+    const val = lodge?.raw?.availability;
+
+    if (val === undefined || val === null) return;
+
+    setAvailability(val);
+  }, [lodge]);
+
   // helper: safely parse yyyy-mm-dd into a local Date (no timezone shift), return null if invalid
   const parseDateInput = (s) => {
     if (!s) return null;
@@ -407,6 +417,7 @@ export default function LodgeDetails() {
           }
         );
         const json = await res.json();
+        console.log("Background availability check:", json);
         if (!mounted) return;
         // update local availability states for UI
         setAvailability(json && json.success ? Boolean(json.available) : null);
@@ -551,6 +562,7 @@ export default function LodgeDetails() {
         let json = null;
         try {
           json = JSON.parse(text);
+          console.log("Fetched lodge by id:", json);
         } catch (e) {
           console.warn("Invalid JSON from get_lodge.php", text);
           return;
@@ -678,18 +690,23 @@ export default function LodgeDetails() {
         {/* Image Gallery Section */}
         <div className="w-full relative">
           {/* Availability overlay shown immediately when lodge is booked for the selected/default dates */}
-          {availability === false && (
-            <div className="absolute inset-0 z-30 flex items-start justify-center p-4 pointer-events-none">
-              <div className="bg-red-700/90 text-white font-bold rounded-md px-4 py-3 text-center pointer-events-auto max-w-2xl">
-                {availabilityConflicts && availabilityConflicts.length > 0 ? (
-                  <>{`Booked, not available from ${formatDisplayDate(
-                    availabilityConflicts[0].start_date
-                  )} to ${formatDisplayDate(
-                    availabilityConflicts[0].end_date
-                  )} — check another lodge, Thank you`}</>
-                ) : (
-                  "Booked, not available — check another lodge, Thank you"
-                )}
+
+          {lodge?.raw?.availability == 0 && (
+            <div className="absolute inset-0 z-30 flex items-start justify-center p-4 py-10 pointer-events-none">
+              <div className="bg-red-700/70 text-white font-bold rounded-md px-4 py-3 text-center pointer-events-auto max-w-2xl">
+                Lodge is currently marked unavailable by the owner, Please check
+                another lodge or contact Admin"
+              </div>
+            </div>
+          )}
+          {availabilityConflicts?.length > 0 && (
+            <div className="absolute inset-0 z-30 flex items-start justify-center p-4 py-10 pointer-events-none">
+              <div className="bg-red-700/70 text-white font-bold rounded-md px-4 py-3 text-center pointer-events-auto max-w-2xl">
+                {`Booked! Not available from ${formatDisplayDate(
+                  availabilityConflicts[0].start_date
+                )} to ${formatDisplayDate(
+                  availabilityConflicts[0].end_date
+                )}, Thank you`}
               </div>
             </div>
           )}
@@ -1030,7 +1047,10 @@ export default function LodgeDetails() {
                   }}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
-                  className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 px-8 rounded-full shadow-md transition-all"
+                  className={
+                    "bg-yellow-400 text-black font-bold py-3 px-8 rounded-full shadow-md transition-all " +
+                    "hover:bg-yellow-300"
+                  }
                 >
                   Book Now
                 </motion.button>

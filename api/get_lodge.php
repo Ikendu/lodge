@@ -20,11 +20,11 @@ try {
     $pdo = $db->connect();
 
     if ($id !== '') {
-        $sql = 'SELECT id, userUid, userLoginMail, nin, title, location, price, type, description, amenities, capacity, bathroomType, image_first, image_second, image_third, created_at, JSON_OBJECT() AS raw FROM lodges WHERE id = :id LIMIT 1';
+        $sql = 'SELECT id, userUid, userLoginMail, nin, title, location, price, availability, type, description, amenities, capacity, bathroomType, image_first, image_second, image_third, created_at, JSON_OBJECT() AS raw FROM lodges WHERE id = :id LIMIT 1';
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':id' => $id]);
     } else {
-        $sql = 'SELECT id, userUid, userLoginMail, nin, title, location, price, type, description, amenities, capacity, bathroomType, image_first, image_second, image_third, created_at, JSON_OBJECT() AS raw FROM lodges WHERE title = :title LIMIT 1';
+        $sql = 'SELECT id, userUid, userLoginMail, nin, title, location, price, availability, type, description, amenities, capacity, bathroomType, image_first, image_second, image_third, created_at, JSON_OBJECT() AS raw FROM lodges WHERE title = :title LIMIT 1';
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':title' => $title]);
     }

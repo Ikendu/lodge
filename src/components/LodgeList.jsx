@@ -125,6 +125,84 @@ export default function LodgeList({
                 >
                   View
                 </button>
+                {/* Availability toggle for owners */}
+                <div className="mt-2">
+                  <button
+                    onClick={async () => {
+                      const newVal = lodge.availability ? 0 : 1;
+                      const ok = await modal.confirm({
+                        title: newVal ? "Mark available" : "Mark not available",
+                        message: newVal
+                          ? "Mark this lodge as available for bookings?"
+                          : "Mark this lodge as not available (hidden from availability)?",
+                        okText: "Yes",
+                        cancelText: "Cancel",
+                      });
+                      if (!ok) return;
+
+                      // optimistic UI update in state
+                      const prev = lodge.availability;
+                      setLodges((prevArr) =>
+                        prevArr.map((it) =>
+                          it.id === lodge.id
+                            ? { ...it, availability: newVal }
+                            : it
+                        )
+                      );
+                      try {
+                        const endpoints = [
+                          "https://lodge.morelinks.com.ng/api/update_lodge_availability.php",
+                          "http://localhost/lodge/api/update_lodge_availability.php",
+                        ];
+                        let done = false;
+                        for (const url of endpoints) {
+                          try {
+                            const res = await fetch(url, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                id: lodge.id,
+                                availability: newVal,
+                              }),
+                            });
+                            const text = await res.text();
+                            const json = JSON.parse(text || "{}");
+                            console.log("Availability update response:", json);
+                            if (res.ok && json.success) {
+                              done = true;
+                              break;
+                            }
+                          } catch (e) {
+                            continue;
+                          }
+                        }
+                        if (!done) throw new Error("Update failed");
+                        // success — state already updated optimistically
+                      } catch (e) {
+                        // revert optimistic update
+                        setLodges((prevArr) =>
+                          prevArr.map((it) =>
+                            it.id === lodge.id
+                              ? { ...it, availability: prev }
+                              : it
+                          )
+                        );
+                        await modal.alert({
+                          title: "Update failed",
+                          message: "Could not update availability. Try again.",
+                        });
+                      }
+                    }}
+                    className={
+                      "px-3 py-1 rounded text-sm " +
+                      (lodge.availability
+                        ? "bg-green-600 text-white"
+                        : "bg-red-600 text-white")
+                    }
+                  >
+                    {lodge.availability ? "Available" : "Not available"}
+                  </button>
+                </div>
                 {onEdit && (
                   <button
                     onClick={() => onEdit(lodge)}

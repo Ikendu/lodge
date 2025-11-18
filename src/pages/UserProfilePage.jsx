@@ -397,7 +397,9 @@ export default function UserProfilePage() {
           {loadingPaid ? (
             <div>Loading your paid bookings…</div>
           ) : paidBookings.length === 0 ? (
-            <div className="text-sm text-gray-300">No paid bookings found.</div>
+            <div className="text-sm text-gray-300">
+              No paid bookings found, If you have booking try reloading the page
+            </div>
           ) : (
             <div className="space-y-3">
               {paidBookings.map((b) => (
