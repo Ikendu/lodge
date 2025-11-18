@@ -12,7 +12,7 @@ export default function PaymentSuccess() {
   const flutterdata = location.state?.flutterwave;
   const paystackdata = location.state?.paystackdata;
 
-  console.log("Payment data:", { flutterdata, paystackdata });
+  // console.log("Payment data:", { flutterdata, paystackdata });
   console.log("Lodge data:", lodge);
 
   const formatDate = (raw) => {
@@ -43,7 +43,7 @@ export default function PaymentSuccess() {
     formatDate(flutterdata?.created_at);
   const fullName = `${profile?.firstName || ""} ${profile?.lastName || ""}`;
   const owner = JSON.parse(localStorage.getItem("ownerProfile"));
-  console.log("Owner data:", owner);
+  // console.log("Owner data:", owner);
   useEffect(() => {
     if (hasSaved.current) return;
     hasSaved.current = true;
@@ -52,6 +52,7 @@ export default function PaymentSuccess() {
       fullname: fullName,
       email: profile?.userLoginMail || null,
       nin: profile?.nin || null,
+      lodge_id: lodge?.id || lodge?.raw?.id || null,
       mobile: profile?.mobile || null,
       gender: profile?.gender || null,
       amount,
@@ -82,6 +83,7 @@ export default function PaymentSuccess() {
 
       order_id: paymentReference || null,
     };
+    console.log("Saving payload:", payload);
 
     const key = `payment_saved_${reference}`;
     const lodgeKey =
@@ -95,7 +97,7 @@ export default function PaymentSuccess() {
       return;
     }
     if (localStorage.getItem(key)) {
-      console.log("Payment already saved locally, skipping DB save.");
+      // console.log("Payment already saved locally, skipping DB save.");
       return;
     }
 
@@ -128,7 +130,7 @@ export default function PaymentSuccess() {
           } catch (e) {
             // ignore storage errors
           }
-          console.log("Payment saved:", json);
+          // console.log("Payment saved:", json);
         } else {
           setSaveStatus("error");
           console.error("Save failed:", json);

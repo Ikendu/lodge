@@ -44,6 +44,20 @@ try {
         }
     }
 
+    // If we have an id, fetch upcoming bookings for this lodge
+    if (!empty($row['id'])) {
+        try {
+            $bstmt = $pdo->prepare("SELECT id, start_date as startDate, end_date as endDate, nights, status FROM bookings WHERE lodge_id = :lid AND status = 'booked' AND end_date >= CURDATE() ORDER BY start_date");
+            $bstmt->execute([':lid' => $row['id']]);
+            $bookings = $bstmt->fetchAll(PDO::FETCH_ASSOC);
+            $row['bookings'] = $bookings;
+        } catch (Exception $e) {
+            $row['bookings'] = [];
+        }
+    } else {
+        $row['bookings'] = [];
+    }
+
     echo json_encode(['success' => true, 'data' => $row]);
     exit;
 } catch (Exception $e) {

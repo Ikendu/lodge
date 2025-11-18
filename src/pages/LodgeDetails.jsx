@@ -217,16 +217,73 @@ export default function LodgeDetails() {
       return;
     }
 
-    // Profile exists -> proceed to payment
-    const booking = {
-      lodge,
-      profile,
-      startDate: selectionRange.startDate?.toISOString()?.slice(0, 10) || null,
-      endDate: selectionRange.endDate?.toISOString()?.slice(0, 10) || null,
-      nights: nights || 0,
-      total: total || 0,
-    };
-    navigate("/payment", { state: booking });
+    // Profile exists -> check availability before proceeding to payment
+    (async () => {
+      const payload = {
+        lodge_id: lodge?.id || lodge?.raw?.id || null,
+        startDate:
+          selectionRange.startDate?.toISOString()?.slice(0, 10) || null,
+        endDate: selectionRange.endDate?.toISOString()?.slice(0, 10) || null,
+      };
+      try {
+        const res = await fetch(
+          "https://lodge.morelinks.com.ng/api/check_availability.php",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
+        const text = await res.text();
+        let json = null;
+        try {
+          json = JSON.parse(text);
+        } catch (e) {
+          await modal.alert({
+            title: "Availability check failed",
+            message: "Invalid server response",
+          });
+          return;
+        }
+        if (!json.success) {
+          await modal.alert({
+            title: "Availability check failed",
+            message: json.message || "Could not check availability",
+          });
+          return;
+        }
+        if (!json.available) {
+          // show first conflict range to the user
+          console.log("Booking available:", json);
+          const first = json.conflicts && json.conflicts[0];
+          const msg = first
+            ? `Selected dates have been booked (from ${first.start_date} to ${first.end_date}). Please pick other dates or contact admin.`
+            : "Selected dates are not available. Please pick other dates.";
+          await modal.alert({ title: "Dates unavailable", message: msg });
+          return;
+        }
+
+        // Available -> proceed to payment
+        const booking = {
+          lodge,
+          profile,
+          startDate:
+            selectionRange.startDate?.toISOString()?.slice(0, 10) || null,
+          endDate: selectionRange.endDate?.toISOString()?.slice(0, 10) || null,
+          nights: nights || 0,
+          total: total || 0,
+        };
+        navigate("/payment", { state: booking });
+      } catch (err) {
+        console.error("Availability check error", err);
+        try {
+          await modal.alert({
+            title: "Network error",
+            message: "Failed to check availability. Try again.",
+          });
+        } catch (e) {}
+      }
+    })();
   };
 
   // Booking date states (react-date-range)
@@ -258,6 +315,9 @@ export default function LodgeDetails() {
   );
   const [isTouchDevice, setIsTouchDevice] = useState(false);
 
+  // availability state: null = unknown, true = available, false = not available
+  const [availability, setAvailability] = useState(null);
+  const [availabilityConflicts, setAvailabilityConflicts] = useState([]);
   // helper: safely parse yyyy-mm-dd into a local Date (no timezone shift), return null if invalid
   const parseDateInput = (s) => {
     if (!s) return null;
@@ -324,6 +384,55 @@ export default function LodgeDetails() {
       setIsTouchDevice(false);
     }
   }, []);
+
+  // Optionally check availability in background when dates change and lodge id is present
+  // This effect also runs on first render so availability is known immediately.
+  useEffect(() => {
+    let mounted = true;
+    if (!lodge || !(lodge?.id || lodge?.raw?.id)) return;
+    const check = async () => {
+      const payload = {
+        lodge_id: lodge?.id || lodge?.raw?.id || null,
+        startDate:
+          selectionRange.startDate?.toISOString()?.slice(0, 10) || null,
+        endDate: selectionRange.endDate?.toISOString()?.slice(0, 10) || null,
+      };
+      try {
+        const res = await fetch(
+          "https://lodge.morelinks.com.ng/api/check_availability.php",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
+        const json = await res.json();
+        if (!mounted) return;
+        // update local availability states for UI
+        setAvailability(json && json.success ? Boolean(json.available) : null);
+        setAvailabilityConflicts(json && json.conflicts ? json.conflicts : []);
+
+        // also attach availability to fetchedLodge if we have one
+        setFetchedLodge((prev) => {
+          try {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              availability: json && json.success ? json.available : null,
+              availability_conflicts:
+                json && json.conflicts ? json.conflicts : [],
+            };
+          } catch (e) {
+            return prev;
+          }
+        });
+      } catch (e) {
+        // ignore background availability errors
+      }
+    };
+    check();
+    return () => (mounted = false);
+  }, [selectionRange.startDate, selectionRange.endDate, lodge]);
 
   // helper to open the native date picker in a cross-browser way.
   // Some browsers (older Safari on iOS) don't implement showPicker(). In that case
@@ -567,7 +676,23 @@ export default function LodgeDetails() {
           class="fa-solid fa-arrow-left cursor-pointer pb-10 absolute top-24 left-9 z-10"
         ></i>
         {/* Image Gallery Section */}
-        <div className="w-full">
+        <div className="w-full relative">
+          {/* Availability overlay shown immediately when lodge is booked for the selected/default dates */}
+          {availability === false && (
+            <div className="absolute inset-0 z-30 flex items-start justify-center p-4 pointer-events-none">
+              <div className="bg-red-700/90 text-white font-bold rounded-md px-4 py-3 text-center pointer-events-auto max-w-2xl">
+                {availabilityConflicts && availabilityConflicts.length > 0 ? (
+                  <>{`Booked, not available from ${formatDisplayDate(
+                    availabilityConflicts[0].start_date
+                  )} to ${formatDisplayDate(
+                    availabilityConflicts[0].end_date
+                  )} — check another lodge, Thank you`}</>
+                ) : (
+                  "Booked, not available — check another lodge, Thank you"
+                )}
+              </div>
+            </div>
+          )}
           <img
             src={images[0] || lodge.image_first_url || ""}
             alt={lodge.title}

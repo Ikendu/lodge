@@ -545,7 +545,7 @@ export default function UserProfilePage() {
                 alt="Given"
                 className="w-full h-80 object-cover rounded-2xl group-hover:opacity-90 transition-all duration-300"
               />
-              {signatureSrc && (
+              {/* {signatureSrc && (
                 <div className="flex justify-center p-3 bg-transparent">
                   <img
                     src={signatureSrc}
@@ -554,7 +554,7 @@ export default function UserProfilePage() {
                     style={{ height: "auto" }}
                   />
                 </div>
-              )}
+              )} */}
             </motion.div>
           </div>
 

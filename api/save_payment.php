@@ -216,6 +216,55 @@ try {
 
     $insertId = $pdo->lastInsertId();
 
+    // If start/end dates provided, attempt to create a booking record
+    if ($insertId && $startDate && $endDate) {
+        try {
+            // Determine lodge_id: prefer explicit lodge_id from payload, otherwise try to match by title
+            $lodge_id = null;
+            if (!empty($data['lodge_id']) && is_numeric($data['lodge_id'])) {
+                $lodge_id = (int)$data['lodge_id'];
+            } elseif (!empty($lodge_title)) {
+                $q = $pdo->prepare("SELECT id FROM lodges WHERE title = :title LIMIT 1");
+                $q->execute([':title' => $lodge_title]);
+                $r = $q->fetch(PDO::FETCH_ASSOC);
+                if ($r) $lodge_id = (int)$r['id'];
+            }
+
+            if ($lodge_id) {
+                // Check for overlapping confirmed bookings
+                $c = $pdo->prepare("SELECT id FROM bookings WHERE lodge_id = :lid AND status = 'booked' AND NOT (end_date < :start OR start_date > :end) LIMIT 1");
+                $c->execute([':lid' => $lodge_id, ':start' => $startDate, ':end' => $endDate]);
+                $conf = $c->fetch(PDO::FETCH_ASSOC);
+                if ($conf) {
+                    // mark booking as conflict
+                    $ins = $pdo->prepare("INSERT INTO bookings (lodge_id, user_uid, payment_id, start_date, end_date, nights, status, notes, created_at) VALUES (:lid, :uid, :pid, :start, :end, :nights, 'conflict', :notes, NOW())");
+                    $ins->execute([
+                        ':lid' => $lodge_id,
+                        ':uid' => $data['userUid'] ?? null,
+                        ':pid' => $insertId,
+                        ':start' => $startDate,
+                        ':end' => $endDate,
+                        ':nights' => $nights,
+                        ':notes' => 'Auto-created after payment; conflict with existing booking',
+                    ]);
+                } else {
+                    $ins = $pdo->prepare("INSERT INTO bookings (lodge_id, user_uid, payment_id, start_date, end_date, nights, status, created_at) VALUES (:lid, :uid, :pid, :start, :end, :nights, 'booked', NOW())");
+                    $ins->execute([
+                        ':lid' => $lodge_id,
+                        ':uid' => $data['userUid'] ?? null,
+                        ':pid' => $insertId,
+                        ':start' => $startDate,
+                        ':end' => $endDate,
+                        ':nights' => $nights,
+                    ]);
+                }
+            }
+        } catch (Exception $e) {
+            // Do not fail the payment save if booking creation errors; log for investigation
+            error_log("Booking create after payment failed: " . $e->getMessage() . "\n", 3, __DIR__ . '/booking_debug.log');
+        }
+    }
+
     // === Send email receipt to user and admin ===
     ob_start();
     generate_payment_receipt_html($data);
