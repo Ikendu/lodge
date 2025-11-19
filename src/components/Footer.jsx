@@ -14,6 +14,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { useState } from "react";
 import { useModalContext } from "./ui/ModalProvider";
 import { auth } from "../firebaseConfig";
+import { User } from "lucide-react";
 
 export default function Footer() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function Footer() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const modal = useModalContext();
 
+  const userProfile = localStorage.getItem("customerProfile");
   const footerVariants = {
     hidden: { opacity: 0, y: 30 },
     visible: {
@@ -36,7 +38,7 @@ export default function Footer() {
       whileInView="visible"
       variants={footerVariants}
       viewport={{ once: true }}
-      className="relative bg-gradient-to-r from-indigo-800 via-purple-700 to-blue-700 text-white pt-16 pb-8 px-6 md:px-20 overflow-hidden"
+      className="relative bg-gradient-to-r from-indigo-950 via-purple-900 to-blue-950 text-white pt-16 pb-8 px-6 md:px-20 overflow-hidden"
     >
       {/* Wave Divider */}
       <div className="absolute top-0 left-0 w-full overflow-hidden leading-none rotate-180">
@@ -58,7 +60,7 @@ export default function Footer() {
         {/* About Section */}
         <div>
           <h3 className="text-2xl font-bold mb-4">MoreLinks Lodge</h3>
-          <p className="text-gray-200 leading-relaxed">
+          <p className="text-gray-400 leading-relaxed">
             Connecting travelers, students, and tenants with affordable and
             comfortable lodging options. Whether you’re listing or finding a
             space, we make it seamless and secure.
@@ -79,16 +81,18 @@ export default function Footer() {
                 Home
               </motion.span>
             </li>
-            <li>
-              <motion.span
-                whileHover={{ x: 5, scale: 1.05 }}
-                transition={{ duration: 0.2 }}
-                className="cursor-pointer hover:text-yellow-300"
-                onClick={() => navigate("/profile")}
-              >
-                My Dashboard
-              </motion.span>
-            </li>
+            {userProfile && (
+              <li>
+                <motion.span
+                  whileHover={{ x: 5, scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                  className="cursor-pointer hover:text-yellow-300"
+                  onClick={() => navigate("/profile")}
+                >
+                  My Dashboard
+                </motion.span>
+              </li>
+            )}
 
             <li>
               {/* Scroll to lodge list on same page */}
@@ -200,16 +204,6 @@ export default function Footer() {
                 onClick={() => navigate("/faqs")}
               >
                 FAQs
-              </motion.span>
-            </li>
-
-            <li>
-              <motion.span
-                whileHover={{ x: 5, scale: 1.05 }}
-                className="cursor-pointer hover:text-yellow-300"
-                onClick={() => navigate("/contact")}
-              >
-                Contact Us
               </motion.span>
             </li>
           </ul>
