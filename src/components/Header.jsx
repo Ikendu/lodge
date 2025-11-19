@@ -42,6 +42,7 @@ export default function Header() {
   let storedLogin = null;
   try {
     storedLogin = JSON.parse(localStorage.getItem("userLogin") || "null");
+    console.log("Stored login:", storedLogin);
   } catch (e) {
     storedLogin = null;
   }
@@ -75,12 +76,36 @@ export default function Header() {
   };
 
   const links = [
-    { name: "Home", path: "/" },
-    { name: "Find Lodge", path: "/apartments" },
-    { name: "List a Lodge", path: "/list_new_lodge" },
-    { name: "About Us", path: "/about" },
-    { name: "Contact", path: "/contact" },
-    { name: "FAQs", path: "/faqs" },
+    {
+      name: "Home",
+      path: "/",
+      icon: <i class="fa fa-home" aria-hidden="true"></i>,
+    },
+    {
+      name: "Find Lodge",
+      path: "/apartments",
+      icon: <i class="fa fa-search" aria-hidden="true"></i>,
+    },
+    {
+      name: "List a Lodge",
+      path: "/list_new_lodge",
+      icon: <i class="fa fa-plus-circle" aria-hidden="true"></i>,
+    },
+    {
+      name: "About Us",
+      path: "/about",
+      icon: <i class="fa fa-info-circle" aria-hidden="true"></i>,
+    },
+    {
+      name: "Contact",
+      path: "/contact",
+      icon: <i class="fa fa-envelope" aria-hidden="true"></i>,
+    },
+    {
+      name: "FAQs",
+      path: "/faqs",
+      icon: <i class="fa fa-question-circle" aria-hidden="true"></i>,
+    },
   ];
 
   return (
@@ -203,8 +228,9 @@ export default function Header() {
                   navigate(link.path);
                 }
               }}
-              className="hover:text-yellow-300 transition-colors"
+              className="flex gap-1 items-center hover:text-yellow-300 transition-colors"
             >
+              {link.icon}
               {link.name}
             </button>
           ))}
@@ -237,11 +263,14 @@ export default function Header() {
                 <div className="absolute right-0 mt-2 w-40 bg-white text-gray-800 rounded shadow-lg py-2 z-50">
                   <button
                     onClick={() => setAccountMenuOpen(false)}
-                    className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
+                    className="absolute top-1 right-1 text-red-700 hover:text-gray-700"
                     aria-label="Close menu"
                   >
                     <X size={16} />
                   </button>
+                  <p className="p-2 px-4 ">
+                    {storedLogin?.displayName?.toUpperCase()}
+                  </p>
                   <button
                     onClick={() => {
                       setAccountMenuOpen(false);
@@ -261,9 +290,9 @@ export default function Header() {
                         navigate("/profile");
                       }
                     }}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                    className="text-blue-600 flex gap-4 items-center w-full text-left px-4 py-2 hover:bg-gray-100"
                   >
-                    Profile
+                    <i class="fa fa-user" aria-hidden="true"></i> Dashboard
                   </button>
                   <button
                     onClick={async () => {
@@ -279,9 +308,9 @@ export default function Header() {
                       });
                       navigate("/");
                     }}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                    className="text-blue-600 flex gap-4 items-center w-full text-left px-4 py-2 hover:bg-gray-100"
                   >
-                    Logout
+                    <i class="fa fa-sign-out" aria-hidden="true"></i> Logout
                   </button>
                 </div>
               )}
@@ -340,11 +369,14 @@ export default function Header() {
                 <div className="absolute right-0 mt-2 w-40 bg-white text-gray-800 rounded shadow-lg py-2 z-50">
                   <button
                     onClick={() => setAccountMenuOpen(false)}
-                    className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
+                    className="absolute top-1 right-1 text-red-700 hover:text-gray-700"
                     aria-label="Close menu"
                   >
                     <X size={16} />
                   </button>
+                  <p className="p-2 px-4 ">
+                    {storedLogin?.displayName?.toUpperCase()}
+                  </p>
                   <button
                     onClick={() => {
                       setAccountMenuOpen(false);
@@ -363,9 +395,9 @@ export default function Header() {
                         navigate("/profile");
                       }
                     }}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                    className="text-blue-600 flex gap-3 items-center w-full text-left px-4 py-2 hover:bg-gray-100"
                   >
-                    Profile
+                    <i class="fa fa-user" aria-hidden="true"></i> Dashboard
                   </button>
                   <button
                     onClick={async () => {
@@ -382,8 +414,9 @@ export default function Header() {
                       });
                       navigate("/");
                     }}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                    className="text-blue-600 flex gap-3 items-center w-full text-left px-4 py-2 hover:bg-gray-100"
                   >
+                    <i class="fa fa-sign-out" aria-hidden="true"></i>
                     Logout
                   </button>
                 </div>

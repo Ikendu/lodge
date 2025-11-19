@@ -9,9 +9,17 @@ import {
 } from "react-icons/fa";
 import { Link as ScrollLink } from "react-scroll";
 import { Link, useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useState } from "react";
+import { useModalContext } from "./ui/ModalProvider";
+import { auth } from "../firebaseConfig";
 
 export default function Footer() {
   const navigate = useNavigate();
+  const [user] = useAuthState(auth);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const modal = useModalContext();
 
   const footerVariants = {
     hidden: { opacity: 0, y: 30 },
@@ -71,6 +79,16 @@ export default function Footer() {
                 Home
               </motion.span>
             </li>
+            <li>
+              <motion.span
+                whileHover={{ x: 5, scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+                className="cursor-pointer hover:text-yellow-300"
+                onClick={() => navigate("/profile")}
+              >
+                My Dashboard
+              </motion.span>
+            </li>
 
             <li>
               {/* Scroll to lodge list on same page */}
@@ -97,17 +115,6 @@ export default function Footer() {
                 List Your Lodge
               </motion.span>
             </li>
-
-            <li>
-              <motion.span
-                whileHover={{ x: 5, scale: 1.05 }}
-                className="cursor-pointer hover:text-yellow-300"
-                onClick={() => navigate("/faqs")}
-              >
-                FAQs
-              </motion.span>
-            </li>
-
             <li>
               <motion.span
                 whileHover={{ x: 5, scale: 1.05 }}
@@ -116,6 +123,37 @@ export default function Footer() {
               >
                 Contact Us
               </motion.span>
+            </li>
+            <li>
+              {user ? (
+                <button
+                  onClick={async () => {
+                    await signOut(auth);
+                    setAccountMenuOpen(false);
+                    localStorage.removeItem("customerProfile");
+                    localStorage.removeItem("userLogin");
+                    await modal.alert({
+                      title: "Stay in touch",
+                      message:
+                        "Thank you for being part of Morelinks community. We look forward to having you again.",
+                      okText: "Close",
+                    });
+                    navigate("/");
+                  }}
+                  className="text-red-200 flex gap-4 items-center px-2 p-1 rounded-lg text-left hover:bg-gray-100 hover:text-red-600"
+                >
+                  <i class="fa fa-sign-out" aria-hidden="true"></i> Logout
+                </button>
+              ) : (
+                <motion.span
+                  whileHover={{ x: 5, scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                  className="cursor-pointer hover:text-yellow-300"
+                  onClick={() => navigate("/login")}
+                >
+                  Login
+                </motion.span>
+              )}
             </li>
           </ul>
         </div>
@@ -154,6 +192,25 @@ export default function Footer() {
                   Safety Tips
                 </motion.span>
               </Link>
+            </li>
+            <li>
+              <motion.span
+                whileHover={{ x: 5, scale: 1.05 }}
+                className="cursor-pointer hover:text-yellow-300"
+                onClick={() => navigate("/faqs")}
+              >
+                FAQs
+              </motion.span>
+            </li>
+
+            <li>
+              <motion.span
+                whileHover={{ x: 5, scale: 1.05 }}
+                className="cursor-pointer hover:text-yellow-300"
+                onClick={() => navigate("/contact")}
+              >
+                Contact Us
+              </motion.span>
             </li>
           </ul>
         </div>
