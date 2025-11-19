@@ -27,7 +27,7 @@ export default function AboutUs() {
           <div className="flex justify-between">
             <i
               onClick={() => navigate(-1)}
-              class="fa-solid fa-arrow-left cursor-pointer pb-10"
+              class="fa-solid fa-arrow-left cursor-pointer pb-10 py-5 pr-5"
             ></i>
             <div></div>
           </div>

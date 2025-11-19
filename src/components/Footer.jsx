@@ -49,7 +49,7 @@ export default function Footer() {
       <div className="relative z-10 grid grid-cols-1 md:grid-cols-4 gap-10">
         {/* About Section */}
         <div>
-          <h3 className="text-2xl font-bold mb-4">MoreLink Lodge</h3>
+          <h3 className="text-2xl font-bold mb-4">MoreLinks Lodge</h3>
           <p className="text-gray-200 leading-relaxed">
             Connecting travelers, students, and tenants with affordable and
             comfortable lodging options. Whether you’re listing or finding a
@@ -209,9 +209,17 @@ export default function Footer() {
         transition={{ delay: 0.5 }}
         className="mt-10 text-center text-sm text-gray-200 border-t border-white/20 pt-4"
       >
-        © {new Date().getFullYear()}{" "}
-        <span className="text-yellow-300 font-semibold">MoreLink Lodge</span>.
-        All rights reserved.
+        <a
+          href="https://morelinks.com.ng"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          © {new Date().getFullYear()}{" "}
+          <span className="text-yellow-300 font-semibold">
+            MoreLinks Tech Concept
+          </span>
+          . All rights reserved.
+        </a>
       </motion.div>
     </motion.footer>
   );

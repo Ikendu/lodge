@@ -7,8 +7,12 @@ import {
   FaWhatsapp,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 export default function ContactUs() {
+  const navigate = useNavigate();
+
+  // animation variants
   const fadeInUp = {
     hidden: { opacity: 0, y: 40 },
     visible: (i) => ({
@@ -29,14 +33,23 @@ export default function ContactUs() {
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen text-gray-800">
       {/* Hero Section */}
+
       <section className="relative overflow-hidden text-center py-20 bg-gradient-to-r from-indigo-700 to-purple-600 text-white">
         <motion.h1
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-4xl md:text-6xl font-bold mb-4"
+          className=""
         >
-          Get in Touch
+          <div className="flex justify-between">
+            <i
+              onClick={() => navigate(-1)}
+              class="fa-solid fa-arrow-left cursor-pointer  p-3 md:p-5 pr-5"
+            ></i>
+          </div>
+          <div className="text-4xl md:text-6xl font-bold mb-4">
+            Get in Touch
+          </div>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
