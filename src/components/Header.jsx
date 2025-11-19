@@ -75,6 +75,7 @@ export default function Header() {
   };
 
   const links = [
+    { name: "Home", path: "/" },
     { name: "Find Lodge", path: "/apartments" },
     { name: "List a Lodge", path: "/list_new_lodge" },
     { name: "About Us", path: "/about" },

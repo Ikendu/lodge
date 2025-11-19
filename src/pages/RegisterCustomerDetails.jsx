@@ -2,10 +2,15 @@ import { useEffect, useState } from "react";
 import { useModalContext } from "../components/ui/ModalProvider";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "../firebaseConfig";
 
 export default function RegisterCustomerDetails() {
   const navigate = useNavigate();
   const location = useLocation();
+  // also accept Firebase auth presence as a valid login
+  const [firebaseUser, loadingAuth] = useAuthState(auth);
+  const [checkingLogin, setCheckingLogin] = useState(true);
 
   // Allow prefilled values when navigating back from verify step
   const provided = location.state?.provided || {};
@@ -19,7 +24,21 @@ export default function RegisterCustomerDetails() {
     } catch (e) {
       // ignore
     }
-  }, [navigate]);
+    const userData = localStorage.getItem("userLogin");
+
+    // While Firebase auth is initializing, wait to avoid flicker
+    if (loadingAuth) return;
+
+    if (!userData && !firebaseUser) {
+      // console.log(
+      //   "No user found (localStorage + firebase) → redirecting to /login"
+      // );
+      navigate("/login");
+    } else {
+      console.log("User present → allow register page");
+    }
+    setCheckingLogin(false);
+  }, [navigate, loadingAuth, firebaseUser]);
 
   const [form, setForm] = useState({
     dob: provided.dob || "",
@@ -190,6 +209,15 @@ export default function RegisterCustomerDetails() {
     }
   };
 
+  // ✅ Prevent render flicker while checking login
+  if (checkingLogin) {
+    return (
+      <div className="flex items-center justify-center h-screen text-white bg-indigo-700">
+        Checking login...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 p-4">
       <motion.div
@@ -198,9 +226,12 @@ export default function RegisterCustomerDetails() {
         transition={{ duration: 0.6 }}
         className="bg-white/20 backdrop-blur-lg shadow-2xl rounded-2xl w-full max-w-3xl p-6 sm:p-8"
       >
-        <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-6">
-          Additional Details
-        </h2>
+        <div className="text-center mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white  ">
+            Your Profile Details
+          </h2>
+          <p className="">Welcome to Morelinks, let's get to know you</p>
+        </div>
 
         <form
           onSubmit={handleSubmit}

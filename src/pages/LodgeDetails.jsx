@@ -13,6 +13,7 @@ import ownerImg2 from "../assets/icons/userNin.png";
 import { differenceInCalendarDays } from "date-fns";
 
 import calendarIcon from "../assets/icons/calendar.png";
+import ScrollToTop from "../components/ScrollToTop";
 
 export default function LodgeDetails() {
   const location = useLocation();
@@ -689,33 +690,35 @@ export default function LodgeDetails() {
         initial="hidden"
         animate="show"
       >
+        <ScrollToTop />
         <i
           onClick={() => navigate(-1)}
-          class="fa-solid fa-arrow-left cursor-pointer pb-10 absolute top-24 left-9 z-10"
+          class="fa-solid fa-arrow-left cursor-pointer p-2 rounded-full text-white absolute top-24 left-9 z-10 bg-black"
         ></i>
         {/* Image Gallery Section */}
         <div className="w-full relative">
           {/* Availability overlay shown immediately when lodge is booked for the selected/default dates */}
 
           {lodge?.raw?.availability == 0 && (
-            <div className="absolute inset-0 z-30 flex items-start justify-center p-4 py-10 pointer-events-none">
+            <div className="absolute inset-0 z-30 flex items-start justify-center p-4 py-14 pointer-events-none">
               <div className="bg-red-700/70 text-white font-bold rounded-md px-4 py-3 text-center pointer-events-auto max-w-2xl">
                 Lodge is currently marked unavailable by the owner, Please check
                 another lodge or contact Admin"
               </div>
             </div>
           )}
-          {availabilityConflicts?.length > 0 && (
-            <div className="absolute inset-0 z-30 flex items-start justify-center p-4 py-10 pointer-events-none">
-              <div className="bg-red-700/70 text-white font-bold rounded-md px-4 py-3 text-center pointer-events-auto max-w-2xl">
-                {`Booked! - Not available from ${formatDisplayDate(
-                  availabilityConflicts[0].start_date
-                )} to ${formatDisplayDate(
-                  availabilityConflicts[0].end_date
-                )}, Thank you`}
+          {availabilityConflicts?.length > 0 &&
+            !lodge?.raw?.availability == 0 && (
+              <div className="absolute inset-0 z-30 flex items-start justify-center p-4 py-14 pointer-events-none">
+                <div className="bg-red-700/70 text-white font-bold rounded-md px-4 py-3 text-center pointer-events-auto max-w-2xl">
+                  {`Booked! - Not available from ${formatDisplayDate(
+                    availabilityConflicts[0].start_date
+                  )} to ${formatDisplayDate(
+                    availabilityConflicts[0].end_date
+                  )}, Thank you`}
+                </div>
               </div>
-            </div>
-          )}
+            )}
           <img
             src={images[0] || lodge.image_first_url || ""}
             alt={lodge.title}
