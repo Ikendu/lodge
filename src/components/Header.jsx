@@ -101,11 +101,6 @@ export default function Header() {
       path: "/contact",
       icon: <i class="fa fa-envelope" aria-hidden="true"></i>,
     },
-    {
-      name: "FAQs",
-      path: "/faqs",
-      icon: <i class="fa fa-question-circle" aria-hidden="true"></i>,
-    },
   ];
 
   return (
@@ -429,7 +424,14 @@ export default function Header() {
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle Menu"
           >
-            {menuOpen ? <X size={28} /> : <Menu size={28} />}
+            {menuOpen ? (
+              <X
+                size={28}
+                className="bg-yellow-600 rounded-full p-1 text-white"
+              />
+            ) : (
+              <Menu size={28} />
+            )}
           </button>
         </div>
       </div>
@@ -512,23 +514,28 @@ export default function Header() {
               Go
             </button>
           </div>
-          {links.map((link, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                if (link.path === "/list_new_lodge" && !user) {
-                  const from = { pathname: "/list_new_lodge" };
-                  navigate("/login", { state: { from } });
-                } else {
-                  navigate(link.path);
-                }
-                setMenuOpen(false);
-              }}
-              className="block w-full hover:text-yellow-300 transition-colors"
-            >
-              {link.name}
-            </button>
-          ))}
+          <div className="flex justify-center">
+            <div>
+              {links.map((link, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    if (link.path === "/list_new_lodge" && !user) {
+                      const from = { pathname: "/list_new_lodge" };
+                      navigate("/login", { state: { from } });
+                    } else {
+                      navigate(link.path);
+                    }
+                    setMenuOpen(false);
+                  }}
+                  className="flex gap-4 items-center py-2 hover:text-yellow-300 transition-colors"
+                >
+                  {link?.icon}
+                  {link?.name}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
