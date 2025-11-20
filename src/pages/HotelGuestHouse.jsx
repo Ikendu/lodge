@@ -3,9 +3,8 @@ import { Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import logo from "../assets/logos/logo.png";
 
-export default function Apartments() {
+export default function HotelGuestHouse() {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -30,7 +29,6 @@ export default function Apartments() {
       .then((j) => {
         if (!mounted) return;
         if (j && j.success && Array.isArray(j.data)) {
-          console.log("Fetched lodges:", j.data);
           const mapped = j.data.map((row) => ({
             id: row.id,
             title: row.title,
@@ -65,8 +63,8 @@ export default function Apartments() {
       const typeRaw =
         (l.raw && (l.raw.type || l.raw.lodge_type || l.raw.type_name)) || "";
       const type = String(typeRaw).toLowerCase();
-      // Exclude hotel rooms and guest houses from the Apartments listing
-      if (type.includes("hotel") || type.includes("guest")) return false;
+      // Only include hotel rooms and guest houses
+      if (!(type.includes("hotel") || type.includes("guest"))) return false;
       // price filter
       if (l.price < min || l.price > max) return false;
       // location filter
@@ -96,20 +94,19 @@ export default function Apartments() {
       <div>
         <i
           onClick={() => navigate(-1)}
-          class="fa-solid fa-arrow-left cursor-pointer py-5 pr-10 absolute top-14 left-4 z-10"
+          className="fa-solid fa-arrow-left cursor-pointer py-5 pr-10 absolute top-14 left-4 z-10"
         ></i>
       </div>
 
       <h2 className="text-2xl md:text-3xl font-bold mb-2 text-center text-gray-800 pt-8">
-        Explore Available Lodges & Apartments
+        Hotel Rooms & Guest Houses
       </h2>
-      <div className=" text-center mb-6">
+      <div className="text-center mb-6">
         <button
-          onClick={() => navigate("/hotel-guesthouse")}
-          className="text-sm text-blue-600 hover:underline w-full flex items-center justify-center gap-2"
+          onClick={() => navigate("/apartments")}
+          className="text-sm text-blue-600 hover:underline"
         >
-          <i class="fa-solid fa-bed"></i>
-          Click here to view Hotel Rooms & Guest Houses instead
+          View Other Lodges & Apartments
         </button>
       </div>
 
@@ -142,7 +139,7 @@ export default function Apartments() {
         ) : error ? (
           <div className="py-16 text-center text-red-600">
             <h3>
-              Failed to load lodges, Please check your nextwork and reload the
+              Failed to load lodges, Please check your network and reload the
               page
             </h3>
           </div>
@@ -170,10 +167,6 @@ export default function Apartments() {
                     <span className="font-bold text-blue-600">
                       ₦{lodge.price.toLocaleString()}/night
                     </span>
-                    {/* <div className="flex items-center text-yellow-500">
-                      <Star size={16} className="fill-yellow-500" />
-                      <span className="ml-1 text-sm">{lodge.rating}</span>
-                    </div> */}
                   </div>
                 </div>
               </motion.div>

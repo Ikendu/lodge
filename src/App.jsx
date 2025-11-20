@@ -11,6 +11,7 @@ import RegisterCustomer from "./pages/RegisterCustomer";
 import RegisterSuccess from "./pages/RegisterSuccess";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Apartments from "./pages/Apartments.jsx";
+import HotelGuestHouse from "./pages/HotelGuestHouse.jsx";
 import LoginPage from "./pages/Login.jsx";
 import FAQPage from "./pages/FqaPage.jsx";
 import LodgeDetails from "./pages/LodgeDetails.jsx";
@@ -63,6 +64,7 @@ export default function App() {
             <Route path="/lodge/" element={<LodgeDetails />} />
 
             <Route path="/apartments" element={<Apartments />} />
+            <Route path="/hotel-guesthouse" element={<HotelGuestHouse />} />
             <Route path="/list_new_lodge" element={<AddNewLodge />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/payment" element={<Payment />} />
