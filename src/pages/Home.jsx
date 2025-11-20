@@ -5,6 +5,7 @@ import { auth } from "../firebaseConfig";
 import { motion } from "framer-motion";
 import guest from "../assets/logos/guest.png";
 import ownerh from "../assets/logos/ownerh.png";
+import herobg from "../assets/images/herobg.jpg";
 import { Star } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
@@ -106,75 +107,84 @@ export default function Home() {
     navigate("/list_new_lodge");
   };
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 text-white p-6">
-      {/* Header */}
-      <motion.h1
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="text-4xl md:text-5xl font-extrabold text-center m-12 drop-shadow-lg"
+    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 text-white p-2">
+      {/* HERO SECTION with responsive background image (content sits on top) */}
+      <section
+        className="relative w-full flex items-center justify-center overflow-hidden rounded-2xl mb-8"
+        style={{
+          backgroundImage: `url(${herobg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
       >
-        <p>
-          <i class="fa-solid fa-house-user p-4"></i>
-        </p>
-        Welcome to <span className="text-yellow-300">MoreLinks Lodge</span>
-        <p className="font-thin text-right italic py-2 text-sm">
-          where life is made easier and connections more safer
-        </p>
-      </motion.h1>
-
-      {/* Options Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mb-20">
-        {/* Lodge Seeker */}
-        <motion.div
-          className="cursor-pointer bg-white/20 backdrop-blur-lg rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border border-white/30"
-          variants={cardVariants}
-          initial="hidden"
-          animate="visible"
-          whileHover="hover"
-          custom={0}
-          onClick={() => navigate("/apartments")}
-        >
-          <img
-            src={guest}
-            alt="guest or tenant"
-            className="h-20 mb-4 drop-shadow-md"
-          />
-          <h4 className="text-2xl font-bold mb-2">Find a Lodge</h4>
-          <p className="text-sm md:text-base opacity-90">
-            Looking for the perfect place to lodge or rent? We've got you
-            covered.
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative z-10 w-full max-w-5xl px-4 py-12">
+          <motion.h1
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-3xl md:text-5xl font-extrabold text-center drop-shadow-lg leading-tight"
+          >
+            <span className="inline-block mb-3 text-blue-300">Welcome to</span>
+            <br />
+            <span className="text-4xl md:text-6xl">MoreLinks Lodge</span>
+          </motion.h1>
+          <p className="mt-3 text-sm md:text-base text-white/90 italic text-center max-w-2xl mx-auto">
+            where life is made easier and connections more safer
           </p>
-          <span className="mt-4 inline-block bg-yellow-400 text-black font-semibold py-2 px-6 rounded-full shadow hover:bg-yellow-300 transition-all">
-            Click Here
-          </span>
-        </motion.div>
 
-        {/* Lodge Owner */}
-        <motion.div
-          className="cursor-pointer bg-white/20 backdrop-blur-lg rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border border-white/30"
-          variants={cardVariants}
-          initial="hidden"
-          animate="visible"
-          whileHover="hover"
-          custom={1}
-          onClick={handleListLodge}
-        >
-          <img
-            src={ownerh}
-            alt="lodge owner"
-            className="h-20 mb-4 drop-shadow-md"
-          />
-          <h4 className="text-2xl font-bold mb-2">List a Lodge</h4>
-          <p className="text-sm md:text-base opacity-90">
-            Want to rent out your lodge, space, or apartment? Join us and reach
-            thousands of potential tenants.
-          </p>
-          <span className="mt-4 inline-block bg-green-400 text-black font-semibold py-2 px-6 rounded-full shadow hover:bg-green-300 transition-all">
-            Click Here
-          </span>
-        </motion.div>
-      </div>
+          {/* Options Section (cards) placed on top of hero */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mt-8 mx-auto">
+            <motion.div
+              className="cursor-pointer bg-white/20 backdrop-blur-lg rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border border-white/30"
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              whileHover="hover"
+              custom={0}
+              onClick={() => navigate("/apartments")}
+            >
+              <img
+                src={guest}
+                alt="guest or tenant"
+                className="h-20 mb-4 drop-shadow-md"
+              />
+              <h4 className="text-2xl font-bold mb-2">Find a Lodge</h4>
+              <p className="text-sm md:text-base opacity-90">
+                Looking for the perfect place to lodge or rent? We've got you
+                covered.
+              </p>
+              <span className="mt-4 inline-block bg-blue-400 text-black font-semibold py-2 px-6 rounded-full shadow hover:bg-yellow-300 transition-all">
+                Click Here
+              </span>
+            </motion.div>
+
+            <motion.div
+              className="cursor-pointer bg-white/20 backdrop-blur-lg rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border border-white/30"
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              whileHover="hover"
+              custom={1}
+              onClick={handleListLodge}
+            >
+              <img
+                src={ownerh}
+                alt="lodge owner"
+                className="h-20 mb-4 drop-shadow-md"
+              />
+              <h4 className="text-2xl font-bold mb-2">List a Lodge</h4>
+              <p className="text-sm md:text-base opacity-90">
+                Want to rent out your lodge, space, or apartment? Join us and
+                reach thousands of potential tenants.
+              </p>
+              <span className="mt-4 inline-block bg-green-400 text-black font-semibold py-2 px-6 rounded-full shadow hover:bg-green-300 transition-all">
+                Click Here
+              </span>
+            </motion.div>
+          </div>
+        </div>
+      </section>
 
       {/* Feature / CTA sections (inserted) */}
       <div className="w-full max-w-6xl mb-8">
@@ -187,7 +197,7 @@ export default function Home() {
           transition={{ duration: 0.6 }}
         >
           <div>
-            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-yellow-300">
+            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-black">
               Affordable Stays. Easy Bookings. Real Connections.
             </h3>
             <p className="text-white/90 text-base md:text-lg">
@@ -339,7 +349,7 @@ export default function Home() {
             </svg>
           </div>
           <div>
-            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-yellow-300">
+            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-black">
               Need a Place to Stay?
             </h3>
             <p className="text-white/90 text-base md:text-lg mb-4">
@@ -370,7 +380,7 @@ export default function Home() {
           transition={{ duration: 0.6, delay: 0.1 }}
         >
           <div>
-            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-yellow-300">
+            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-black">
               Have a Free Room or Space? Earn from It!
             </h3>
             <p className="text-white/90 text-base md:text-lg mb-4">
@@ -455,7 +465,7 @@ export default function Home() {
           viewport={{ once: false, amount: 0.35 }}
           transition={{ duration: 0.6, delay: 0.15 }}
         >
-          <h4 className="text-xl font-bold text-center p-3 text-yellow-300 mb-3">
+          <h4 className="text-xl font-bold text-center p-3 text-black mb-3">
             Why Choose Morelinks?
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-white/90">
