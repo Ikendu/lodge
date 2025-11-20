@@ -20,6 +20,7 @@ import {
 } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useModalContext } from "../components/ui/ModalProvider";
+import { Link } from "react-router-dom";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -631,6 +632,12 @@ export default function LoginPage() {
               )}
             </button>
           </div>
+        
+        <div className="mt-3 text-center">
+          <Link to="/forgot-password" className="text-sm text-indigo-600 hover:underline">
+            Forgot password?
+          </Link>
+        </div>
         </form>
         {/* Divider */}
         <div className="my-6 text-center text-gray-500 relative">

@@ -12,6 +12,8 @@ import RegisterSuccess from "./pages/RegisterSuccess";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Apartments from "./pages/Apartments.jsx";
 import HotelGuestHouse from "./pages/HotelGuestHouse.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
 import LoginPage from "./pages/Login.jsx";
 import FAQPage from "./pages/FqaPage.jsx";
 import LodgeDetails from "./pages/LodgeDetails.jsx";
@@ -65,6 +67,8 @@ export default function App() {
 
             <Route path="/apartments" element={<Apartments />} />
             <Route path="/hotel-guesthouse" element={<HotelGuestHouse />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/list_new_lodge" element={<AddNewLodge />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/payment" element={<Payment />} />
