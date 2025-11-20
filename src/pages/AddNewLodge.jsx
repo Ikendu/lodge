@@ -190,9 +190,15 @@ export default function AddNewLodge() {
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7 }}
-        className="text-3xl md:text-4xl font-bold text-gray-800 mb-6"
+        className=" text-gray-800 mb-6"
       >
-        Add a New Lodge
+        <div>
+          <i
+            onClick={() => navigate(-1)}
+            class="fa-solid fa-arrow-left cursor-pointer py-5 pr-10 absolute top-14 left-4 z-10"
+          ></i>
+        </div>
+        <h2 className="text-2xl md:text-4xl font-bold">Add a New Lodge</h2>
       </motion.h1>
 
       <motion.form

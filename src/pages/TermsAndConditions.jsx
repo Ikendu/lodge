@@ -1,8 +1,16 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function TermsAndConditions() {
+  const navigate = useNavigate();
   return (
     <div className="max-w-4xl mx-auto px-6 py-12 text-gray-900 leading-relaxed">
+      <div>
+        <i
+          onClick={() => navigate(-1)}
+          class="fa-solid fa-arrow-left cursor-pointer py-5 pr-10 absolute top-14 left-4 z-10"
+        ></i>
+      </div>
       <h1 id="top" className="text-3xl font-bold text-blue-700 mb-6">
         Terms & Conditions
       </h1>

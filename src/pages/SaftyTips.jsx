@@ -1,8 +1,16 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function SafetyTips() {
+  const navigate = useNavigate();
   return (
     <div className="bg-gray-50 min-h-screen py-10 px-5 sm:px-10">
+      <div>
+        <i
+          onClick={() => navigate(-1)}
+          class="fa-solid fa-arrow-left cursor-pointer py-5 pr-10 absolute top-14 left-4 z-10"
+        ></i>
+      </div>
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">

@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { FaQuestionCircle, FaHeadset, FaInfoCircle } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 export default function HelpCenter() {
+  const navigate = useNavigate();
   const [openIndex, setOpenIndex] = useState(null);
 
   const toggleFAQ = (index) => {
@@ -45,6 +47,12 @@ export default function HelpCenter() {
     <div className="bg-gradient-to-b from-blue-50 to-purple-50 min-h-screen text-gray-800">
       {/* Hero Section */}
       <section className="relative text-center py-20 bg-gradient-to-r from-indigo-700 to-purple-700 text-white overflow-hidden">
+        <div>
+          <i
+            onClick={() => navigate(-1)}
+            class="fa-solid fa-arrow-left cursor-pointer py-5 pr-10 absolute top-2 left-4 z-10"
+          ></i>
+        </div>
         <motion.h1
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}

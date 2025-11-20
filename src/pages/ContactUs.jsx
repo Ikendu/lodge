@@ -34,7 +34,7 @@ export default function ContactUs() {
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen text-gray-800">
       {/* Hero Section */}
 
-      <section className="relative overflow-hidden text-center py-20 bg-gradient-to-r from-indigo-700 to-purple-600 text-white">
+      <section className="relative overflow-hidden text-center py-5 bg-gradient-to-r from-indigo-700 to-purple-600 text-white">
         <motion.h1
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -47,7 +47,7 @@ export default function ContactUs() {
               class="fa-solid fa-arrow-left cursor-pointer  p-3 md:p-5 pr-5"
             ></i>
           </div>
-          <div className="text-4xl md:text-6xl font-bold mb-4">
+          <div className="text-4xl md:text-6xl pt-16 font-bold mb-4">
             Get in Touch
           </div>
         </motion.h1>

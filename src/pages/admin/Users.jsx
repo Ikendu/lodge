@@ -35,7 +35,7 @@ export default function Users() {
   return (
     <div className="w-full overflow-hidden">
       <h3 className="text-lg font-semibold mb-3">Users</h3>
-      <div className="w-[100%] mt-10 border border-gray-300 rounded-lg shadow-md h-64 overflow-auto">
+      <div className="w-[100%] mt-10 border border-gray-300 rounded-lg shadow-md h-full overflow-auto">
         <table className="w-full border-collapse text-sm bg-white">
           <tr>
             <th className="px-4 py-2 text-left">ID</th>

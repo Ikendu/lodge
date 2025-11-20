@@ -87,11 +87,14 @@ export default function Apartments() {
 
   return (
     <div className="p-4 md:p-10">
-      <i
-        onClick={() => navigate(-1)}
-        class="fa-solid fa-arrow-left cursor-pointer py-5 pr-10 absolute top-20 left-4 z-10"
-      ></i>
-      <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center text-gray-800">
+      <div>
+        <i
+          onClick={() => navigate(-1)}
+          class="fa-solid fa-arrow-left cursor-pointer py-5 pr-10 absolute top-14 left-4 z-10"
+        ></i>
+      </div>
+
+      <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center text-gray-800 pt-8">
         Explore Available Lodges & Apartments
       </h2>
 

@@ -1,9 +1,19 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function PrivacyPolicy() {
+  const navigate = useNavigate();
   return (
     <div className="max-w-4xl mx-auto px-6 py-12 text-gray-800 leading-relaxed">
-      <h1 className="text-3xl font-bold text-blue-700 mb-6">Privacy Policy</h1>
+      <div>
+        <i
+          onClick={() => navigate(-1)}
+          class="fa-solid fa-arrow-left cursor-pointer py-5 pr-10 absolute top-14 left-4 z-10"
+        ></i>
+      </div>
+      <h1 className="text-3xl font-bold text-blue-700 mb-6 pt-2">
+        Privacy Policy
+      </h1>
       <p className="mb-4">
         Welcome to <strong>MoreLink Lodge</strong> (“we,” “our,” “us”). Your
         privacy is important to us. This Privacy Policy explains how we collect,

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const faqs = [
   {
@@ -37,6 +38,7 @@ const faqs = [
 
 export default function FAQPage() {
   const [openIndex, setOpenIndex] = useState(null);
+  const navigate = useNavigate();
 
   const toggleFAQ = (index) => {
     setOpenIndex(openIndex === index ? null : index);

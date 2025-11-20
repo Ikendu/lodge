@@ -102,6 +102,7 @@ export default function Footer() {
                 duration={600}
                 offset={-80}
                 className="cursor-pointer hover:text-yellow-300 block"
+                onClick={() => navigate("/apartments")}
               >
                 <motion.span whileHover={{ x: 5, scale: 1.05 }}>
                   Find a Lodge
