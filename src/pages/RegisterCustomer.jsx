@@ -37,7 +37,7 @@ export default function RegisterCustomer() {
     try {
       const cp = localStorage.getItem("customerProfile");
       if (cp) {
-        console.log("Customer profile exists — redirecting to /profile");
+        // console.log("Customer profile exists — redirecting to /profile");
         navigate("/profile", { replace: true });
         return;
       }
@@ -52,9 +52,9 @@ export default function RegisterCustomer() {
     if (loadingAuth) return;
 
     if (!userData && !firebaseUser) {
-      console.log(
-        "No user found (localStorage + firebase) → redirecting to /login"
-      );
+      // console.log(
+      //   "No user found (localStorage + firebase) → redirecting to /login"
+      // );
       navigate("/login");
     } else {
       console.log("User present → allow register page");
@@ -412,8 +412,9 @@ export default function RegisterCustomer() {
                   try {
                     if (modal && typeof modal.alert === "function") {
                       await modal.alert({
-                        title: "Missing NIN",
-                        message: "Please enter your NIN number.",
+                        title: "Missing NIN or Network failure",
+                        message:
+                          "Please enter your NIN number or check your Network.",
                       });
                     }
                   } catch (err) {
