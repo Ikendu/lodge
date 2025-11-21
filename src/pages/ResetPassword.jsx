@@ -68,23 +68,35 @@ export default function ResetPassword() {
                 className="w-full p-2 border rounded mt-1"
               />
             </div>
-            {message ? <div className="text-sm text-green-600">{message}</div> : null}
+            {message ? (
+              <div className="text-sm text-green-600">{message}</div>
+            ) : null}
             {error ? <div className="text-sm text-red-600">{error}</div> : null}
             <div className="flex items-center justify-between">
               <button
                 type="submit"
                 disabled={loading}
                 className={`py-2 px-4 rounded-lg text-white font-semibold transition-colors ${
-                  loading ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+                  loading
+                    ? "bg-indigo-400 cursor-not-allowed"
+                    : "bg-indigo-600 hover:bg-indigo-700"
                 }`}
               >
                 {loading ? "Updating..." : "Change password"}
               </button>
-              <button type="button" onClick={() => navigate(-1)} className="text-sm text-gray-600 underline">Back</button>
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="text-sm text-gray-600 underline"
+              >
+                Back
+              </button>
             </div>
           </form>
         ) : (
-          <div className="text-sm text-red-600">Invalid or missing reset code.</div>
+          <div className="text-sm text-red-600">
+            Invalid or missing reset code.
+          </div>
         )}
       </motion.div>
     </div>

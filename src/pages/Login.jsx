@@ -632,12 +632,15 @@ export default function LoginPage() {
               )}
             </button>
           </div>
-        
-        <div className="mt-3 text-center">
-          <Link to="/forgot-password" className="text-sm text-indigo-600 hover:underline">
-            Forgot password?
-          </Link>
-        </div>
+
+          <div className="mt-3 text-center">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-indigo-600 hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
         </form>
         {/* Divider */}
         <div className="my-6 text-center text-gray-500 relative">
@@ -645,11 +648,11 @@ export default function LoginPage() {
           <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-full h-px bg-gray-300"></div>
         </div>
         {/* Social Logins */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="flex justify-center gap-3">
           {[
             { name: "Google", color: "bg-red-500" },
             { name: "Yahoo", color: "bg-purple-600" },
-            { name: "Facebook", color: "bg-blue-600" },
+            // { name: "Facebook", color: "bg-blue-600" },
           ].map((provider, i) => (
             <motion.button
               key={i}
@@ -657,7 +660,7 @@ export default function LoginPage() {
               whileTap={{ scale: 0.97 }}
               onClick={() => handleSocialLogin(provider.name)}
               disabled={loading}
-              className={`${provider.color} text-white py-2 rounded-lg font-semibold transition text-sm`}
+              className={`${provider.color} text-white py-2 w-32 rounded-lg font-semibold transition text-sm`}
             >
               {provider.name}
             </motion.button>

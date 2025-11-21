@@ -49,8 +49,8 @@ export default function ForgotPassword() {
           Forgot Password
         </h2>
         <p className="text-sm text-gray-600 mb-4">
-          Enter the email address associated with your account and we'll send
-          a link to reset your password.
+          Enter the email address associated with your account and we'll send a
+          link to reset your password.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -79,7 +79,9 @@ export default function ForgotPassword() {
               type="submit"
               disabled={loading}
               className={`py-2 px-4 rounded-lg text-white font-semibold transition-colors ${
-                loading ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+                loading
+                  ? "bg-indigo-400 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700"
               }`}
             >
               {loading ? "Sending..." : "Send reset email"}
