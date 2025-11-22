@@ -14,6 +14,7 @@ export default function RegisterCustomer() {
   // via location.state.provided. It is responsible for NIN verification and
   // the final registration submit which sends the combined payload.
   const provided = location.state?.provided || {};
+  console.log("RegisterCustomer received provided:", provided);
 
   const [form, setForm] = useState({
     nin: "",
@@ -261,7 +262,6 @@ export default function RegisterCustomer() {
       payload.append("state", verified.entity?.origin_state || "");
       payload.append("place", verified.entity?.origin_place || "");
 
-      payload.append("dob", provided.dob || "");
       payload.append("phone", verified.entity?.phone_number || "");
       payload.append("mobile", provided.mobile || "");
       payload.append("gender", verified.entity?.gender || "");

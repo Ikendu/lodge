@@ -197,7 +197,7 @@ export default function Home() {
           transition={{ duration: 0.6 }}
         >
           <div>
-            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-black">
+            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-gray-800">
               Affordable Stays. Easy Bookings. Real Connections.
             </h3>
             <p className="text-white/90 text-base md:text-lg">
@@ -349,7 +349,7 @@ export default function Home() {
             </svg>
           </div>
           <div>
-            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-black">
+            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-gray-800">
               Need a Place to Stay?
             </h3>
             <p className="text-white/90 text-base md:text-lg mb-4">
@@ -380,7 +380,7 @@ export default function Home() {
           transition={{ duration: 0.6, delay: 0.1 }}
         >
           <div>
-            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-black">
+            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-gray-800">
               Have a Free Room or Space? Earn from It!
             </h3>
             <p className="text-white/90 text-base md:text-lg mb-4">
@@ -465,7 +465,7 @@ export default function Home() {
           viewport={{ once: false, amount: 0.35 }}
           transition={{ duration: 0.6, delay: 0.15 }}
         >
-          <h4 className="text-xl font-bold text-center p-3 text-black mb-3">
+          <h4 className="text-xl font-bold text-center p-3 text-gray-800 mb-3">
             Why Choose Morelinks?
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-white/90">

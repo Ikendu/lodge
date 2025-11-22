@@ -393,9 +393,12 @@ export default function LoginPage() {
               : "Authentication failed.");
           setError(msg);
         }
-        // Always show a modal with the raw error message so users see the problem clearly
+        // Show the detailed "Account Creation Error" modal only when the
+        // user was attempting to create an account (isRegister === true).
+        // Avoid showing this modal for ordinary login failures where we
+        // already prompt the user to register.
         try {
-          if (modal && typeof modal.alert === "function") {
+          if (isRegister && modal && typeof modal.alert === "function") {
             await modal.alert({
               title: "Account Creation Error",
               message: rawMsg.includes("auth/email-already-in-us")

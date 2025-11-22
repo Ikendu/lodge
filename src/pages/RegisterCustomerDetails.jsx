@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useModalContext } from "../components/ui/ModalProvider";
+import StateLgaSelect from "../components/StateLgaSelect";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -239,7 +240,7 @@ export default function RegisterCustomerDetails() {
         >
           <div className="col-span-2 flex flex-col">
             <label className="text-white mb-2 font-medium">
-              Current Address
+              Contact Address
             </label>
             <textarea
               name="address"
@@ -252,6 +253,7 @@ export default function RegisterCustomerDetails() {
               }`}
               required
               aria-invalid={fieldErrors.address ? "true" : "false"}
+              placeholder="The address of the place you currently live"
             />
             {fieldErrors.address ? (
               <div className="text-xs text-red-500 mt-1">
@@ -261,47 +263,25 @@ export default function RegisterCustomerDetails() {
           </div>
 
           <div className="col-span-2 md:col-span-1 flex flex-col">
-            <label className="text-white mb-2 font-medium">Address LGA</label>
-            <input
-              name="addressLga"
-              value={form.addressLga}
+            <label className="text-white mb-2 font-medium">
+              State of Residency
+            </label>
+            <StateLgaSelect
+              stateValue={form.addressState}
+              lgaValue={form.addressLga}
               onChange={handleChange}
               onBlur={handleBlur}
-              className={`p-3 rounded-xl w-full ${
-                fieldErrors.addressLga
-                  ? "border-red-500 ring-1 ring-red-400"
-                  : ""
-              }`}
-              placeholder="e.g. Nsukka"
-              required
-              aria-invalid={fieldErrors.addressLga ? "true" : "false"}
-            />
-            {fieldErrors.addressLga ? (
-              <div className="text-xs text-red-500 mt-1">
-                {fieldErrors.addressLga}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="col-span-2 md:col-span-1 flex flex-col">
-            <label className="text-white mb-2 font-medium">Address State</label>
-            <input
-              name="addressState"
-              value={form.addressState}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`p-3 rounded-xl w-full ${
-                fieldErrors.addressState
-                  ? "border-red-500 ring-1 ring-red-400"
-                  : ""
-              }`}
-              placeholder="e.g. Enugu"
-              required
-              aria-invalid={fieldErrors.addressState ? "true" : "false"}
+              errorState={fieldErrors.addressState}
+              errorLga={fieldErrors.addressLga}
             />
             {fieldErrors.addressState ? (
               <div className="text-xs text-red-500 mt-1">
                 {fieldErrors.addressState}
+              </div>
+            ) : null}
+            {fieldErrors.addressLga ? (
+              <div className="text-xs text-red-500 mt-1">
+                {fieldErrors.addressLga}
               </div>
             ) : null}
           </div>
@@ -310,9 +290,14 @@ export default function RegisterCustomerDetails() {
             <label className="text-white mb-2 font-medium">
               Permanent Address
             </label>
+            <p className=" italic text-white/70">
+              This can be your village address or a place owned by you or your
+              parents
+            </p>
             <textarea
               name="permanentAddress"
               value={form.permanentAddress}
+              placeholder="Enter full address"
               onChange={handleChange}
               onBlur={handleBlur}
               rows="2"
@@ -401,6 +386,7 @@ export default function RegisterCustomerDetails() {
             </label>
             <input
               name="nextOfKinName"
+              placeholder="Full name"
               value={form.nextOfKinName}
               onChange={handleChange}
               onBlur={handleBlur}
@@ -425,6 +411,7 @@ export default function RegisterCustomerDetails() {
             </label>
             <input
               name="nextOfKinPhone"
+              placeholder="Eg: 08012345678"
               value={form.nextOfKinPhone}
               onChange={handleChange}
               onBlur={handleBlur}
@@ -447,7 +434,7 @@ export default function RegisterCustomerDetails() {
             <label className="text-white mb-2 font-medium">
               Relationship to Next of Kin
             </label>
-            <input
+            <select
               name="nextOfKinRelation"
               value={form.nextOfKinRelation}
               onChange={handleChange}
@@ -459,7 +446,21 @@ export default function RegisterCustomerDetails() {
               }`}
               required
               aria-invalid={fieldErrors.nextOfKinRelation ? "true" : "false"}
-            />
+            >
+              <option value="">Select relationship</option>
+              <option>Father</option>
+              <option>Mother</option>
+              <option>Husband</option>
+              <option>Wife</option>
+              <option>Brother</option>
+              <option>Sister</option>
+              <option>Son</option>
+              <option>Daughter</option>
+              <option>Uncle</option>
+              <option>Aunt</option>
+              <option>Cousin</option>
+              <option>Friend</option>
+            </select>
             {fieldErrors.nextOfKinRelation ? (
               <div className="text-xs text-red-500 mt-1">
                 {fieldErrors.nextOfKinRelation}
@@ -473,6 +474,7 @@ export default function RegisterCustomerDetails() {
             </label>
             <input
               name="nextOfKinAddress"
+              placeholder="Full Contact Address"
               value={form.nextOfKinAddress}
               onChange={handleChange}
               onBlur={handleBlur}
