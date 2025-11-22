@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useModalContext } from "../../components/ui/ModalProvider";
 
 function apiFetch(path, opts = {}) {
   const token = localStorage.getItem("adminToken");
@@ -13,6 +14,7 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const modal = useModalContext();
 
   useEffect(() => {
     let mounted = true;
@@ -55,6 +57,7 @@ export default function Users() {
             </th>
 
             <th className="px-4 py-2 text-left">Date Created</th>
+            <th className="px-4 py-2 text-left">Actions</th>
           </tr>
           {users.map((u) => (
             <tr
@@ -84,6 +87,61 @@ export default function Users() {
               <td className="px-4 py-2">{u?.nextOfKinPhone}</td>
               <td className="px-4 py-2">{u?.nextOfKinAddress}</td>
               <td className="px-4 py-2">{u?.created_at}</td>
+              <td className="px-4 py-2">{u?.created_at}</td>
+              <td className="px-4 py-2">
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    try {
+                      const ok = await modal.confirm({
+                        title: "Delete user",
+                        message: `Are you sure you want to delete user <strong>${
+                          u?.firstName || ""
+                        } ${
+                          u?.lastName || ""
+                        }</strong>? This action cannot be undone.`,
+                        okText: "Delete",
+                        cancelText: "Cancel",
+                      });
+                      if (!ok) return;
+
+                      const res = await apiFetch(
+                        "https://lodge.morelinks.com.ng/api/admin/users_action.php",
+                        {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ id: u.id, action: "delete" }),
+                        }
+                      );
+                      const json = await res.json();
+                      if (!json.success) {
+                        await modal.alert({
+                          title: "Delete failed",
+                          message: json.message || "Failed to delete",
+                        });
+                        return;
+                      }
+                      // remove from UI
+                      setUsers((prev) => prev.filter((x) => x.id !== u.id));
+                      await modal.alert({
+                        title: "Deleted",
+                        message: "User deleted successfully.",
+                      });
+                    } catch (err) {
+                      console.error(err);
+                      try {
+                        await modal.alert({
+                          title: "Error",
+                          message: String(err || "Unknown error"),
+                        });
+                      } catch (e) {}
+                    }
+                  }}
+                  className="text-sm bg-red-600 text-white px-3 py-1 rounded hover:opacity-90"
+                >
+                  Delete
+                </button>
+              </td>
             </tr>
           ))}
         </table>

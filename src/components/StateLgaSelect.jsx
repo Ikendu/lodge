@@ -31,44 +31,50 @@ export default function StateLgaSelect({
   };
 
   return (
-    <div className="grid grid-cols-1 gap-2">
-      <select
-        name={stateName}
-        value={stateValue}
-        onChange={handleStateChange}
-        onBlur={onBlur}
-        className={`p-3 rounded-xl w-full ${
-          errorState ? "border-red-500 ring-1 ring-red-400" : ""
-        }`}
-        aria-invalid={errorState ? "true" : "false"}
-      >
-        <option value="">Select State</option>
-        {states.map((s) => (
-          <option key={s} value={s}>
-            {s}
-          </option>
-        ))}
-      </select>
-
-      <label className="text-white mb-2 font-medium">LGA of Residency </label>
-      <div className="flex flex-col md:flex-row">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+      <div>
+        <label className="text-white mb-2 font-medium">
+          State of Residency
+        </label>
         <select
-          name={lgaName}
-          value={lgaValue}
-          onChange={handleLgaChange}
+          name={stateName}
+          value={stateValue}
+          onChange={handleStateChange}
           onBlur={onBlur}
           className={`p-3 rounded-xl w-full ${
-            errorLga ? "border-red-500 ring-1 ring-red-400" : ""
+            errorState ? "border-red-500 ring-1 ring-red-400" : ""
           }`}
-          aria-invalid={errorLga ? "true" : "false"}
+          aria-invalid={errorState ? "true" : "false"}
         >
-          <option value="">Select LGA</option>
-          {lgasForState.map((l) => (
-            <option key={l} value={l}>
-              {l}
+          <option value="">Select State</option>
+          {states.map((s) => (
+            <option key={s} value={s}>
+              {s}
             </option>
           ))}
         </select>
+      </div>
+      <div>
+        <label className="text-white mb-2 font-medium">LGA of Residency </label>
+        <div className="">
+          <select
+            name={lgaName}
+            value={lgaValue}
+            onChange={handleLgaChange}
+            onBlur={onBlur}
+            className={`p-3 rounded-xl w-full ${
+              errorLga ? "border-red-500 ring-1 ring-red-400" : ""
+            }`}
+            aria-invalid={errorLga ? "true" : "false"}
+          >
+            <option value="">Select LGA</option>
+            {lgasForState.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
     </div>
   );

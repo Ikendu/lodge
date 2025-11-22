@@ -49,10 +49,7 @@ export default function RegisterCustomerDetails() {
     mobile: provided.mobile || "",
     imageFile: null,
     imageData: provided.imageData || null, // data URL for safe transfer
-    nextOfKinName: provided.nextOfKinName || "",
-    nextOfKinPhone: provided.nextOfKinPhone || "",
-    nextOfKinRelation: provided.nextOfKinRelation || "",
-    nextOfKinAddress: provided.nextOfKinAddress || "",
+    // next-of-kin fields are moved to a separate step
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -149,10 +146,6 @@ export default function RegisterCustomerDetails() {
       { key: "permanentAddress", label: "Permanent address" },
       { key: "mobile", label: "WhatsApp mobile" },
       { key: "imageData", label: "Upload a picture of you" },
-      { key: "nextOfKinName", label: "Next of kin name" },
-      { key: "nextOfKinPhone", label: "Next of kin phone" },
-      { key: "nextOfKinRelation", label: "Next of kin relationship" },
-      { key: "nextOfKinAddress", label: "Next of kin address" },
     ];
 
     const missing = required
@@ -193,14 +186,12 @@ export default function RegisterCustomerDetails() {
           permanentAddress: form.permanentAddress,
           mobile: form.mobile,
           imageData: form.imageData || null,
-          nextOfKinName: form.nextOfKinName,
-          nextOfKinPhone: form.nextOfKinPhone,
-          nextOfKinRelation: form.nextOfKinRelation,
-          nextOfKinAddress: form.nextOfKinAddress,
+          // next-of-kin will be collected on the next page
         },
         from: location.state?.from || null,
       };
-      navigate("/registeruser/details", { state: payloadState });
+      // go to the next registration step (next-of-kin)
+      navigate("/registeruser/next-of-kin", { state: payloadState });
     } catch (err) {
       console.error("Failed to proceed to verification:", err);
     } finally {
@@ -261,9 +252,6 @@ export default function RegisterCustomerDetails() {
           </div>
 
           <div className="col-span-2 md:col-span-1 flex flex-col">
-            <label className="text-white mb-2 font-medium">
-              State of Residency
-            </label>
             <StateLgaSelect
               stateValue={form.addressState}
               lgaValue={form.addressLga}
@@ -369,128 +357,6 @@ export default function RegisterCustomerDetails() {
             ) : null}
           </div>
 
-          <div className="col-span-2 flex flex-col">
-            <h4 className="text-xl font-bold">Next of Kin Details</h4>
-            <p className=" italic text-white/70">
-              For security purpose your next-of-kin should not be the same
-              person traveling/lodging with you. You can always update this
-              information later in your profile.
-            </p>
-          </div>
-
-          <div className="col-span-2 md:col-span-1 flex flex-col">
-            <label className="text-white mb-2 font-medium">
-              Next of Kin Name
-            </label>
-            <input
-              name="nextOfKinName"
-              placeholder="Full name"
-              value={form.nextOfKinName}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`p-3 rounded-xl w-full ${
-                fieldErrors.nextOfKinName
-                  ? "border-red-500 ring-1 ring-red-400"
-                  : ""
-              }`}
-              required
-              aria-invalid={fieldErrors.nextOfKinName ? "true" : "false"}
-            />
-            {fieldErrors.nextOfKinName ? (
-              <div className="text-xs text-red-500 mt-1">
-                {fieldErrors.nextOfKinName}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="col-span-2 md:col-span-1 flex flex-col">
-            <label className="text-white mb-2 font-medium">
-              Next of Kin Phone
-            </label>
-            <input
-              name="nextOfKinPhone"
-              placeholder="Eg: 08012345678"
-              value={form.nextOfKinPhone}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`p-3 rounded-xl w-full ${
-                fieldErrors.nextOfKinPhone
-                  ? "border-red-500 ring-1 ring-red-400"
-                  : ""
-              }`}
-              required
-              aria-invalid={fieldErrors.nextOfKinPhone ? "true" : "false"}
-            />
-            {fieldErrors.nextOfKinPhone ? (
-              <div className="text-xs text-red-500 mt-1">
-                {fieldErrors.nextOfKinPhone}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="col-span-2 md:col-span-1 flex flex-col">
-            <label className="text-white mb-2 font-medium">
-              Relationship to Next of Kin
-            </label>
-            <select
-              name="nextOfKinRelation"
-              value={form.nextOfKinRelation}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`p-3 rounded-xl w-full ${
-                fieldErrors.nextOfKinRelation
-                  ? "border-red-500 ring-1 ring-red-400"
-                  : ""
-              }`}
-              required
-              aria-invalid={fieldErrors.nextOfKinRelation ? "true" : "false"}
-            >
-              <option value="">Select relationship</option>
-              <option>Father</option>
-              <option>Mother</option>
-              <option>Husband</option>
-              <option>Wife</option>
-              <option>Brother</option>
-              <option>Sister</option>
-              <option>Son</option>
-              <option>Daughter</option>
-              <option>Uncle</option>
-              <option>Aunt</option>
-              <option>Cousin</option>
-              <option>Friend</option>
-            </select>
-            {fieldErrors.nextOfKinRelation ? (
-              <div className="text-xs text-red-500 mt-1">
-                {fieldErrors.nextOfKinRelation}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="col-span-2 md:col-span-1 flex flex-col">
-            <label className="text-white mb-2 font-medium">
-              Next of Kin Address
-            </label>
-            <input
-              name="nextOfKinAddress"
-              placeholder="Full Contact Address"
-              value={form.nextOfKinAddress}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`p-3 rounded-xl w-full ${
-                fieldErrors.nextOfKinAddress
-                  ? "border-red-500 ring-1 ring-red-400"
-                  : ""
-              }`}
-              required
-              aria-invalid={fieldErrors.nextOfKinAddress ? "true" : "false"}
-            />
-            {fieldErrors.nextOfKinAddress ? (
-              <div className="text-xs text-red-500 mt-1">
-                {fieldErrors.nextOfKinAddress}
-              </div>
-            ) : null}
-          </div>
-
           <div className="col-span-2">
             <div className="flex items-start space-x-3 mt-4">
               <input
@@ -524,7 +390,7 @@ export default function RegisterCustomerDetails() {
                   : "bg-gradient-to-r from-blue-400 to-purple-600"
               }`}
             >
-              {submitting ? "Proceeding..." : "Continue to NIN Verification"}
+              {submitting ? "Proceeding..." : "Continue"}
             </motion.button>
           </div>
         </form>

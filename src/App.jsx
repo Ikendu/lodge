@@ -26,6 +26,7 @@ import SafetyTips from "./pages/SaftyTips.jsx";
 import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import RegisterCustomerDetails from "./pages/RegisterCustomerDetails";
+import RegisterNextOfKin from "./pages/RegisterNextOfKin";
 import AddNewLodge from "./pages/AddNewLodge.jsx";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
@@ -56,6 +57,10 @@ export default function App() {
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/registeruser" element={<RegisterCustomerDetails />} />
+            <Route
+              path="/registeruser/next-of-kin"
+              element={<RegisterNextOfKin />}
+            />
             <Route
               path="/registeruser/details"
               element={<RegisterCustomer />}
