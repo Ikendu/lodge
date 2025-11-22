@@ -50,27 +50,26 @@ export default function StateLgaSelect({
         ))}
       </select>
 
-      <label htmlFor="" className="text-white mb-2 font-medium">
-        LGA of Residency
-      </label>
-
-      <select
-        name={lgaName}
-        value={lgaValue}
-        onChange={handleLgaChange}
-        onBlur={onBlur}
-        className={`p-3 rounded-xl w-full ${
-          errorLga ? "border-red-500 ring-1 ring-red-400" : ""
-        }`}
-        aria-invalid={errorLga ? "true" : "false"}
-      >
-        <option value="">Select LGA</option>
-        {lgasForState.map((l) => (
-          <option key={l} value={l}>
-            {l}
-          </option>
-        ))}
-      </select>
+      <label className="text-white mb-2 font-medium">LGA of Residency </label>
+      <div className="flex flex-col md:flex-row">
+        <select
+          name={lgaName}
+          value={lgaValue}
+          onChange={handleLgaChange}
+          onBlur={onBlur}
+          className={`p-3 rounded-xl w-full ${
+            errorLga ? "border-red-500 ring-1 ring-red-400" : ""
+          }`}
+          aria-invalid={errorLga ? "true" : "false"}
+        >
+          <option value="">Select LGA</option>
+          {lgasForState.map((l) => (
+            <option key={l} value={l}>
+              {l}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }

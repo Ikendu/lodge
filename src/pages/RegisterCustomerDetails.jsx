@@ -42,7 +42,6 @@ export default function RegisterCustomerDetails() {
   }, [navigate, loadingAuth, firebaseUser]);
 
   const [form, setForm] = useState({
-    dob: provided.dob || "",
     address: provided.address || "",
     addressLga: provided.addressLga || "",
     addressState: provided.addressState || "",
@@ -188,7 +187,6 @@ export default function RegisterCustomerDetails() {
     try {
       const payloadState = {
         provided: {
-          dob: form.dob,
           address: form.address,
           addressLga: form.addressLga,
           addressState: form.addressState,
@@ -231,7 +229,7 @@ export default function RegisterCustomerDetails() {
           <h2 className="text-2xl sm:text-3xl font-bold text-white  ">
             Your Profile Details
           </h2>
-          <p className="">Welcome to Morelinks, let's get to know you</p>
+          <p className="">Welcome to Morelinks</p>
         </div>
 
         <form
@@ -240,7 +238,7 @@ export default function RegisterCustomerDetails() {
         >
           <div className="col-span-2 flex flex-col">
             <label className="text-white mb-2 font-medium">
-              Contact Address
+              Residential Address
             </label>
             <textarea
               name="address"
