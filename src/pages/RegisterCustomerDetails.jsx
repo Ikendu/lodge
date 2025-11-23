@@ -31,12 +31,9 @@ export default function RegisterCustomerDetails() {
     if (loadingAuth) return;
 
     if (!userData && !firebaseUser) {
-      // console.log(
-      //   "No user found (localStorage + firebase) → redirecting to /login"
-      // );
       navigate("/login");
     } else {
-      console.log("User present → allow register page");
+      // user present — allow register page
     }
     setCheckingLogin(false);
   }, [navigate, loadingAuth, firebaseUser]);
@@ -56,7 +53,7 @@ export default function RegisterCustomerDetails() {
   const [consentChecked, setConsentChecked] = useState(false);
   const modal = useModalContext();
   const [fieldErrors, setFieldErrors] = useState({});
-  // console.log("Errors:", fieldErrors);
+  // fieldErrors logged during development removed
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;

@@ -157,7 +157,6 @@ export default function UserProfilePage() {
           let json = null;
           try {
             json = JSON.parse(text);
-            console.log("Payment Details", json);
           } catch (e) {
             continue;
           }
@@ -673,7 +672,8 @@ export default function UserProfilePage() {
                 ["Email", profile?.email],
                 ["Phone", profile?.nin_phone],
                 ["Mobile", profile?.mobile],
-                ["NIN", profile?.nin],
+                ["NIN", "Verified"],
+                // ["NIN", profile?.nin],
               ].map(([label, value], i) => (
                 <motion.div
                   key={i}

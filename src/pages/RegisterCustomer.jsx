@@ -14,7 +14,6 @@ export default function RegisterCustomer() {
   // via location.state.provided. It is responsible for NIN verification and
   // the final registration submit which sends the combined payload.
   const provided = location.state?.provided || {};
-  console.log("RegisterCustomer received provided:", provided);
 
   const [form, setForm] = useState({
     nin: "",
@@ -38,7 +37,7 @@ export default function RegisterCustomer() {
     try {
       const cp = localStorage.getItem("customerProfile");
       if (cp) {
-        // console.log("Customer profile exists — redirecting to /profile");
+        // customerProfile exists — redirecting to /profile
         navigate("/profile", { replace: true });
         return;
       }
@@ -53,12 +52,9 @@ export default function RegisterCustomer() {
     if (loadingAuth) return;
 
     if (!userData && !firebaseUser) {
-      // console.log(
-      //   "No user found (localStorage + firebase) → redirecting to /login"
-      // );
       navigate("/login");
     } else {
-      console.log("User present → allow register page");
+      // user present — allow register page
     }
     setCheckingLogin(false);
   }, [navigate, firebaseUser, loadingAuth]);
@@ -110,7 +106,6 @@ export default function RegisterCustomer() {
           const text = await res.text();
           try {
             const parsed = JSON.parse(text);
-            console.log("verifyNin response NIN", parsed);
             if (parsed && typeof parsed === "object") {
               data = parsed;
               break;

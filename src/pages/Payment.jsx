@@ -12,16 +12,14 @@ export default function Payment() {
   const location = useLocation();
   const navigate = useNavigate();
   const booking = location.state;
-  console.log("Booking info:", booking);
   const lodge = booking?.lodge;
   const profile =
     booking?.profile ||
     JSON.parse(localStorage.getItem("customerProfile") || "null");
-  console.log("Lodge for payment:", lodge);
-  console.log("Profile for payment:", profile);
+  // booking, lodge and profile are provided via location.state
 
   const { startDate, endDate, nights, total } = booking || {};
-  console.log("Booked dates:", startDate, endDate, nights);
+  // booked dates available in booking state
 
   const [method, setMethod] = useState("flutterwave");
   const [processing, setProcessing] = useState(false);
@@ -36,7 +34,7 @@ export default function Payment() {
     setProcessing(true);
 
     const handler = window.PaystackPop.setup({
-      key: TEST_PAYSTACK_KEY,
+      key: PAYSTACK_KEY,
       email: profile.userLoginMail,
       amount: Number(total) * 100,
       currency: "NGN",
@@ -66,7 +64,6 @@ export default function Payment() {
 
             const text = await res.text();
             const parsed = JSON.parse(text);
-            console.log("Verification result:", parsed);
             setVerifyPaystack(parsed);
 
             if (parsed.status && parsed.data?.status === "success") {
@@ -105,7 +102,7 @@ export default function Payment() {
 
   const startFlutterwave = () => {
     window.FlutterwaveCheckout({
-      public_key: TEST_FLUTTERWAVE_KEY, // from .env
+      public_key: FLUTTERWAVE_KEY, // from .env
       tx_ref: Date.now(),
       amount: Number(total),
       currency: "NGN",
@@ -129,7 +126,6 @@ export default function Payment() {
         })
           .then((res) => res.json())
           .then((data) => {
-            console.log("Flutterwave verification response:", data);
             const parsed = data?.data;
 
             if (
@@ -151,12 +147,12 @@ export default function Payment() {
                 },
               });
             } else {
-              console.log("Payment verification failed. Try again.");
+              // Payment verification failed
             }
           });
       },
       onclose: function () {
-        console.log("Payment modal closed");
+        // Payment modal closed
       },
     });
   };

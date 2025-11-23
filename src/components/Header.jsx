@@ -42,7 +42,7 @@ export default function Header() {
   let storedLogin = null;
   try {
     storedLogin = JSON.parse(localStorage.getItem("userLogin") || "null");
-    console.log("Stored login:", storedLogin);
+    // stored login loaded
   } catch (e) {
     storedLogin = null;
   }

@@ -198,11 +198,11 @@ export default function Home() {
         >
           <div>
             <h3 className="text-2xl md:text-3xl font-bold mb-3 text-gray-800">
-              Affordable Stays. Easy Bookings. Real Connections.
+              Affordable, Secure, Easy Bookings, Real Connections.
             </h3>
             <p className="text-white/90 text-base md:text-lg">
               Tired of missing that interview, training, or workshop just
-              because accommodation costs too much? With Morelinks Lodge
+              because accommodation costs too much? With Morelinks Lodge secure
               Listings, you can find comfortable, budget-friendly rooms near
               your destination — anytime, anywhere.
             </p>
@@ -353,14 +353,15 @@ export default function Home() {
               Need a Place to Stay?
             </h3>
             <p className="text-white/90 text-base md:text-lg mb-4">
-              Stay smart and save more with our verified, affordable lodges.
-              Whether you’re traveling for work, studies, or events, we’ve got
-              you covered.
+              Stay smart and save more with our verified, affordable secure
+              lodges. Whether you’re traveling for work, studies, or events,
+              we’ve got you covered.
             </p>
             <ul className="text-white/90 list-disc list-inside mb-4">
               <li>Find stays that fit your budget</li>
               <li> Book safely and easily online</li>
               <li> Enjoy comfort and convenience wherever you go</li>
+              <li>Your security is sure</li>
             </ul>
             <button
               className="mt-2 inline-block bg-yellow-400 text-black font-semibold py-2 px-5 rounded-full shadow hover:bg-yellow-300 transition-all"
@@ -391,6 +392,7 @@ export default function Home() {
               <li>Earn extra income effortlessly</li>
               <li>List in minutes, get verified fast</li>
               <li>Connect with great guests near you</li>
+              <li>At no cost</li>
             </ul>
             <button
               className="mt-2 inline-block bg-green-400 text-black font-semibold py-2 px-5 rounded-full shadow hover:bg-green-300 transition-all"

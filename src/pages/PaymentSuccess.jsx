@@ -12,8 +12,7 @@ export default function PaymentSuccess() {
   const flutterdata = location.state?.flutterwave;
   const paystackdata = location.state?.paystackdata;
 
-  // console.log("Payment data:", { flutterdata, paystackdata });
-  console.log("Lodge data:", lodge);
+  // payment and lodge logging removed for production
 
   const formatDate = (raw) => {
     if (!raw) return "-";
@@ -43,7 +42,7 @@ export default function PaymentSuccess() {
     formatDate(flutterdata?.created_at);
   const fullName = `${profile?.firstName || ""} ${profile?.lastName || ""}`;
   const owner = JSON.parse(localStorage.getItem("ownerProfile"));
-  // console.log("Owner data:", owner);
+  // owner data logging removed
   useEffect(() => {
     if (hasSaved.current) return;
     hasSaved.current = true;
@@ -83,7 +82,7 @@ export default function PaymentSuccess() {
 
       order_id: paymentReference || null,
     };
-    console.log("Saving payload:", payload);
+    // saving payload (no console output)
 
     const key = `payment_saved_${reference}`;
     const lodgeKey =
@@ -97,7 +96,7 @@ export default function PaymentSuccess() {
       return;
     }
     if (localStorage.getItem(key)) {
-      // console.log("Payment already saved locally, skipping DB save.");
+      // payment already saved locally — skipping DB save
       return;
     }
 
@@ -130,7 +129,7 @@ export default function PaymentSuccess() {
           } catch (e) {
             // ignore storage errors
           }
-          // console.log("Payment saved:", json);
+          // payment saved
         } else {
           setSaveStatus("error");
           console.error("Save failed:", json);

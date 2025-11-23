@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import logo from "../assets/logos/logo.png";
 
@@ -30,7 +30,6 @@ export default function Apartments() {
       .then((j) => {
         if (!mounted) return;
         if (j && j.success && Array.isArray(j.data)) {
-          console.log("Fetched lodges:", j.data);
           const mapped = j.data.map((row) => ({
             id: row.id,
             title: row.title,
@@ -103,14 +102,17 @@ export default function Apartments() {
       <h2 className="text-2xl md:text-3xl font-bold mb-2 text-center text-gray-800 pt-8">
         Explore Available Lodges & Apartments
       </h2>
-      <div className=" text-center mb-6">
+      <div className=" text-center mb-6 flex flex-col gap-3">
         <button
           onClick={() => navigate("/hotel-guesthouse")}
-          className="text-sm text-blue-600 hover:underline w-full flex items-center justify-center gap-2"
+          className="text-blue-600 hover:underline w-full flex items-center justify-center gap-2"
         >
           <i class="fa-solid fa-bed"></i>
           Click here to view Hotel Rooms & Guest Houses instead
         </button>
+        <Link className="text-blue-500" to={"/list_new_lodge"}>
+          Have a lodge to list? Click here
+        </Link>
       </div>
 
       <div className="">
@@ -180,6 +182,14 @@ export default function Apartments() {
             ))}
           </div>
         )}
+      </div>
+      <div className="mt-10 text-center flex flex-col gap-5 font-semibold">
+        <p className="text-yellow-700">
+          More Lodges coming soon at your prefared locations...
+        </p>
+        <Link className="text-blue-500" to={"/list_new_lodge"}>
+          Have a lodge to list? Click here
+        </Link>
       </div>
     </div>
   );

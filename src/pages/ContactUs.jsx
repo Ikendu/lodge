@@ -166,7 +166,6 @@ export default function ContactUs() {
                   }
                 );
                 const json = await res.json();
-                console.log("Contact", json);
                 if (json && json.success) {
                   toast.success("Message sent — we will get back to you soon");
                   // reset

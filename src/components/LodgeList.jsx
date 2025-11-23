@@ -167,7 +167,6 @@ export default function LodgeList({
                             });
                             const text = await res.text();
                             const json = JSON.parse(text || "{}");
-                            console.log("Availability update response:", json);
                             if (res.ok && json.success) {
                               done = true;
                               break;

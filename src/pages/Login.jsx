@@ -119,11 +119,7 @@ export default function LoginPage() {
               "customerProfile",
               JSON.stringify(json.profile)
             );
-            console.log(
-              "✅ Profile saved to localStorage from",
-              url,
-              json.profile
-            );
+            // profile saved to localStorage
           } catch (e) {
             console.warn("Failed to save customerProfile to localStorage", e);
           }
@@ -150,7 +146,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (user) {
       (async () => {
-        console.log("Auto-login detected for user:", user.email, user.uid);
+        // auto-login detected for user
         await fetchUserProfile(user.uid, user.email);
 
         // persist lightweight login info for other pages/components
@@ -322,7 +318,7 @@ export default function LoginPage() {
         navigate(fromTarget.path, { replace: true, state: returnState2 });
       }
     } catch (err) {
-      console.log("Authentication error:", err);
+      // authentication error
       const rawMsg = String(
         err?.message || err?.code || "Authentication failed."
       );

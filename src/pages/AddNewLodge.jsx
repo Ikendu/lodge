@@ -120,18 +120,7 @@ export default function AddNewLodge() {
     images.forEach((img, i) => formData.append(`image${i + 1}`, img.file));
 
     // Debug dump of FormData entries (works in modern browsers)
-    try {
-      console.group("AddNewLodge FormData");
-      for (const pair of formData.entries()) {
-        // For File entries print filename
-        if (pair[1] instanceof File)
-          console.log(pair[0], pair[1].name, pair[1].type, pair[1].size);
-        else console.log(pair[0], pair[1]);
-      }
-      console.groupEnd();
-    } catch (err) {
-      console.log("Could not enumerate FormData", err);
-    }
+    // Debug logging removed for production: do not print FormData to console
 
     setSubmitting(true);
 

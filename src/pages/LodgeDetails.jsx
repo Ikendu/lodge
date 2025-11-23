@@ -23,7 +23,7 @@ export default function LodgeDetails() {
   const stateLodge = location.state?.lodge;
   const [fetchedLodge, setFetchedLodge] = useState(null);
   const lodge = stateLodge || fetchedLodge;
-  // console.log("Lodge details page - lodge:", lodge);
+  // lodge details
 
   const startNativeRef = useRef(null);
   const endNativeRef = useRef(null);
@@ -240,7 +240,6 @@ export default function LodgeDetails() {
         let json = null;
         try {
           json = JSON.parse(text);
-          console.log("Availability check response:", json);
         } catch (e) {
           await modal.alert({
             title: "Availability check failed",
@@ -257,7 +256,6 @@ export default function LodgeDetails() {
         }
         if (!json.available) {
           // show first conflict range to the user
-          console.log("Booking available:", json);
           const first = json.conflicts && json.conflicts[0];
           const msg = first
             ? `Selected dates have been booked (from ${first.start_date} to ${first.end_date}). Please pick other dates or contact admin.`
@@ -424,7 +422,6 @@ export default function LodgeDetails() {
           }
         );
         const json = await res.json();
-        console.log("Background availability check:", json);
         if (!mounted) return;
         // update local availability states for UI
         setAvailability(json && json.success ? Boolean(json.available) : null);
@@ -569,7 +566,6 @@ export default function LodgeDetails() {
         let json = null;
         try {
           json = JSON.parse(text);
-          console.log("Fetched lodge by id:", json);
         } catch (e) {
           console.warn("Invalid JSON from get_lodge.php", text);
           return;
