@@ -6,7 +6,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebaseConfig";
 import { signOut } from "firebase/auth";
 import { useModalContext } from "./ui/ModalProvider";
-import { lodges } from "../lodgedata";
+// import { lodges } from "../lodgedata";
 import toast from "react-hot-toast";
 
 export default function Header() {
