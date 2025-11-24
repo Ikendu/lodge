@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { FaQuestionCircle, FaHeadset, FaInfoCircle } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import UpdateComingSoon from "../assets/UpdateComingSoon";
 
 export default function HelpCenter() {
   const navigate = useNavigate();
@@ -80,10 +81,7 @@ export default function HelpCenter() {
         <h2 className="text-3xl font-bold text-indigo-700 mb-10">
           Explore Topics
         </h2>
-        <p className="text-red-600 pb-5 italic">
-          More updates are coming on this section, contact admin for any
-          question you may have for now, thank you.
-        </p>
+        <UpdateComingSoon />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {[
@@ -126,6 +124,7 @@ export default function HelpCenter() {
         <h2 className="text-3xl font-bold text-indigo-700 text-center mb-10">
           Frequently Asked Questions
         </h2>
+        <UpdateComingSoon />
 
         <div className="max-w-3xl mx-auto">
           {faqs.map((faq, i) => (

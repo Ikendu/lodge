@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useModalContext } from "./ui/ModalProvider";
 
 export default function LodgeList({
@@ -61,7 +61,17 @@ export default function LodgeList({
   if (loading)
     return <div className="text-sm text-white/70">Loading lodges…</div>;
   if (!loading && lodges.length === 0)
-    return <div className="text-sm text-white/70">No lodges found.</div>;
+    return (
+      <div className="text-sm text-white/70">
+        <p>You have not listed any lodge. </p>
+        <p>
+          If you have a free lodge or apartment go ahead and{" "}
+          <Link to={"/list_new_lodge"} className=" underline text-white/90">
+            make extra income with it
+          </Link>
+        </p>
+      </div>
+    );
 
   return (
     <motion.div

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import UpdateComingSoon from "../assets/UpdateComingSoon";
 
 const faqs = [
   {
@@ -62,6 +63,8 @@ export default function FAQPage() {
         <h2 className="text-3xl font-bold text-center mb-8 text-blue-700">
           Frequently Asked Questions
         </h2>
+
+        <UpdateComingSoon />
 
         <div className="space-y-4">
           {faqs.map((faq, index) => (
