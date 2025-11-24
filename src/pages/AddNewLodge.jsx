@@ -201,6 +201,10 @@ export default function AddNewLodge() {
         <label className="block text-gray-700 font-semibold mb-2">
           Lodge Images (Max 3)
         </label>
+        <p className=" italic text-xs text-red-600">
+          Please remove all clothes, personal items or trash on site before
+          taking the room pictures
+        </p>
 
         <div className="grid grid-cols-3 gap-4 mb-6">
           {images.map((img, index) => (

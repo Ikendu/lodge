@@ -32,7 +32,6 @@ export default function Lodges() {
   }, []);
 
   const handleDelete = async (id) => {
-    const modal = useModalContext();
     const ok = await modal.confirm({
       title: "Delete lodge",
       message: `Delete lodge #${id}? This is irreversible.`,
