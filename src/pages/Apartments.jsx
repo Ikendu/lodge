@@ -24,39 +24,90 @@ export default function Apartments() {
 
   useEffect(() => {
     let mounted = true;
-    setLoading(true);
-    fetch("https://lodge.morelinks.com.ng/api/get_all_lodge.php")
-      .then((r) => r.json())
-      .then((j) => {
+    const cacheKey = "cachedLodges_v1";
+    const mapRows = (rows) =>
+      rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        location: row.location,
+        price: parseFloat(row.price) || 0,
+        rating: row.rating || 3,
+        images: [
+          row.image_first_url,
+          row.image_second_url,
+          row.image_third_url,
+        ].filter(Boolean),
+        raw: row,
+      }));
+
+    const backgroundFetch = async (silent = true) => {
+      try {
+        const res = await fetch(
+          "https://lodge.morelinks.com.ng/api/get_all_lodge.php"
+        );
+        const j = await res.json();
         if (!mounted) return;
         if (j && j.success && Array.isArray(j.data)) {
-          const mapped = j.data.map((row) => ({
-            id: row.id,
-            title: row.title,
-            description: row.description,
-            location: row.location,
-            price: parseFloat(row.price) || 0,
-            rating: row.rating || 3,
-            images: [
-              row.image_first_url,
-              row.image_second_url,
-              row.image_third_url,
-            ].filter(Boolean),
-            raw: row,
-          }));
-          setLodges(mapped);
-        } else {
+          const mapped = mapRows(j.data);
+          // compare with existing cached value to avoid unnecessary re-renders
+          const prev = JSON.parse(localStorage.getItem(cacheKey) || "null");
+          const prevJson = prev && prev.data ? JSON.stringify(prev.data) : null;
+          const newJson = JSON.stringify(mapped);
+          if (prevJson !== newJson) {
+            localStorage.setItem(
+              cacheKey,
+              JSON.stringify({ ts: Date.now(), data: mapped })
+            );
+            if (!silent) setLodges(mapped);
+            else
+              setLodges((cur) => {
+                try {
+                  return JSON.stringify(cur) === newJson ? cur : mapped;
+                } catch (e) {
+                  return mapped;
+                }
+              });
+          }
+        } else if (!silent) {
           setError("Failed to load lodges");
         }
-      })
-      .catch((err) => {
-        console.error(err);
+      } catch (err) {
         if (!mounted) return;
-        setError(String(err));
-      })
-      .finally(() => mounted && setLoading(false));
+        if (!silent) {
+          setError(String(err));
+        }
+      } finally {
+        if (!silent && mounted) setLoading(false);
+      }
+    };
 
-    return () => (mounted = false);
+    // Try to restore from cache first to avoid blocking UI
+    try {
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+      if (cached && Array.isArray(cached.data)) {
+        setLodges(cached.data);
+        setLoading(false);
+        // perform a silent background refresh to keep data fresh
+        backgroundFetch(true);
+      } else {
+        // no cache: show loader and fetch
+        setLoading(true);
+        backgroundFetch(false);
+      }
+    } catch (e) {
+      // parsing error -> fetch normally
+      setLoading(true);
+      backgroundFetch(false);
+    }
+
+    // periodic silent refresh every 5 minutes
+    const interval = setInterval(() => backgroundFetch(true), 5 * 60 * 1000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const filtered = useMemo(() => {
