@@ -17,8 +17,46 @@ export default function Header() {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [mobileSearchVisible, setMobileSearchVisible] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [lodges, setLodges] = useState([]);
   const hintRef = useRef(null);
   const mobileSearchRef = useRef(null);
+
+  useEffect(() => {
+    let mounted = true;
+    // setLoading(true);
+    fetch("https://lodge.morelinks.com.ng/api/get_all_lodge.php")
+      .then((r) => r.json())
+      .then((j) => {
+        if (!mounted) return;
+        if (j && j.success && Array.isArray(j.data)) {
+          const mapped = j.data.map((row) => ({
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            location: row.location,
+            price: parseFloat(row.price) || 0,
+            rating: row.rating || 3,
+            images: [
+              row.image_first_url,
+              row.image_second_url,
+              row.image_third_url,
+            ].filter(Boolean),
+            raw: row,
+          }));
+          setLodges(mapped);
+        } else {
+          setError("Failed to load lodges");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        if (!mounted) return;
+        setError(String(err));
+      });
+    // .finally(() => mounted && setLoading(false));
+
+    return () => (mounted = false);
+  }, []);
 
   useEffect(() => {
     if (mobileSearchVisible && mobileSearchRef.current) {
