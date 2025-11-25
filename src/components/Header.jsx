@@ -51,7 +51,7 @@ export default function Header() {
       .catch((err) => {
         console.error(err);
         if (!mounted) return;
-        setError(String(err));
+        // setError(String(err));
       });
     // .finally(() => mounted && setLoading(false));
 

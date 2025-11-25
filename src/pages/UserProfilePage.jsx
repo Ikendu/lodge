@@ -28,6 +28,7 @@ export default function UserProfilePage() {
     }
   }, []);
   const display = profileData || savedData || {};
+  console.log("Saved Data:", savedData);
 
   // Paid bookings / payments
   const [paidBookings, setPaidBookings] = useState([]);
@@ -174,6 +175,7 @@ export default function UserProfilePage() {
   }, [savedData, display]);
 
   const requestRefund = async (payment) => {
+    console.log("Requesting refund for payment:", payment);
     const ok = await modal.confirm({
       title: "Request refund",
       message: "Are you sure you want to request a refund for this booking?",
@@ -184,7 +186,7 @@ export default function UserProfilePage() {
     const reason = await modal.prompt({
       title: "Refund reason (optional)",
       message: "Optional: enter a short reason for the refund request",
-      placeholder: "Reason (optional)",
+      placeholder: "Reason for refund",
       okText: "Submit",
       cancelText: "Skip",
       defaultValue: "",
@@ -194,20 +196,25 @@ export default function UserProfilePage() {
       "http://localhost/lodge/api/request_refund.php",
     ];
     const payload = {
-      payment_id: payment.id || 0,
+      payment_id: payment?.id || 0,
       reference:
-        payment.reference ||
-        payment.payment_reference ||
-        payment.order_id ||
+        payment?.reference ||
+        payment?.payment_reference ||
+        payment?.order_id ||
         "",
-      email:
-        savedData?.userLoginMail ||
-        savedData?.email ||
-        display?.userLoginMail ||
-        display?.email ||
-        "",
+      userEmail: savedData?.userLoginMail || display?.userLoginMail || "",
+      userMobile: savedData?.mobile || display?.mobile || "",
+      userName:
+        `${savedData?.firstName || display?.firstName || ""} ${
+          savedData?.lastName || display?.lastName
+        }` || "",
+      amount: payment?.amount || 0,
+      lodgeTitle: payment?.lodge_title || payment?.lodge || "Untitled lodge",
+      lodgeOwnerNumber: payment?.owner_mobile || "",
+      lodgeOwnerEmail: payment?.owner_email || "",
       reason: reason || "",
     };
+    console.log("Refund Payload:", payload);
     for (const url of endpoints) {
       try {
         const res = await fetch(url, {
