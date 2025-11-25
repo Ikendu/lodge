@@ -41,7 +41,7 @@ Created service account github-action-1050305684 with Firebase Hosting admin per
 - User verification with NIN or BVN for security purposes
 - Bank account details must tarry with NIN cetails
 
-this is the code for the landing page, I want to add below it list of lodges like airbnb displayed to select from, when a user clicked on each lodge there will be a check to see if the user is registered if yes the user will be taken to the lodge owners details it the user is not registered the user will be taken to register page
+this is the code for the landing page, I want to add below it list of lodges like airbnb displayed to select from, when a user clicked on each lodge there will be a check to see if the user is registered if yes the user will be taken to the lodge tails it the user is not registered the user will be taken to register page
 
 for backward unstageing of commit
 git reset HEAD~1

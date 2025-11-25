@@ -87,6 +87,7 @@ export default function LodgeDetails() {
         let json = null;
         try {
           json = JSON.parse(text);
+          // console.log("Fetched profile", json);
 
           // handle parsed JSON below
         } catch (e) {
@@ -401,13 +402,17 @@ export default function LodgeDetails() {
   }, []);
 
   // Optionally check availability in background when dates change and lodge id is present
-  // This effect also runs on first render so availability is known immediately.
+  // Use the lodge id (primitive) in the dependency list and only update fetchedLodge
+  // when availability/conflicts actually change. This avoids creating a new
+  // lodge object every check which would cause this effect (and others) to
+  // re-run continuously and produce UI flicker.
   useEffect(() => {
     let mounted = true;
-    if (!lodge || !(lodge?.id || lodge?.raw?.id)) return;
+    const lodgeId = lodge?.id || lodge?.raw?.id || null;
+    if (!lodgeId) return;
     const check = async () => {
       const payload = {
-        lodge_id: lodge?.id || lodge?.raw?.id || null,
+        lodge_id: lodgeId,
         startDate:
           selectionRange.startDate?.toISOString()?.slice(0, 10) || null,
         endDate: selectionRange.endDate?.toISOString()?.slice(0, 10) || null,
@@ -423,19 +428,32 @@ export default function LodgeDetails() {
         );
         const json = await res.json();
         if (!mounted) return;
-        // update local availability states for UI
-        setAvailability(json && json.success ? Boolean(json.available) : null);
-        setAvailabilityConflicts(json && json.conflicts ? json.conflicts : []);
 
-        // also attach availability to fetchedLodge if we have one
+        const newAvailable =
+          json && json.success ? Boolean(json.available) : null;
+        const newConflicts = json && json.conflicts ? json.conflicts : [];
+
+        // update local availability states for UI
+        setAvailability(newAvailable);
+        setAvailabilityConflicts(newConflicts);
+
+        // only attach availability to fetchedLodge when it changes to avoid
+        // creating a new object on every check (which causes re-renders)
         setFetchedLodge((prev) => {
           try {
             if (!prev) return prev;
+            const prevAvail =
+              prev.availability === undefined
+                ? null
+                : Boolean(prev.availability);
+            const prevConflicts = prev.availability_conflicts || [];
+            const conflictsChanged =
+              JSON.stringify(prevConflicts) !== JSON.stringify(newConflicts);
+            if (prevAvail === newAvailable && !conflictsChanged) return prev;
             return {
               ...prev,
-              availability: json && json.success ? json.available : null,
-              availability_conflicts:
-                json && json.conflicts ? json.conflicts : [],
+              availability: newAvailable,
+              availability_conflicts: newConflicts,
             };
           } catch (e) {
             return prev;
@@ -447,7 +465,12 @@ export default function LodgeDetails() {
     };
     check();
     return () => (mounted = false);
-  }, [selectionRange.startDate, selectionRange.endDate, lodge]);
+  }, [
+    selectionRange.startDate,
+    selectionRange.endDate,
+    lodge?.id,
+    lodge?.raw?.id,
+  ]);
 
   // helper to open the native date picker in a cross-browser way.
   // Some browsers (older Safari on iOS) don't implement showPicker(). In that case
@@ -1130,9 +1153,9 @@ export default function LodgeDetails() {
                       {`${ownerProfile?.firstName} ${ownerProfile?.middleName} ${ownerProfile?.lastName}` ||
                         "Not provided"}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    {/* <div className="text-sm text-gray-500">
                       {ownerProfile?.address || "Address not provided"}
-                    </div>
+                    </div> */}
                   </div>
 
                   <div className="text-sm text-gray-600 space-y-2 italic">
