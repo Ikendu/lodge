@@ -27,7 +27,7 @@ export default function RefundRequests() {
       .then((r) => r.text())
       .then((text) => {
         const json = text ? JSON.parse(text) : {};
-        console.log("Refund Data", json.data);
+        // console.log("Refund Data", json.data);
         if (!json.success) throw new Error(json.message || "Failed");
         if (mounted) setItems(json.data || []);
       })

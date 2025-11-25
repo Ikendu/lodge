@@ -14,7 +14,7 @@ try {
     $pdo = $db->connect();
 
     // ensure table exists (request_refund.php creates refund_requests as needed)
-    $stmt = $pdo->prepare('SELECT id, payment_id, payment_reference, user_email, reason, status, created_at FROM refund_requests ORDER BY created_at DESC');
+    $stmt = $pdo->prepare('SELECT * FROM refund_requests ORDER BY created_at DESC');
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

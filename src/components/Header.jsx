@@ -647,7 +647,7 @@ export default function Header() {
                         className="w-12 h-8 object-cover rounded"
                       />
                       <div>
-                        <div className="font-medium">{m.title}</div>
+                        <div className="font-medium text-black">{m.title}</div>
                         <div className="text-xs text-gray-500">
                           {m.location} • ₦{m.price.toLocaleString()}
                         </div>

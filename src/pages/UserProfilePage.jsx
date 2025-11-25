@@ -28,7 +28,7 @@ export default function UserProfilePage() {
     }
   }, []);
   const display = profileData || savedData || {};
-  console.log("Saved Data:", savedData);
+  // console.log("Saved Data:", savedData);
 
   // Paid bookings / payments
   const [paidBookings, setPaidBookings] = useState([]);
@@ -214,7 +214,7 @@ export default function UserProfilePage() {
       lodgeOwnerEmail: payment?.owner_email || "",
       reason: reason || "",
     };
-    console.log("Refund Payload:", payload);
+    // console.log("Refund Payload:", payload);
     for (const url of endpoints) {
       try {
         const res = await fetch(url, {

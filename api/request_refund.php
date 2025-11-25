@@ -19,14 +19,24 @@ if (!is_array($data)) {
     exit;
 }
 
-$reference = trim($data['reference'] ?? '');
+// NEW PAYLOAD FIELDS
 $payment_id = intval($data['payment_id'] ?? 0);
-$email = trim($data['email'] ?? '');
+$reference = trim($data['reference'] ?? '');
+
+$userEmail = trim($data['userEmail'] ?? '');
+$userMobile = trim($data['userMobile'] ?? '');
+$userName = trim($data['userName'] ?? '');
+$amount = floatval($data['amount'] ?? 0);
+
+$lodgeTitle = trim($data['lodgeTitle'] ?? '');
+$lodgeOwnerNumber = trim($data['lodgeOwnerNumber'] ?? '');
+$lodgeOwnerEmail = trim($data['lodgeOwnerEmail'] ?? '');
+
 $reason = trim($data['reason'] ?? '');
 
-if (!$reference && !$payment_id) {
+if (!$payment_id && !$reference) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Provide payment reference or payment_id']);
+    echo json_encode(['success' => false, 'message' => 'Provide payment_id or reference']);
     exit;
 }
 
@@ -47,29 +57,31 @@ try {
     }
 
     $payment = $stmt->fetch(PDO::FETCH_ASSOC);
+
     if (!$payment) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Payment not found']);
         exit;
     }
 
-    // basic ownership check: if email supplied, require it matches payment email
-    if ($email && strtolower($email) !== strtolower($payment['email'])) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'Payment does not belong to this user']);
-        exit;
-    }
-
-    // ensure refund_requests table exists
-    $pdo->exec("CREATE TABLE IF NOT EXISTS refund_requests (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        payment_id INT NOT NULL,
-        payment_reference VARCHAR(200) NOT NULL,
-        user_email VARCHAR(255) DEFAULT NULL,
-        reason TEXT DEFAULT NULL,
-        status VARCHAR(50) DEFAULT 'requested',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    // ensure refund_requests table has all new fields
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS refund_requests (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            payment_id INT NOT NULL,
+            payment_reference VARCHAR(200) NOT NULL,
+            user_email VARCHAR(255) DEFAULT NULL,
+            user_mobile VARCHAR(50) DEFAULT NULL,
+            user_name VARCHAR(255) DEFAULT NULL,
+            amount DECIMAL(12,2) DEFAULT 0,
+            lodge_title VARCHAR(255) DEFAULT NULL,
+            lodge_owner_mobile VARCHAR(50) DEFAULT NULL,
+            lodge_owner_email VARCHAR(255) DEFAULT NULL,
+            reason TEXT DEFAULT NULL,
+            status VARCHAR(50) DEFAULT 'requested',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
 
     // check if already requested
     $check = $pdo->prepare('SELECT id FROM refund_requests WHERE payment_id = :pid LIMIT 1');
@@ -79,29 +91,40 @@ try {
         exit;
     }
 
-    $insert = $pdo->prepare('INSERT INTO refund_requests (payment_id, payment_reference, user_email, reason, status) VALUES (:pid, :pref, :email, :reason, :status)');
+    // Insert new full payload
+    $insert = $pdo->prepare("
+        INSERT INTO refund_requests 
+        (payment_id, payment_reference, user_email, user_mobile, user_name, amount, lodge_title, 
+         lodge_owner_mobile, lodge_owner_email, reason, status)
+        VALUES 
+        (:pid, :pref, :email, :mobile, :uname, :amount, :ltitle, :lownum, :lowemail, :reason, 'requested')
+    ");
+
     $insert->execute([
         ':pid' => $payment['id'],
-        ':pref' => $payment['reference'] ?? $payment['payment_reference'] ?? '',
-        ':email' => $email ?: $payment['email'] ?? null,
+        ':pref' => $reference ?: $payment['reference'] ?? '',
+        ':email' => $userEmail ?: $payment['email'] ?? null,
+        ':mobile' => $userMobile,
+        ':uname' => $userName,
+        ':amount' => $amount,
+        ':ltitle' => $lodgeTitle,
+        ':lownum' => $lodgeOwnerNumber,
+        ':lowemail' => $lodgeOwnerEmail,
         ':reason' => $reason,
-        ':status' => 'requested',
     ]);
 
-    // attempt best-effort update on payments table to mark refund requested if column exists
+    // mark payment as refund_requested
     try {
         $pdo->exec("ALTER TABLE payments ADD COLUMN IF NOT EXISTS refund_requested TINYINT(1) DEFAULT 0;");
-    } catch (Exception $e) {
-        // some MySQL versions don't support IF NOT EXISTS — ignore errors here
-    }
+    } catch (Exception $e) {}
+
     try {
         $u = $pdo->prepare('UPDATE payments SET refund_requested = 1 WHERE id = :id');
         $u->execute([':id' => $payment['id']]);
-    } catch (Exception $e) {
-        // ignore if column missing
-    }
+    } catch (Exception $e) {}
 
-    echo json_encode(['success' => true, 'message' => 'Refund request submitted']);
+    echo json_encode(['success' => true, 'message' => 'Refund request submitted successfully']);
+
 } catch (PDOException $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
