@@ -132,6 +132,14 @@ export default function Home() {
           <p className="mt-3 text-sm md:text-base text-white/90 italic text-center max-w-2xl mx-auto">
             where life is made easier and connections more safer
           </p>
+          <div className="flex items-center justify-center mt-6 ">
+            <button
+              onClick={() => navigate("login")}
+              className="bg-green-500 py-3 px-20 rounded-full cursor-pointer"
+            >
+              Get Started
+            </button>
+          </div>
 
           {/* Options Section (cards) placed on top of hero */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mt-8 mx-auto">
