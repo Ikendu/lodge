@@ -1093,7 +1093,7 @@ export default function LodgeDetails() {
 
               {/* Owner images: side-by-side, each fills its column */}
               <div className="grid grid-cols-2 gap-3 mb-3">
-                <div className="relative">
+                {/* <div className="relative">
                   <img
                     src={ownerThumbLeft}
                     alt={ownerProfile?.firstName || "Owner"}
@@ -1113,7 +1113,7 @@ export default function LodgeDetails() {
                   <div className="absolute left-2 top-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
                     Verified
                   </div>
-                </div>
+                </div> */}
 
                 <div className="relative">
                   <img
@@ -1164,7 +1164,10 @@ export default function LodgeDetails() {
                     </p>
                     <div>
                       <strong className="text-gray-700">LGA of Origin:</strong>{" "}
-                      {ownerProfile?.lga || lodge.owner?.lga || "Not provided"}
+                      {ownerProfile?.lga ||
+                        lodge.owner?.lga ||
+                        ownerProfile?.birth_lga ||
+                        "Not provided"}
                     </div>
                     <div>
                       <strong className="text-gray-700">
@@ -1172,6 +1175,7 @@ export default function LodgeDetails() {
                       </strong>{" "}
                       {ownerProfile?.state ||
                         lodge.owner?.state ||
+                        ownerProfile?.birth_state ||
                         "Not provided"}
                     </div>
                   </div>
