@@ -140,7 +140,6 @@ export default function Home() {
               Get Started for free
             </button>
           </div>
-
           {/* Options Section (cards) placed on top of hero */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mt-8 mx-auto">
             <motion.div
@@ -188,6 +187,11 @@ export default function Home() {
                 Click Here
               </span>
             </motion.div>
+          </div>{" "}
+          <div className="flex justify-center mt-6 cursor-pointer">
+            <span className="mt-4 bg-blue-400 text-black font-semibold py-2 px-8 rounded-full shadow hover:bg-yellow-300 transition-all">
+              How it Works
+            </span>
           </div>
         </div>
       </section>
