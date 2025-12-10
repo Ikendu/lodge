@@ -188,7 +188,10 @@ export default function Home() {
               </span>
             </motion.div>
           </div>{" "}
-          <div className="flex justify-center mt-6 cursor-pointer">
+          <div
+            onClick={() => navigate("/how-it-works")}
+            className="flex justify-center mt-6 cursor-pointer"
+          >
             <span className="mt-4 bg-blue-400 text-black font-semibold py-2 px-8 rounded-full shadow hover:bg-yellow-300 transition-all">
               How it Works
             </span>

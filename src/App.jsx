@@ -35,6 +35,7 @@ import Users from "./pages/admin/Users";
 import Lodges from "./pages/admin/Lodges";
 import Payments from "./pages/admin/Payments";
 import RefundRequests from "./pages/admin/RefundRequests";
+import HowItWorks from "./pages/HowItWorks";
 import AccountDeletions from "./pages/admin/AccountDeletions";
 import Complaints from "./pages/admin/Complaints";
 import Contacts from "./pages/admin/Contacts";
@@ -71,6 +72,7 @@ export default function App() {
             <Route path="/lodge/" element={<LodgeDetails />} />
 
             <Route path="/apartments" element={<Apartments />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/hotel-guesthouse" element={<HotelGuestHouse />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
