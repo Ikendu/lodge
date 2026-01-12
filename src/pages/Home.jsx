@@ -220,7 +220,8 @@ export default function Home() {
               You have already registered
             </h3>
             <p className="mb-4">
-              Hello {user?.displayName.sent}, click below to visit your profile.
+              Hello {user?.displayName.toUpperCase()}, click below to visit your
+              profile.
             </p>
             <div className="flex justify-end gap-2">
               <button
