@@ -25,7 +25,9 @@ export default function Home() {
   };
 
   const [user] = useAuthState(auth);
+  console.log("Current user:", user);
   const location = useLocation();
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const params = useMemo(
     () => new URLSearchParams(location.search),
@@ -39,6 +41,7 @@ export default function Home() {
   const [lodges, setLodges] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const profileData = localStorage.getItem("customerProfile");
 
   useEffect(() => {
     let mounted = true;
@@ -134,7 +137,13 @@ export default function Home() {
           </p>
           <div className="flex items-center justify-center mt-6 ">
             <button
-              onClick={() => navigate("login")}
+              onClick={() => {
+                if (profileData) {
+                  setShowProfileModal(true);
+                } else {
+                  navigate("/login");
+                }
+              }}
               className="bg-green-500 py-3 px-20 rounded-full cursor-pointer"
             >
               Get Started for free
@@ -198,6 +207,41 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {showProfileModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowProfileModal(false)}
+            aria-hidden="true"
+          />
+          <div className="relative bg-white text-gray-900 rounded-lg p-6 max-w-md mx-4 z-10">
+            <h3 className="text-lg font-bold mb-2">
+              You have already registered
+            </h3>
+            <p className="mb-4">
+              Hello {user?.displayName.sent}, click below to visit your profile.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                className="px-4 py-2 rounded bg-gray-200"
+                onClick={() => setShowProfileModal(false)}
+              >
+                Close
+              </button>
+              <button
+                className="px-4 py-2 rounded bg-green-500 text-white"
+                onClick={() => {
+                  setShowProfileModal(false);
+                  navigate("/profile");
+                }}
+              >
+                Visit Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Feature / CTA sections (inserted) */}
       <div className="w-full max-w-6xl mb-8">
