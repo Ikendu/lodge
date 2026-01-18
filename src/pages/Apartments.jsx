@@ -214,11 +214,14 @@ export default function Apartments() {
                 <img
                   src={lodge.images?.[0] ?? ""}
                   alt={lodge.title}
-                  className="h-56 w-full object-cover"
+                  className="h-60 w-full object-cover"
                 />
                 <div className="p-4">
                   <h3 className="font-semibold text-lg">{lodge.title}</h3>
                   <p className="text-gray-500 text-sm">{lodge.location}</p>
+                  <p className="text-gray-600 text-sm font-semibold">
+                    {lodge?.raw.type}
+                  </p>
                   <div className="flex justify-between items-center mt-3">
                     <span className="font-bold text-blue-600">
                       ₦{lodge.price.toLocaleString()}/night
