@@ -201,7 +201,7 @@ export default function Apartments() {
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {(filtered.length ? filtered : lodges).map((lodge, index) => (
+            {lodges.map((lodge, index) => (
               <motion.div
                 key={lodge.id}
                 initial={{ opacity: 0, y: 30 }}
