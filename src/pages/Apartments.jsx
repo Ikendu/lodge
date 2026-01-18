@@ -110,32 +110,32 @@ export default function Apartments() {
     };
   }, []);
 
-  const filtered = useMemo(() => {
-    return lodges.filter((l) => {
-      const typeRaw =
-        (l.raw && (l.raw.type || l.raw.lodge_type || l.raw.type_name)) || "";
-      const type = String(typeRaw).toLowerCase();
-      // Exclude hotel rooms and guest houses from the Apartments listing
-      if (type.includes("hotel") || type.includes("guest")) return false;
-      // price filter
-      if (l.price < min || l.price > max) return false;
-      // location filter
-      if (loc) {
-        if (!(l.location || "").toLowerCase().includes(loc)) return false;
-      }
-      if (q) {
-        const hay = (
-          l.title +
-          " " +
-          l.description +
-          " " +
-          l.location
-        ).toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [lodges, q, loc, min, max]);
+  // const filtered = useMemo(() => {
+  //   return lodges.filter((l) => {
+  //     const typeRaw =
+  //       (l.raw && (l.raw.type || l.raw.lodge_type || l.raw.type_name)) || "";
+  //     const type = String(typeRaw).toLowerCase();
+  //     // Exclude hotel rooms and guest houses from the Apartments listing
+  //     if (type.includes("hotel") || type.includes("guest")) return false;
+  //     // price filter
+  //     if (l.price < min || l.price > max) return false;
+  //     // location filter
+  //     if (loc) {
+  //       if (!(l.location || "").toLowerCase().includes(loc)) return false;
+  //     }
+  //     if (q) {
+  //       const hay = (
+  //         l.title +
+  //         " " +
+  //         l.description +
+  //         " " +
+  //         l.location
+  //       ).toLowerCase();
+  //       if (!hay.includes(q)) return false;
+  //     }
+  //     return true;
+  //   });
+  // }, [lodges, q, loc, min, max]);
 
   const handleRoomClick = (lodge) => {
     navigate(`/lodge/${lodge.id}`, { state: { lodge } });
